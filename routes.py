@@ -971,26 +971,21 @@ def admin_backup_restore():
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('calendar'))
 
+    if 'backup_file' not in request.files:
+        flash('No backup file provided')
+        return redirect(url_for('admin_backup'))
+
+    file = request.files['backup_file']
+    if file.filename == '':
+        flash('No backup file selected')
+        return redirect(url_for('admin_backup'))
+
+    if not file.filename.endswith('.json'):
+        flash('Invalid file type. Please upload a JSON backup file.')
+        return redirect(url_for('admin_backup'))
+
     try:
         app.logger.info('Starting backup restoration process...')
-
-        if 'backup_file' not in request.files:
-            app.logger.warning('No backup file provided in request')
-            flash('No backup file provided')
-            return redirect(url_for('admin_backup'))
-
-        file = request.files['backup_file']
-        if file.filename == '':
-            app.logger.warning('Empty filename provided')
-            flash('No backup file selected')
-            return redirect(url_for('admin_backup'))
-
-        if not file.filename.endswith('.json'):
-            app.logger.warning(f'Invalid file type: {file.filename}')
-            flash('Invalid file type. Please upload a JSON backup file.')
-            return redirect(url_for('admin_backup'))
-
-        # Read and parse backup data
         backup_content = file.read().decode('utf-8')
         app.logger.debug(f'Backup content length: {len(backup_content)} bytes')
 
@@ -1004,59 +999,73 @@ def admin_backup_restore():
 
         # Begin transaction
         try:
-            # Restore locations
-            for location_data in backup_data.get('locations', []):
-                location_id = location_data.get('id')
-                if location_id:
-                    app.logger.debug(f'Looking for location with ID: {location_id}')
-                    location = Location.query.get(location_id)
-                    if location:
-                        app.logger.debug(f'Updating existing location: {location_id}')
-                        for key, value in location_data.items():
-                            if key != 'id':  # Skip the ID field
-                                setattr(location, key, value)
-                    else:
-                        app.logger.debug(f'Creating new location: {location_data.get("name")}')
-                        new_location = Location(
-                            name=location_data.get('name'),
-                            description=location_data.get('description'),
-                            active=location_data.get('active', True)
-                        )
-                        db.session.add(new_location)
+            # Step 1: Restore Users first (they have no dependencies)
+            existing_users = {user.email: user.id for user in User.query.all()}
+            user_id_mapping = {}  # Map old IDs to new IDs
 
-            db.session.commit()  # Commit locations first
-
-            # Restore users
             for user_data in backup_data.get('users', []):
-                user = User.query.filter_by(email=user_data.get('email')).first()
-                if user:
-                    app.logger.debug(f'Updating existing user: {user_data.get("email")}')
+                email = user_data.get('email')
+                if email in existing_users:
+                    user = User.query.get(existing_users[email])
+                    app.logger.debug(f'Updating existing user: {email}')
                     user.username = user_data.get('username')
                     user.password_hash = user_data.get('password_hash')
                     user.is_admin = user_data.get('is_admin', False)
                     user.color = user_data.get('color', '#3498db')
                     user.timezone = user_data.get('timezone', 'America/Los_Angeles')
                 else:
-                    app.logger.debug(f'Creating new user: {user_data.get("email")}')
+                    app.logger.debug(f'Creating new user: {email}')
                     new_user = User(
                         username=user_data.get('username'),
-                        email=user_data.get('email'),
+                        email=email,
                         password_hash=user_data.get('password_hash'),
                         is_admin=user_data.get('is_admin', False),
                         color=user_data.get('color', '#3498db'),
                         timezone=user_data.get('timezone', 'America/Los_Angeles')
                     )
                     db.session.add(new_user)
+                    db.session.flush()  # Get the new user's ID
+                    user_id_mapping[user_data.get('id')] = new_user.id
 
-            db.session.commit()  # Commit users
+            db.session.commit()
+            app.logger.info('Users restored successfully')
 
-            # Restore quick links
+            # Step 2: Restore Locations
+            location_id_mapping = {}
+            for location_data in backup_data.get('locations', []):
+                old_id = location_data.get('id')
+                app.logger.debug(f'Looking for location with ID: {old_id}')
+                location = Location.query.get(old_id)
+
+                if location:
+                    app.logger.debug(f'Updating existing location: {old_id}')
+                    location.name = location_data.get('name')
+                    location.description = location_data.get('description')
+                    location.active = location_data.get('active', True)
+                    location_id_mapping[old_id] = old_id
+                else:
+                    app.logger.debug(f'Creating new location: {location_data.get("name")}')
+                    new_location = Location(
+                        name=location_data.get('name'),
+                        description=location_data.get('description'),
+                        active=location_data.get('active', True)
+                    )
+                    db.session.add(new_location)
+                    db.session.flush()
+                    location_id_mapping[old_id] = new_location.id
+
+            db.session.commit()
+            app.logger.info('Locations restored successfully')
+
+            # Step 3: Restore Quick Links
             for link_data in backup_data.get('quick_links', []):
                 link = QuickLink.query.filter_by(title=link_data.get('title')).first()
                 if link:
                     app.logger.debug(f'Updating existing quick link: {link_data.get("title")}')
-                    for key, value in link_data.items():
-                        setattr(link, key, value)
+                    link.url = link_data.get('url')
+                    link.icon = link_data.get('icon')
+                    link.category = link_data.get('category')
+                    link.order = link_data.get('order', 0)
                 else:
                     app.logger.debug(f'Creating new quick link: {link_data.get("title")}')
                     new_link = QuickLink(
@@ -1068,31 +1077,45 @@ def admin_backup_restore():
                     )
                     db.session.add(new_link)
 
-            db.session.commit()  # Commit quick links
+            db.session.commit()
+            app.logger.info('Quick links restored successfully')
 
-            # Restore schedules last since they depend on users and locations
+            # Step 4: Restore Schedules (after all dependencies are restored)
             for schedule_data in backup_data.get('schedules', []):
                 try:
-                    # Convert ISO format strings back to datetime objects
+                    # Map the technician_id to the new user ID if it exists
+                    old_tech_id = schedule_data.get('technician_id')
+                    new_tech_id = user_id_mapping.get(old_tech_id)
+
+                    if not new_tech_id:
+                        app.logger.warning(f'Skipping schedule - technician {old_tech_id} not found')
+                        continue
+
+                    # Map the location_id to the new location ID if it exists
+                    old_location_id = schedule_data.get('location_id')
+                    new_location_id = location_id_mapping.get(old_location_id) if old_location_id else None
+
+                    # Convert ISO format strings to datetime objects
                     start_time = datetime.fromisoformat(schedule_data.get('start_time'))
                     end_time = datetime.fromisoformat(schedule_data.get('end_time'))
 
-                    app.logger.debug(f'Creating schedule for technician: {schedule_data.get("technician_id")}')
+                    app.logger.debug(f'Creating schedule for technician: {new_tech_id}')
                     new_schedule = Schedule(
-                        technician_id=schedule_data.get('technician_id'),
+                        technician_id=new_tech_id,
                         start_time=start_time,
                         end_time=end_time,
                         description=schedule_data.get('description'),
                         time_off=schedule_data.get('time_off', False),
-                        location_id=schedule_data.get('location_id')
+                        location_id=new_location_id
                     )
                     db.session.add(new_schedule)
+
                 except (ValueError, KeyError) as e:
                     app.logger.error(f'Error creating schedule: {str(e)}')
                     continue
 
-            db.session.commit()  # Final commit for schedules
-            app.logger.info('Backup restored successfully')
+            db.session.commit()
+            app.logger.info('Schedules restored successfully')
             flash('Backup restored successfully!')
 
         except Exception as e:

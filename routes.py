@@ -782,8 +782,7 @@ def export_schedules():
         excel_file.seek(0)
 
         return send_file(
-            excel_file,
-            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            excel_file,            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             as_attachment=True,
             download_name=f'timesheets_{start_date}_to_{end_date}.xlsx'
         )
@@ -1250,12 +1249,16 @@ def admin_edit_location(location_id):
         # Get form data with proper boolean conversion for active status
         name = request.form.get('name')
         description = request.form.get('description', '')
-        active = request.form.get('active') == 'on'
+        # Explicitly check for the checkbox value
+        active = 'active' in request.form
 
         # Validate required fields
         if not name:
             flash('Location name is required.')
             return redirect(url_for('admin_locations'))
+
+        # Track if status changed
+        status_changed = location.active != active
 
         # Update location
         location.name = name
@@ -1263,11 +1266,13 @@ def admin_edit_location(location_id):
         location.active = active
 
         db.session.commit()
-        flash('Location updated successfully!')
 
         # Log the status change if it occurred
-        if location.active != active:
+        if status_changed:
             app.logger.info(f"Location '{location.name}' status changed to {'active' if active else 'inactive'}")
+            flash(f"Location '{location.name}' has been {'activated' if active else 'deactivated'}.")
+        else:
+            flash('Location updated successfully!')
 
     except Exception as e:
         db.session.rollback()

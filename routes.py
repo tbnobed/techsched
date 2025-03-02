@@ -24,7 +24,6 @@ def index():
     return redirect(url_for('login'))
 
 @app.route('/api/active_users')
-@login_required
 def get_active_users():
     """Get users who have schedules active at the current time"""
     if not current_user.is_authenticated:
@@ -48,28 +47,38 @@ def get_active_users():
             .all())
 
         # Convert times to user's timezone and format response
-        user_tz = current_user.get_timezone()
+        user_tz = pytz.timezone(current_user.timezone or 'UTC')
         result = []
-        for user, schedule, location in active_users:
-            # Convert schedule times to user's timezone
-            start_time = schedule.start_time.astimezone(user_tz)
-            end_time = schedule.end_time.astimezone(user_tz)
 
-            result.append({
-                'username': user.username,
-                'color': user.color,
-                'schedule': {
-                    'start_time': start_time.strftime('%H:%M'),
-                    'end_time': end_time.strftime('%H:%M'),
-                    'description': schedule.description or ''
-                },
-                'location': {
-                    'name': location.name if location else 'No Location',
-                    'description': location.description if location else ''
-                }
-            })
+        for user, schedule, location in active_users:
+            try:
+                # Ensure times are timezone-aware
+                start_time = schedule.start_time if schedule.start_time.tzinfo else pytz.UTC.localize(schedule.start_time)
+                end_time = schedule.end_time if schedule.end_time.tzinfo else pytz.UTC.localize(schedule.end_time)
+
+                # Convert to user's timezone
+                start_time = start_time.astimezone(user_tz)
+                end_time = end_time.astimezone(user_tz)
+
+                result.append({
+                    'username': user.username,
+                    'color': user.color or '#3498db',
+                    'schedule': {
+                        'start_time': start_time.strftime('%H:%M'),
+                        'end_time': end_time.strftime('%H:%M'),
+                        'description': schedule.description or ''
+                    },
+                    'location': {
+                        'name': location.name if location else 'No Location',
+                        'description': location.description if location else ''
+                    }
+                })
+            except Exception as e:
+                app.logger.error(f"Error processing user {user.username}: {str(e)}")
+                continue
 
         return jsonify(result)
+
     except Exception as e:
         app.logger.error(f"Error in get_active_users: {str(e)}")
         return jsonify({'error': str(e)}), 500
@@ -877,30 +886,34 @@ def admin_delete_quick_link(link_id):
 @app.route('/admin/quick_links/reorder', methods=['POST'])
 @login_required
 def admin_reorder_quick_links():
-    if not current_user.is_admin:
-        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    """Handle reordering of quick links via AJAX"""
+    if not current_user.is_authenticated or not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized'}), 403
 
     try:
         new_order = request.json
-        # First, get all links and set a high order number to avoid conflicts
-        links = QuickLink.query.all()
-        for link in links:
-            link.order = 10000 + link.order
+        if not new_order or not isinstance(new_order, list):
+            return jsonify({'error': 'Invalid data format'}), 400
 
-        db.session.commit()
-
-        # Then update with new order
+        # Update order for each quick link
         for item in new_order:
-            link = QuickLink.query.get(item['id'])
+            link_id = item.get('id')
+            new_position = item.get('order')
+
+            if link_id is None or new_position is None:
+                continue
+
+            link = QuickLink.query.get(link_id)
             if link:
-                link.order = int(item['order'])
+                link.order = new_position
 
         db.session.commit()
         return jsonify({'success': True})
+
     except Exception as e:
         db.session.rollback()
-        app.logger.error(f"Error reordering quick links: {str(e)}")
-        return jsonify({'success': False, 'message': str(e)}), 500
+        app.logger.error(f'Error reordering quick links: {str(e)}')
+        return jsonify({'error': 'Server error'}), 500
 
 @app.context_processor
 def inject_quick_links():
@@ -909,80 +922,56 @@ def inject_quick_links():
     return dict(get_quick_links=get_quick_links)
 
 @app.route('/api/upcoming_time_off')
-@login_required
 def get_upcoming_time_off():
-    """Get time off entries for the next 2 weeks"""
-    try:
-        # Get current time in UTC since our database stores times inUTC
-        current_time = datetime.now(pytz.UTC)
-        two_weeks_later = current_time + timedelta(days=14)
+    """Get upcoming time off schedules"""
+    if not current_user.is_authenticated:
+        return jsonify({'error': 'Authentication required'}), 401
 
-        # Query for upcoming time off entries
-        time_off_entries = (Schedule.query
-            .join(User)
+    try:
+        # Get current time in UTC
+        current_time = datetime.now(pytz.UTC)
+        end_time = current_time + timedelta(days=30)  # Look ahead 30 days
+
+        # Query upcoming time off schedules
+        time_off_schedules = (
+            Schedule.query
+            .join(User, Schedule.technician_id == User.id)
             .filter(
+                Schedule.time_off == True,
                 Schedule.start_time >= current_time,
-                Schedule.start_time <= two_weeks_later,
-                Schedule.time_off == True
-            )
-            .with_entities(
-                User.username,
-                Schedule.start_time,
-                Schedule.end_time,
-                Schedule.description
+                Schedule.start_time <= end_time
             )
             .order_by(Schedule.start_time)
-            .all())
+            .all()
+        )
 
-        # Group entries by username and consolidate consecutive dates
-        user_entries = {}
-        formatted_entries = []
-        user_tz = pytz.timezone('America/Los_Angeles')  # Default timezone
+        # Format response
+        result = []
+        user_tz = pytz.timezone(current_user.timezone or 'UTC')
 
-        for username, start_time, end_time, description in time_off_entries:
-            if username not in user_entries:
-                user_entries[username] = []
+        for schedule in time_off_schedules:
+            try:
+                start_time = schedule.start_time if schedule.start_time.tzinfo else pytz.UTC.localize(schedule.start_time)
+                end_time = schedule.end_time if schedule.end_time.tzinfo else pytz.UTC.localize(schedule.end_time)
 
-            start_local = start_time.astimezone(user_tz)
-            end_local = end_time.astimezone(user_tz)
+                start_time = start_time.astimezone(user_tz)
+                end_time = end_time.astimezone(user_tz)
 
-            user_entries[username].append({
-                'start_date': start_local.date(),
-                'end_date': end_local.date(),
-                'description': description
-            })
-
-        # Consolidate consecutive dates for each user
-        for username, entries in user_entries.items():
-            entries.sort(key=lambda x: x['start_date'])
-            consolidated = []
-            current_entry = entries[0]
-
-            for entry in entries[1:]:
-                if (entry['start_date'] - current_entry['end_date']).days <= 1:                    # Consecutive days, extend the current entry
-                    current_entry['end_date'] = max(current_entry['end_date'], entry['end_date'])
-                else:
-                    # Non-consecutive, add current entry and start a new one
-                    consolidated.append(current_entry)
-                    current_entry = entry
-
-            consolidated.append(current_entry)
-
-            # Format consolidated entries
-            for entry in consolidated:
-                duration = (entry['end_date'] - entry['start_date']).days + 1
-                formatted_entries.append({
-                    'username': username,
-                    'start_date': entry['start_date'].strftime('%b %d'),
-                    'end_date': entry['end_date'].strftime('%b %d'),
-                    'duration': f"{duration} day{'s' if duration != 1 else ''}",
-                    'description': entry.get('description') or 'Time Off'
+                result.append({
+                    'username': schedule.technician.username,
+                    'start_date': start_time.strftime('%Y-%m-%d'),
+                    'end_date': end_time.strftime('%Y-%m-%d'),
+                    'description': schedule.description or 'Time Off'
                 })
+            except Exception as e:
+                app.logger.error(f"Error processing time off schedule: {str(e)}")
+                continue
 
-        return jsonify(formatted_entries)
+        return jsonify(result)
+
     except Exception as e:
         app.logger.error(f"Error in get_upcoming_time_off: {str(e)}")
-        return jsonify([])
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/admin/backup')
 @login_required
@@ -1178,12 +1167,14 @@ def admin_backup_restore():
             db.session.commit()
             app.logger.info('Quick links restored successfully')
 
-            # Step 4: Restore Schedules
+            # Step 4: Restore Schedules (after all dependencies are restored)
             schedules_restored = 0
             schedules_skipped = 0
+            schedules_updated = 0
 
             for schedule_data in backup_data.get('schedules', []):
                 try:
+                    # Map the technician_id to the new user ID if it exists
                     old_tech_id = schedule_data.get('technician_id')
                     new_tech_id = user_id_mapping.get(old_tech_id)
 
@@ -1192,33 +1183,50 @@ def admin_backup_restore():
                         schedules_skipped += 1
                         continue
 
+                    # Map the location_id to the new location ID if it exists
                     old_location_id = schedule_data.get('location_id')
-                    new_location_id = location_id_mapping.get(old_location_id)
+                    new_location_id = location_id_mapping.get(old_location_id) if old_location_id else None
 
-                    # Convert schedule times
+                    # Convert ISO format strings to datetime objects
                     start_time = datetime.fromisoformat(schedule_data.get('start_time'))
                     end_time = datetime.fromisoformat(schedule_data.get('end_time'))
 
-                    # Create new schedule
-                    new_schedule = Schedule(
-                        technician_id=new_tech_id,
-                        start_time=start_time,
-                        end_time=end_time,
-                        description=schedule_data.get('description'),
-                        time_off=schedule_data.get('time_off', False),
-                        location_id=new_location_id
-                    )
-                    db.session.add(new_schedule)
-                    schedules_restored += 1
+                    # Check for existing schedule with same technician, time window, and location
+                    existing_schedule = Schedule.query.filter(
+                        Schedule.technician_id == new_tech_id,
+                        Schedule.start_time == start_time,
+                        Schedule.end_time == end_time,
+                        Schedule.location_id == new_location_id
+                    ).first()
+
+                    if existing_schedule:
+                        # Update existing schedule if needed
+                        app.logger.debug(f'Updating existing schedule for technician {new_tech_id}')
+                        existing_schedule.description = schedule_data.get('description')
+                        existing_schedule.time_off = schedule_data.get('time_off', False)
+                        schedules_updated += 1
+                    else:
+                        # Create new schedule only if no matching one exists
+                        app.logger.debug(f'Creating new schedule for technician {new_tech_id}')
+                        new_schedule = Schedule(
+                            technician_id=new_tech_id,
+                            start_time=start_time,
+                            end_time=end_time,
+                            description=schedule_data.get('description'),
+                            time_off=schedule_data.get('time_off', False),
+                            location_id=new_location_id
+                        )
+                        db.session.add(new_schedule)
+                        schedules_restored += 1
 
                 except (ValueError, KeyError) as e:
-                    app.logger.error(f'Error creating schedule: {str(e)}')
+                    app.logger.error(f'Error processing schedule: {str(e)}')
                     schedules_skipped += 1
                     continue
 
             db.session.commit()
-            app.logger.info(f'Schedules restored successfully: {schedules_restored} restored, {schedules_skipped} skipped')
-            flash('Backup restored successfully!')
+            app.logger.info(f'Schedules processed: {schedules_restored} restored, {schedules_updated} updated, {schedules_skipped} skipped')
+            flash(f'Backup restored successfully! {schedules_restored} schedules restored, {schedules_updated} updated, {schedules_skipped} skipped.')
 
         except Exception as e:
             db.session.rollback()

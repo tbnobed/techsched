@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
         onEnd: function(evt) {
             const rows = document.querySelectorAll('#quickLinksTableBody tr');
             const newOrder = Array.from(rows).map((row, index) => ({
-                id: row.dataset.id,
+                id: parseInt(row.dataset.id),
                 order: index
             }));
 
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                    'X-CSRFToken': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify(newOrder)
             })
@@ -177,8 +177,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         row.querySelector('td:first-child span').textContent = index;
                     });
                 } else {
-                    console.error('Failed to update order');
+                    console.error('Failed to update order:', data.error);
+                    alert('Failed to update order. Please try again.');
                 }
+            })
+            .catch(error => {
+                console.error('Error updating order:', error);
+                alert('Error updating order. Please try again.');
             });
         }
     });

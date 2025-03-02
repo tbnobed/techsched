@@ -1324,18 +1324,31 @@ def admin_delete_location(location_id):
 @app.route('/admin/locations/toggle/<int:location_id>', methods=['POST'])
 @login_required
 def admin_toggle_location(location_id):
+    """Toggle location active status"""
+    app.logger.info(f'Location toggle requested for ID: {location_id} by user: {current_user.username}')
+
     if not current_user.is_admin:
+        app.logger.warning(f'Non-admin user {current_user.username} attempted to toggle location {location_id}')
         flash('Access denied.')
         return redirect(url_for('calendar'))
 
     try:
         location = Location.query.get_or_404(location_id)
+        current_status = location.active
         location.active = not location.active
+        location.updated_at = datetime.now(pytz.UTC)
+
+        app.logger.info(f'Toggling location {location_id} ({location.name}) from {current_status} to {location.active}')
+
         db.session.commit()
-        flash(f'Location {location.name} {"activated" if location.active else "deactivated"} successfully!')
+
+        status = 'activated' if location.active else 'deactivated'
+        flash(f'Location "{location.name}" {status} successfully!')
+        app.logger.info(f'Location {location_id} ({location.name}) successfully {status}')
+
     except Exception as e:
         db.session.rollback()
-        app.logger.error(f"Error toggling location status: {str(e)}")
+        app.logger.error(f'Error toggling location {location_id} status: {str(e)}')
         flash('Error updating location status.')
 
     return redirect(url_for('admin_locations'))

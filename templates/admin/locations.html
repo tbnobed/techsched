@@ -25,9 +25,13 @@
                     <td>{{ location.name }}</td>
                     <td>{{ location.description or '' }}</td>
                     <td>
-                        <span class="badge {% if location.active %}bg-success{% else %}bg-danger{% endif %}">
-                            {{ 'Active' if location.active else 'Inactive' }}
-                        </span>
+                        <form method="POST" action="{{ url_for('admin_toggle_location', location_id=location.id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm {% if location.active %}btn-success{% else %}btn-danger{% endif %} toggle-status">
+                                <i data-feather="{% if location.active %}check-circle{% else %}x-circle{% endif %}"></i>
+                                <span>{{ 'Active' if location.active else 'Inactive' }}</span>
+                            </button>
+                        </form>
                     </td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary edit-location" 
@@ -120,6 +124,22 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('locationForm').reset();
         document.getElementById('location_id').value = '';
     });
+
+    // Prevent accidental form submission when pressing enter
+    document.getElementById('locationForm').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+        }
+    });
 });
 </script>
+
+<style>
+.toggle-status {
+    min-width: 90px;
+}
+.toggle-status i {
+    margin-right: 5px;
+}
+</style>
 {% endblock %}

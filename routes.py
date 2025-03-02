@@ -772,7 +772,7 @@ def export_schedules():
 
                 date_cursor += timedelta(days=1)
 
-            # Auto-adjust column widths
+            # Auto-adjustcolumn widths
             for column in ws.columns:
                 max_length =0
                 column =[cell for cell in column]
@@ -1312,5 +1312,26 @@ def admin_delete_location(location_id):
         db.session.rollback()
         app.logger.error(f"Error deleting location: {str(e)}")
         flash('Error deleting location.')
+
+    return redirect(url_for('admin_locations'))
+@app.route('/admin/locations/toggle/<int:location_id>', methods=['POST'])
+@login_required
+def admin_toggle_location(location_id):
+    """Toggle location active status"""
+    if not current_user.is_authenticated or not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('calendar'))
+
+    try:
+        location = Location.query.get_or_404(location_id)
+        location.active = not location.active
+        db.session.commit()
+
+        status = 'activated' if location.active else 'deactivated'
+        flash(f'Location {location.name} {status} successfully!')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Error toggling location status: {str(e)}')
+        flash('Error updating location status.')
 
     return redirect(url_for('admin_locations'))

@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, make_response
+from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, make_response, Response
 from flask_login import login_user, logout_user, login_required, current_user
 from app import app, db
 from models import User, Schedule, QuickLink, Location
@@ -774,8 +774,8 @@ def export_schedules():
 
             # Auto-adjust column widths
             for column in ws.columns:
-                max_length = 0
-                column = [cell for cell in column]
+                max_length =0
+                column =[cell for cell in column]
                 for cell in column:
                     try:
                         if len(str(cell.value)) > max_length:
@@ -991,59 +991,90 @@ def admin_backup_download():
         return redirect(url_for('calendar'))
 
     try:
-        app.logger.info('Starting backup creation process...')
+        # Generate backup data in chunks to reduce memory usage
+        def generate():
+            # Start JSON object
+            yield '{\n'
 
-        # Fetch all data from database
-        users = User.query.all()
-        schedules = Schedule.query.all()
-        locations = Location.query.all()
-        quick_links = QuickLink.query.all()
+            # Users
+            yield '"users": [\n'
+            for i, user in enumerate(User.query.yield_per(100)):
+                user_data = {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'password_hash': user.password_hash,
+                    'is_admin': user.is_admin,
+                    'color': user.color,
+                    'timezone': user.timezone
+                }
+                yield json.dumps(user_data, indent=2)
+                if i < User.query.count() - 1:
+                    yield ',\n'
+            yield '],\n'
 
-        # Create backup data structure
-        backup_data = {
-            'users': [{
-                'id': user.id,
-                'username': user.username,
-                'email': user.email,
-                'password_hash': user.password_hash,
-                'is_admin': user.is_admin,
-                'color': user.color,
-                'timezone': user.timezone
-            } for user in users],
-            'schedules': [{
-                'technician_id': schedule.technician_id,
-                'start_time': schedule.start_time.isoformat(),
-                'end_time': schedule.end_time.isoformat(),
-                'description': schedule.description,
-                'time_off': schedule.time_off,
-                'location_id': schedule.location_id
-            } for schedule in schedules],
-            'locations': [{
-                'id': location.id,
-                'name': location.name,
-                'description': location.description,
-                'active': location.active
-            } for location in locations],
-            'quick_links': [{
-                'title': link.title,
-                'url': link.url,
-                'icon': link.icon,
-                'category': link.category,
-                'order': link.order
-            } for link in quick_links]
-        }
+            # Locations
+            yield '"locations": [\n'
+            for i, location in enumerate(Location.query.yield_per(100)):
+                location_data = {
+                    'id': location.id,
+                    'name': location.name,
+                    'description': location.description,
+                    'active': location.active
+                }
+                yield json.dumps(location_data, indent=2)
+                if i < Location.query.count() - 1:
+                    yield ',\n'
+            yield '],\n'
 
-        # Generate backup file
+            # Quick Links
+            yield '"quick_links": [\n'
+            for i, link in enumerate(QuickLink.query.yield_per(100)):
+                link_data = {
+                    'title': link.title,
+                    'url': link.url,
+                    'icon': link.icon,
+                    'category': link.category,
+                    'order': link.order
+                }
+                yield json.dumps(link_data, indent=2)
+                if i < QuickLink.query.count() - 1:
+                    yield ',\n'
+            yield '],\n'
+
+            # Schedules
+            yield '"schedules": [\n'
+            for i, schedule in enumerate(Schedule.query.yield_per(100)):
+                schedule_data = {
+                    'technician_id': schedule.technician_id,
+                    'start_time': schedule.start_time.isoformat(),
+                    'end_time': schedule.end_time.isoformat(),
+                    'description': schedule.description,
+                    'time_off': schedule.time_off,
+                    'location_id': schedule.location_id
+                }
+                yield json.dumps(schedule_data, indent=2)
+                if i < Schedule.query.count() - 1:
+                    yield ',\n'
+            yield ']\n'
+
+            # End JSON object
+            yield '}\n'
+
+        # Generate filename with timestamp
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        backup_json = json.dumps(backup_data, indent=2)
+        filename = f'backup_{timestamp}.json'
 
-        # Create response with proper headers
-        response = make_response(backup_json)
-        response.headers['Content-Type'] = 'application/json'
-        response.headers['Content-Disposition'] = f'attachment; filename=backup_{timestamp}.json'
-
-        app.logger.info(f'Backup created successfully with {len(users)} users, {len(schedules)} schedules')
-        return response
+        # Return streaming response
+        return Response(
+            generate(),
+            mimetype='application/json',
+            headers={
+                'Content-Disposition': f'attachment; filename="{filename}"',
+                'Cache-Control': 'no-cache',
+                'X-Accel-Buffering': 'no'  # Disable response buffering
+            }
+        )
 
     except Exception as e:
         app.logger.error(f'Error creating backup: {str(e)}')
@@ -1085,7 +1116,7 @@ def admin_backup_restore():
 
         # Begin transaction
         try:
-            # Step 1: Restore Users
+            # Step 1: Restore Users first (they have no dependencies)
             user_id_mapping = {}
             for user_data in backup_data.get('users', []):
                 email = user_data.get('email')
@@ -1094,14 +1125,12 @@ def admin_backup_restore():
 
                 user = User.query.filter_by(email=email).first()
                 if user:
-                    # Update existing user
                     user.username = user_data.get('username')
                     user.is_admin = user_data.get('is_admin', False)
                     user.color = user_data.get('color', '#3498db')
                     user.timezone = user_data.get('timezone', 'America/Los_Angeles')
                     user_id_mapping[user_data.get('id')] = user.id
                 else:
-                    # Create new user
                     new_user = User(
                         username=user_data.get('username'),
                         email=email,
@@ -1167,14 +1196,14 @@ def admin_backup_restore():
             db.session.commit()
             app.logger.info('Quick links restored successfully')
 
-            # Step 4: Restore Schedules (after all dependencies are restored)
+            # Step 4: Restore Schedules
             schedules_restored = 0
             schedules_skipped = 0
             schedules_updated = 0
 
             for schedule_data in backup_data.get('schedules', []):
                 try:
-                    # Map the technician_id to the new user ID if it exists
+                    # Map the technician_id to the new user ID
                     old_tech_id = schedule_data.get('technician_id')
                     new_tech_id = user_id_mapping.get(old_tech_id)
 
@@ -1183,31 +1212,30 @@ def admin_backup_restore():
                         schedules_skipped += 1
                         continue
 
-                    # Map the location_id to the new location ID if it exists
+                    # Map the location_id to the new location ID
                     old_location_id = schedule_data.get('location_id')
-                    new_location_id = location_id_mapping.get(old_location_id) if old_location_id else None
+                    new_location_id = location_id_mapping.get(old_location_id)
 
-                    # Convert ISO format strings to datetime objects
+                    # Convert schedule times
                     start_time = datetime.fromisoformat(schedule_data.get('start_time'))
                     end_time = datetime.fromisoformat(schedule_data.get('end_time'))
 
-                    # Check for existing schedule with same technician, time window, and location
+                    # Check for existing schedule with same criteria
                     existing_schedule = Schedule.query.filter(
                         Schedule.technician_id == new_tech_id,
                         Schedule.start_time == start_time,
                         Schedule.end_time == end_time,
-                        Schedule.location_id == new_location_id
+                        Schedule.location_id == new_location_id,
+                        Schedule.time_off == schedule_data.get('time_off', False)
                     ).first()
 
                     if existing_schedule:
-                        # Update existing schedule if needed
-                        app.logger.debug(f'Updating existing schedule for technician {new_tech_id}')
-                        existing_schedule.description = schedule_data.get('description')
-                        existing_schedule.time_off = schedule_data.get('time_off', False)
-                        schedules_updated += 1
+                        # Update existing schedule only if description differs
+                        if existing_schedule.description != schedule_data.get('description'):
+                            existing_schedule.description = schedule_data.get('description')
+                            schedules_updated += 1
                     else:
-                        # Create new schedule only if no matching one exists
-                        app.logger.debug(f'Creating new schedule for technician {new_tech_id}')
+                        # Create new schedule
                         new_schedule = Schedule(
                             technician_id=new_tech_id,
                             start_time=start_time,

@@ -13,7 +13,7 @@ class ScheduleForm(FlaskForm):
     start_time = DateTimeField('Start Time', validators=[DataRequired()],
                             format='%Y-%m-%d %H:%M')
     end_time = DateTimeField('End Time', validators=[DataRequired()],
-                          format='%Y-%m-%d %H:%M')
+                           format='%Y-%m-%d %H:%M')
     description = TextAreaField('Description', validators=[Length(max=200)])
     location_id = SelectField('Location', coerce=int, validators=[Optional()])
     time_off = BooleanField('Time Off')
@@ -68,3 +68,11 @@ class EditUserForm(FlaskForm):
 
 class TimezoneForm(FlaskForm):
     timezone = SelectField('Timezone', choices=[(tz, tz) for tz in pytz.common_timezones])
+
+class EmailSettingsForm(FlaskForm):
+    admin_email_group = StringField('Admin Email Group', 
+                                  validators=[DataRequired(), Email(), Length(max=120)],
+                                  default='engsched-alerts@tbn.tv')
+    notify_on_create = BooleanField('Send notifications for new schedules', default=True)
+    notify_on_update = BooleanField('Send notifications for schedule updates', default=True)
+    notify_on_delete = BooleanField('Send notifications for schedule deletions', default=True)

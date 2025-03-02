@@ -1,10 +1,10 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, make_response
 from flask_login import login_user, logout_user, login_required, current_user
 from app import app, db
-from models import User, Schedule, QuickLink, Location
+from models import User, Schedule, QuickLink, Location, EmailSettings
 from forms import (
     LoginForm, RegistrationForm, ScheduleForm, AdminUserForm, 
-    EditUserForm, ChangePasswordForm, QuickLinkForm, LocationForm
+    EditUserForm, ChangePasswordForm, QuickLinkForm, LocationForm, EmailSettingsForm
 )
 from datetime import datetime, timedelta
 import pytz
@@ -16,6 +16,8 @@ from io import BytesIO
 import json
 import os
 from werkzeug.utils import secure_filename
+from email_utils import send_schedule_notification
+
 
 @app.route('/')
 def index():
@@ -264,6 +266,7 @@ def new_schedule():
                     flash('You do not have permission to edit this schedule.')
                     return redirect(url_for('calendar'))
 
+                old_desc = schedule.description
                 schedule.start_time = start_time_utc
                 schedule.end_time = end_time_utc
                 schedule.description = form.description.data
@@ -271,6 +274,7 @@ def new_schedule():
                 schedule.location_id = form.location_id.data if form.location_id.data != 0 else None
                 if current_user.is_admin:
                     schedule.technician_id = technician_id
+                send_schedule_notification(schedule, 'updated', f"Schedule updated by {current_user.username}")
             else:
                 schedule = Schedule(
                     technician_id=technician_id,
@@ -281,6 +285,7 @@ def new_schedule():
                     location_id=form.location_id.data if form.location_id.data != 0 else None
                 )
                 db.session.add(schedule)
+                send_schedule_notification(schedule, 'created', f"Schedule created by {current_user.username}")
 
             db.session.commit()
             flash('Schedule updated successfully!' if schedule_id else 'Schedule created successfully!')
@@ -304,6 +309,7 @@ def delete_schedule(schedule_id):
         return redirect(url_for('calendar'))
 
     try:
+        send_schedule_notification(schedule, 'deleted', f"Schedule deleted by {current_user.username}")
         db.session.delete(schedule)
         db.session.commit()
         flash('Schedule deleted successfully!')
@@ -1305,3 +1311,32 @@ def admin_delete_location(location_id):
         flash('Error deleting location. Please try again.')
 
     return redirect(url_for('admin_locations'))
+@app.route('/admin/email-settings', methods=['GET', 'POST'])
+@login_required
+def admin_email_settings():
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('calendar'))
+
+    settings = EmailSettings.query.first()
+    if not settings:
+        settings = EmailSettings()
+        db.session.add(settings)
+        db.session.commit()
+
+    form = EmailSettingsForm(obj=settings)
+
+    if form.validate_on_submit():
+        try:
+            settings.admin_email_group = form.admin_email_group.data
+            settings.notify_on_create = form.notify_on_create.data
+            settings.notify_on_update = form.notify_on_update.data
+            settings.notify_on_delete = form.notify_on_delete.data
+            db.session.commit()
+            flash('Email settings updated successfully!')
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Error updating email settings: {str(e)}")
+            flash('Error updating email settings.')
+
+    return render_template('admin/email_settings.html', form=form)

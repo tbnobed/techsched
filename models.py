@@ -4,6 +4,7 @@ from flask_login import UserMixin
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import current_app
+from typing import List
 
 @login_manager.user_loader
 def load_user(id):
@@ -114,4 +115,22 @@ class Schedule(db.Model):
             'location_name': self.location.name if self.location else None,  # Add location name for mapping
             'time_off': self.time_off,
             'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+class EmailSettings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    admin_email_group = db.Column(db.String(120), nullable=False, default='engsched-alerts@tbn.tv')
+    notify_on_create = db.Column(db.Boolean, default=True)
+    notify_on_update = db.Column(db.Boolean, default=True)
+    notify_on_delete = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+
+    def to_dict(self):
+        """Serialize email settings data"""
+        return {
+            'admin_email_group': self.admin_email_group,
+            'notify_on_create': self.notify_on_create,
+            'notify_on_update': self.notify_on_update,
+            'notify_on_delete': self.notify_on_delete
         }

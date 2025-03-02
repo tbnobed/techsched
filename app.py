@@ -38,8 +38,7 @@ csrf.init_app(app)  # Initialize CSRF protection
 login_manager.login_view = 'login'
 
 with app.app_context():
-    # Import all models here to ensure they're registered with SQLAlchemy
-    from models import User, Schedule, Location, QuickLink, EmailSettings
+    from models import User, Schedule
     db.create_all()
 
 from routes import *

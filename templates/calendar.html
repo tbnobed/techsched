@@ -89,15 +89,7 @@
                          data-time-off="{{ 'true' if schedule.time_off else 'false' }}"
                          data-toggle="tooltip"
                          data-html="true"
-                         title="<div class='hover-content'>
-                                <strong>{{ schedule.technician.username }}</strong>
-                                <span class='text-muted'>{{ schedule.start_time.strftime('%m/%d/%y') }}</span><br>
-                                {{ schedule.start_time.strftime('%H:%M') }}-{{ schedule.end_time.strftime('%H:%M') }}
-                                ({{ ((schedule.end_time - schedule.start_time).total_seconds() / 3600)|int }}h)
-                                {% if schedule.location %}<br><i data-feather='map-pin'></i> {{ schedule.location.name }}{% endif %}
-                                {% if schedule.time_off %}<br><strong class='text-warning'>Time Off</strong>{% endif %}
-                                {{ ('<br>' + schedule.description) if schedule.description else '' }}
-                                </div>">
+                         title="<div class='hover-content'><strong>{{ schedule.technician.username }}</strong> <span class='text-muted'>{{ schedule.start_time.strftime('%m/%d/%y') }}</span><br>{{ schedule.start_time.strftime('%H:%M') }}-{{ schedule.end_time.strftime('%H:%M') }} ({{ ((schedule.end_time - schedule.start_time).total_seconds() / 3600)|int }}h){% if schedule.location %}<br><i data-feather='map-pin'></i> {{ schedule.location.name }}{% endif %}{{ ('<br>' + schedule.description) if schedule.description else '' }}</div>">
                         <div class="schedule-time">
                             {{ schedule.start_time.strftime('%H:%M') }} - 
                             {{ schedule.end_time.strftime('%H:%M') }}
@@ -105,9 +97,6 @@
                         <div class="schedule-tech">{{ schedule.technician.username }}</div>
                         {% if schedule.location %}
                         <div class="schedule-location"><i data-feather="map-pin"></i> {{ schedule.location.name }}</div>
-                        {% endif %}
-                        {% if schedule.time_off %}
-                        <div class="schedule-type"><i data-feather="clock"></i> Time Off</div>
                         {% endif %}
                         <div class="schedule-desc">{{ schedule.description }}</div>
                     </div>
@@ -165,9 +154,9 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="mb-3 form-check">
-                            {{ form.time_off(class="form-check-input", id="time_off") }}
+                        <div class="mb-3">
                             {{ form.time_off.label(class="form-check-label") }}
+                            {{ form.time_off(class="form-check-input", id="time_off") }}
                         </div>
                         {{ form.start_time(type="hidden", id="start_time_input") }}
                         {{ form.end_time(type="hidden", id="end_time_input") }}
@@ -184,6 +173,7 @@
 </div>
 
 <style>
+/* Add custom tooltip styling */
 .tooltip {
     position: absolute;
     z-index: 1070;
@@ -220,6 +210,7 @@
 </style>
 
 <script>
+// Initialize tooltips after the document is loaded
 document.addEventListener('DOMContentLoaded', function() {
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
     tooltipTriggerList.forEach(function(tooltipTriggerEl) {

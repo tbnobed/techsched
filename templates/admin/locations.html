@@ -99,26 +99,29 @@ document.addEventListener('DOMContentLoaded', function() {
             const locationDescription = this.dataset.locationDescription;
             const locationActive = this.dataset.locationActive === 'true';
 
+            // Set form action for edit
+            document.getElementById('locationForm').action = `/admin/locations/edit/${locationId}`;
+            document.getElementById('modalTitle').textContent = 'Edit Location';
+
+            // Set form values
             document.getElementById('location_id').value = locationId;
             document.getElementById('name').value = locationName;
             document.getElementById('description').value = locationDescription;
             document.getElementById('active').checked = locationActive;
-
-            // Update form action for edit
-            document.getElementById('locationForm').action = `/admin/locations/edit/${locationId}`;
-            document.getElementById('modalTitle').textContent = 'Edit Location';
 
             const modal = new bootstrap.Modal(document.getElementById('locationModal'));
             modal.show();
         });
     });
 
-    // Reset form action when adding new location
+    // Reset form when adding new location
     document.querySelector('[data-bs-target="#locationModal"]').addEventListener('click', function() {
         document.getElementById('locationForm').action = "{{ url_for('admin_locations') }}";
         document.getElementById('modalTitle').textContent = 'Add Location';
         document.getElementById('locationForm').reset();
         document.getElementById('location_id').value = '';
+        // Set active to checked by default for new locations
+        document.getElementById('active').checked = true;
     });
 });
 </script>

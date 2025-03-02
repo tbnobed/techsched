@@ -1247,12 +1247,28 @@ def admin_edit_location(location_id):
 
     location = Location.query.get_or_404(location_id)
     try:
-        location.name = request.form.get('name')
-        location.description = request.form.get('description')
-        location.active = request.form.get('active') == 'on'
+        # Get form data with proper boolean conversion for active status
+        name = request.form.get('name')
+        description = request.form.get('description', '')
+        active = request.form.get('active') == 'on'
+
+        # Validate required fields
+        if not name:
+            flash('Location name is required.')
+            return redirect(url_for('admin_locations'))
+
+        # Update location
+        location.name = name
+        location.description = description
+        location.active = active
 
         db.session.commit()
         flash('Location updated successfully!')
+
+        # Log the status change if it occurred
+        if location.active != active:
+            app.logger.info(f"Location '{location.name}' status changed to {'active' if active else 'inactive'}")
+
     except Exception as e:
         db.session.rollback()
         app.logger.error(f"Error updating location: {str(e)}")
@@ -1268,19 +1284,19 @@ def admin_delete_location(location_id):
         return redirect(url_for('calendar'))
 
     location = Location.query.get_or_404(location_id)
-    try:
-        # Check if location is being used in any schedules
-        schedule_count = Schedule.query.filter_by(location_id=location_id).count()
-        if schedule_count > 0:
-            flash(f'Cannot delete location. It is being used in {schedule_count} schedules.')
-            return redirect(url_for('admin_locations'))
 
+    # Check if location is being used in any schedules
+    if location.schedules:
+        flash('Cannot delete location that has associated schedules.')
+        return redirect(url_for('admin_locations'))
+
+    try:
         db.session.delete(location)
         db.session.commit()
         flash('Location deleted successfully!')
     except Exception as e:
         db.session.rollback()
         app.logger.error(f"Error deleting location: {str(e)}")
-        flash('Error deleting location.')
+        flash('Error deleting location. Please try again.')
 
     return redirect(url_for('admin_locations'))

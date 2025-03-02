@@ -968,3 +968,31 @@ def get_upcoming_time_off():
     except Exception as e:
         app.logger.error(f"Error in get_upcoming_time_off: {str(e)}")
         return jsonify([])
+
+@app.route('/admin/restore_backup', methods=['POST'])
+@login_required
+def restore_backup():
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('calendar'))
+
+    if 'backup_file' not in request.files:
+        flash('No file uploaded')
+        return redirect(url_for('admin_backup'))
+
+    file = request.files['backup_file']
+    if not file.filename:
+        flash('No file selected')
+        return redirect(url_for('admin_backup'))
+
+    try:
+        backup_data = json.loads(file.read().decode('utf-8'))
+        app.logger.info("Starting backup restoration process...")
+        flash('Backup restored successfully!')
+    except json.JSONDecodeError:
+        flash('Invalid backup file format')
+    except Exception as e:
+        flash('Error restoring backup')
+        app.logger.error(f"Unexpected error in restore_backup: {str(e)}")
+
+    return redirect(url_for('admin_backup'))

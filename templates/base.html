@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PostSupport Scheduler</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        #current-time-display {
+            background-color: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+
+        #current-time-display h4 {
+            margin: 0;
+            color: #333;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('calendar') }}">PostSupport Scheduler</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('calendar') }}">All Schedules</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('personal_schedule') }}">My Schedule</a>
+                        </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.is_admin %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                                <i data-feather="settings"></i> Admin
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">
+                                        <i data-feather="users"></i> User Management
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('admin_locations') }}">
+                                        <i data-feather="map-pin"></i> Manage Locations
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('admin_quick_links') }}">
+                                        <i data-feather="link"></i> Manage Quick Links
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('admin_backup') }}">
+                                        <i data-feather="database"></i> Backup & Restore
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i data-feather="user"></i> {{ current_user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('profile') }}">
+                                        <i data-feather="settings"></i> Profile Settings
+                                    </a>
+                                </li>
+                                <li>
+                                    <form method="POST" action="{{ url_for('update_timezone') }}" class="px-3 py-2">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <div class="mb-2">
+                                            <label class="form-label">Timezone</label>
+                                            <select name="timezone" class="form-select form-select-sm" onchange="this.form.submit()">
+                                                <option value="America/Los_Angeles" {% if current_user.timezone == 'America/Los_Angeles' %}selected{% endif %}>PST</option>
+                                                <option value="America/Chicago" {% if current_user.timezone == 'America/Chicago' %}selected{% endif %}>CST</option>
+                                            </select>
+                                        </div>
+                                    </form>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('register') }}">Register</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container-fluid mt-4">
+        <div class="row">
+            {% if current_user.is_authenticated %}
+            <!-- Side Panel for Active Users -->
+            <div class="col-md-3 mb-4">
+                <!-- Current Time Display -->
+                <div id="current-time-display" class="text-center">
+                    <h4 class="current-datetime"></h4>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Currently Active</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="active-users">
+                            Loading active users...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Time Off Panel -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Upcoming Time Off</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="upcoming-time-off">
+                            Loading time off entries...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Quick Links -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Quick Links</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            {% for link in get_quick_links() %}
+                            <a href="{{ link.url }}" target="_blank"
+                               class="list-group-item list-group-item-action d-flex align-items-center">
+                                <i data-feather="{{ link.icon }}" class="me-2"></i>
+                                {{ link.title }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Main Content -->
+            <div class="col-md-9">
+            {% endif %}
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-info">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+
+            {% if current_user.is_authenticated %}
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+    <script>
+        // Initialize Feather icons
+        document.addEventListener('DOMContentLoaded', function() {
+            feather.replace();
+
+            // Update current time display
+            function updateCurrentTime() {
+                const timeDisplay = document.querySelector('.current-datetime');
+                if (!timeDisplay) return;
+
+                const now = new Date();
+                const userTimezone = '{{ current_user.timezone }}' || 'America/Los_Angeles';
+
+                const options = {
+                    timeZone: userTimezone,
+                    weekday: 'long',
+                    year: '2-digit',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                };
+
+                const formatter = new Intl.DateTimeFormat('en-US', options);
+                timeDisplay.textContent = formatter.format(now);
+            }
+
+            // Update time immediately and then every second
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+        });
+    </script>
+    <script>
+        function updateActiveUsers() {
+            fetch('/api/active_users')
+                .then(response => response.json())
+                .then(users => {
+                    const container = document.getElementById('active-users');
+                    if (users.length === 0) {
+                        container.innerHTML = '<p class="text-muted">No active technicians</p>';
+                        return;
+                    }
+
+                    let html = '';
+                    users.forEach(user => {
+                        html += `
+                            <div class="mb-3 p-2 border rounded" style="border-left: 4px solid ${user.color} !important">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">${user.username}</h6>
+                                    <span class="badge bg-secondary">${user.schedule.start_time} - ${user.schedule.end_time}</span>
+                                </div>
+                                <div class="small">
+                                    <div class="mb-1">
+                                        <i data-feather="map-pin" class="feather-sm me-1"></i>
+                                        ${user.location.name}
+                                    </div>
+                                    ${user.schedule.description ? 
+                                        `<div class="text-muted">
+                                            <i data-feather="info" class="feather-sm me-1"></i>
+                                            ${user.schedule.description}
+                                        </div>` : ''}
+                                </div>
+                            </div>`;
+                    });
+                    container.innerHTML = html;
+                    feather.replace();
+                })
+                .catch(error => {
+                    console.error('Error fetching active users:', error);
+                    document.getElementById('active-users').innerHTML = 
+                        '<p class="text-danger">Error loading active users</p>';
+                });
+        }
+
+        // Update active users immediately and every minute
+        document.addEventListener('DOMContentLoaded', function() {
+            updateActiveUsers();
+            setInterval(updateActiveUsers, 60000);
+        });
+    </script>
+</body>
+</html>

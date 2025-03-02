@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Edit User: {{ user.username }}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.csrf_token }}
+                        <div class="mb-3">
+                            {{ form.username.label(class="form-label") }}
+                            {{ form.username(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.color.label(class="form-label") }}
+                            {{ form.color(class="form-control") }}
+                            <div class="mt-2 color-preview" style="width: 100%; height: 24px; background-color: {{ user.color }}; border: 1px solid #ddd; border-radius: 4px;"></div>
+                        </div>
+                        <div class="mb-3">
+                            {{ form.password.label(class="form-label") }}
+                            {{ form.password(class="form-control", placeholder="Leave blank to keep current password") }}
+                        </div>
+                        <div class="mb-3 form-check">
+                            {{ form.is_admin(class="form-check-input") }}
+                            {{ form.is_admin.label(class="form-check-label") }}
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary">Update User</button>
+                            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelector('input[type="color"]').addEventListener('input', function() {
+    document.querySelector('.color-preview').style.backgroundColor = this.value;
+});
+</script>
+{% endblock %}

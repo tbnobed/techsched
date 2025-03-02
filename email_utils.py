@@ -18,7 +18,7 @@ def send_email(
     to_emails: List[str],
     subject: str,
     html_content: str,
-    from_email: str = 'engsched-noreply@tbn.tv'
+    from_email: str = 'alerts@obedtv.com'
 ) -> bool:
     """
     Send an email using SendGrid
@@ -47,7 +47,7 @@ def send_email(
     except Exception as e:
         error_message = str(e)
         if "The from address does not match a verified Sender Identity" in error_message:
-            current_app.logger.error(f"SendGrid error: Sender email '{from_email}' is not verified")
+            current_app.logger.error(f"SendGrid error: Sender email '{from_email}' is not verified. Please verify this domain in your SendGrid account.")
         else:
             current_app.logger.error(f"SendGrid error: {error_message}")
         return False

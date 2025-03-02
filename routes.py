@@ -236,6 +236,8 @@ def new_schedule():
     if form.validate_on_submit():
         try:
             app.logger.debug(f"Form data received: {request.form}")
+            app.logger.debug(f"Time off value: {form.time_off.data}")
+
             schedule_id = request.form.get('schedule_id')
             technician_id = form.technician.data if current_user.is_admin else current_user.id
 
@@ -275,7 +277,7 @@ def new_schedule():
                 schedule.start_time = start_time_utc
                 schedule.end_time = end_time_utc
                 schedule.description = form.description.data
-                schedule.time_off = form.time_off.data
+                schedule.time_off = bool(form.time_off.data)  # Ensure boolean conversion
                 schedule.location_id = form.location_id.data if form.location_id.data != 0 else None
                 if current_user.is_admin:
                     schedule.technician_id = technician_id
@@ -285,7 +287,7 @@ def new_schedule():
                     start_time=start_time_utc,
                     end_time=end_time_utc,
                     description=form.description.data,
-                    time_off=form.time_off.data,
+                    time_off=bool(form.time_off.data),  # Ensure boolean conversion
                     location_id=form.location_id.data if form.location_id.data != 0 else None
                 )
                 db.session.add(schedule)

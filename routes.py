@@ -17,12 +17,6 @@ import json
 import os
 from werkzeug.utils import secure_filename
 
-@app.context_processor
-def inject_quick_links():
-    def get_quick_links():
-        return QuickLink.query.order_by(QuickLink.order.asc(), QuickLink.category).all()
-    return dict(get_quick_links=get_quick_links)
-
 @app.route('/')
 def index():
     if current_user.is_authenticated:
@@ -54,35 +48,26 @@ def get_active_users():
             .all())
 
         # Convert times to user's timezone and format response
-        user_tz = pytz.timezone(current_user.timezone or 'UTC')
+        user_tz = current_user.get_timezone()
         result = []
-
         for user, schedule, location in active_users:
-            try:
-                # Ensure times are timezone-aware
-                start_time = schedule.start_time if schedule.start_time.tzinfo else pytz.UTC.localize(schedule.start_time)
-                end_time = schedule.end_time if schedule.end_time.tzinfo else pytz.UTC.localize(schedule.end_time)
+            # Convert schedule times to user's timezone
+            start_time = schedule.start_time.astimezone(user_tz)
+            end_time = schedule.end_time.astimezone(user_tz)
 
-                # Convert to user's timezone
-                start_time = start_time.astimezone(user_tz)
-                end_time = end_time.astimezone(user_tz)
-
-                result.append({
-                    'username': user.username,
-                    'color': user.color or '#3498db',
-                    'schedule': {
-                        'start_time': start_time.strftime('%H:%M'),
-                        'end_time': end_time.strftime('%H:%M'),
-                        'description': schedule.description or ''
-                    },
-                    'location': {
-                        'name': location.name if location else 'No Location',
-                        'description': location.description if location else ''
-                    }
-                })
-            except Exception as e:
-                app.logger.error(f"Error processing user {user.username}: {str(e)}")
-                continue
+            result.append({
+                'username': user.username,
+                'color': user.color,
+                'schedule': {
+                    'start_time': start_time.strftime('%H:%M'),
+                    'end_time': end_time.strftime('%H:%M'),
+                    'description': schedule.description or ''
+                },
+                'location': {
+                    'name': location.name if location else 'No Location',
+                    'description': location.description if location else ''
+                }
+            })
 
         return jsonify(result)
     except Exception as e:
@@ -337,56 +322,73 @@ def copy_previous_week_schedules():
         return redirect(url_for('calendar'))
 
     try:
+        if not request.form.get('csrf_token') or not request.form.get('csrf_token') == request.form.get('csrf_token'):
+            flash('Invalid request. Please try again.')
+            return redirect(url_for('calendar'))
+
         target_week_start_str = request.form.get('target_week_start')
         if not target_week_start_str:
             flash('Invalid week start date.')
             return redirect(url_for('calendar'))
 
-        # Convert target week start to UTC for database operations
         user_tz = current_user.get_timezone()
+
+        # Convert target week start to user's timezone
         target_week_start = user_tz.localize(
             datetime.strptime(target_week_start_str, '%Y-%m-%d')
-        ).astimezone(pytz.UTC)
-
-        # Calculate target week end and previous week dates in UTC
-        target_week_end = target_week_start + timedelta(days=7)
+        )
         previous_week_start = target_week_start - timedelta(days=7)
+
+        # Convert to UTC for database operations
+        target_week_start_utc = target_week_start.astimezone(pytz.UTC)
+        target_week_end_utc = (target_week_start + timedelta(days=7)).astimezone(pytz.UTC)
+        previous_week_start_utc = previous_week_start.astimezone(pytz.UTC)
+        previous_week_end_utc = (previous_week_start + timedelta(days=7)).astimezone(pytz.UTC)
+
+        app.logger.debug(f"Copying schedules from {previous_week_start_utc} to {previous_week_end_utc}")
+        app.logger.debug(f"To target week: {target_week_start_utc} to {target_week_end_utc}")
 
         # Get previous week's schedules
         previous_schedules = Schedule.query.filter(
-            Schedule.start_time >= previous_week_start,
-            Schedule.start_time < target_week_start
+            Schedule.start_time >= previous_week_start_utc,
+            Schedule.start_time < previous_week_end_utc
         ).all()
 
         if not previous_schedules:
             flash('No schedules found in previous week to copy.')
             return redirect(url_for('calendar'))
 
-        # Delete existing schedules in target week
-        Schedule.query.filter(
-            Schedule.start_time >= target_week_start,
-            Schedule.start_time < target_week_end
-        ).delete()
+        try:
+            # Delete existing schedules in target week
+            Schedule.query.filter(
+                Schedule.start_time >= target_week_start_utc,
+                Schedule.start_time < target_week_end_utc
+            ).delete()
 
-        # Copy schedules to new week
-        time_shift = timedelta(days=7)
-        for schedule in previous_schedules:
-            new_schedule = Schedule(
-                technician_id=schedule.technician_id,
-                start_time=schedule.start_time + time_shift,
-                end_time=schedule.end_time + time_shift,
-                description=schedule.description,
-                time_off=schedule.time_off,
-                location_id=schedule.location_id
-            )
-            db.session.add(new_schedule)
+            # Copy schedules to new week
+            time_difference = target_week_start_utc - previous_week_start_utc
 
-        db.session.commit()
-        flash(f'Successfully copied {len(previous_schedules)} schedules from previous week!')
+            for schedule in previous_schedules:
+                new_schedule = Schedule(
+                    technician_id=schedule.technician_id,
+                    start_time=schedule.start_time + time_difference,
+                    end_time=schedule.end_time + time_difference,
+                    description=schedule.description,
+                    time_off=schedule.time_off,
+                    location_id=schedule.location_id
+                )
+                db.session.add(new_schedule)
+
+            db.session.commit()
+            flash(f'Successfully copied {len(previous_schedules)} schedules from previous week!')
+
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Database error in copy_previous_week_schedules: {str(e)}")
+            flash('Error copying schedules from previous week.')
 
     except Exception as e:
-        db.session.rollback()
-        app.logger.error(f"Error copying schedules: {str(e)}")
+        app.logger.error(f"Error in copy_previous_week_schedules: {str(e)}")
         flash('Error copying schedules from previous week.')
 
     return redirect(url_for('calendar', week_start=target_week_start_str))
@@ -711,14 +713,13 @@ def export_schedules():
                 cell.font = header_font
                 cell.fill = header_fill
 
-            # Process schedules
             row = 7
             date_cursor = start_datetime.astimezone(user_tz)
             end_date = end_datetime.astimezone(user_tz)
 
             while date_cursor.date() < end_date.date():
                 day_schedules = [s for s in schedules 
-                              if s.start_time.astimezone(user_tz).date() == date_cursor.date()]
+                               if s.start_time.astimezone(user_tz).date() == date_cursor.date()]
 
                 if day_schedules:
                     for schedule in sorted(day_schedules, key=lambda s: s.start_time):
@@ -803,34 +804,6 @@ def admin_quick_links():
     quick_links = QuickLink.query.order_by(QuickLink.order.asc()).all()
     return render_template('admin/quick_links.html', quick_links=quick_links, form=form)
 
-@app.route('/admin/quicklinks/reorder', methods=['POST'])
-@login_required
-def admin_reorder_quick_links():
-    if not current_user.is_admin:
-        return jsonify({'success': False, 'message': 'Access denied'}), 403
-
-    try:
-        new_order = request.json
-        # First, get all links and set a high order number to avoid conflicts
-        links = QuickLink.query.all()
-        for link in links:
-            link.order = 10000 + link.order
-
-        db.session.commit()
-
-        # Then update with new order
-        for item in new_order:
-            link = QuickLink.query.get(item['id'])
-            if link:
-                link.order = int(item['order'])
-
-        db.session.commit()
-        return jsonify({'success': True})
-    except Exception as e:
-        db.session.rollback()
-        app.logger.error(f"Error reordering quick links: {str(e)}")
-        return jsonify({'success': False, 'message': str(e)}), 500
-
 @app.route('/admin/quick_links/create', methods=['POST'])
 @login_required
 def admin_create_quick_link():
@@ -839,6 +812,7 @@ def admin_create_quick_link():
         return redirect(url_for('calendar'))
 
     try:
+        # Create new quick link
         link = QuickLink(
             title=request.form.get('title'),
             url=request.form.get('url'),
@@ -846,6 +820,7 @@ def admin_create_quick_link():
             category=request.form.get('category'),
             order=request.form.get('order', 0)
         )
+
         db.session.add(link)
         db.session.commit()
         flash('Quick link created successfully!')
@@ -899,9 +874,129 @@ def admin_delete_quick_link(link_id):
 
     return redirect(url_for('admin_quick_links'))
 
+@app.route('/admin/quick_links/reorder', methods=['POST'])
+@login_required
+def admin_reorder_quick_links():
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+
+    try:
+        new_order = request.json
+        # First, get all links and set a high order number to avoid conflicts
+        links = QuickLink.query.all()
+        for link in links:
+            link.order = 10000 + link.order
+
+        db.session.commit()
+
+        # Then update with new order
+        for item in new_order:
+            link = QuickLink.query.get(item['id'])
+            if link:
+                link.order = int(item['order'])
+
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error reordering quick links: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.context_processor
+def inject_quick_links():
+    def get_quick_links():
+        return QuickLink.query.order_by(QuickLink.order.asc(), QuickLink.category).all()
+    return dict(get_quick_links=get_quick_links)
+
+@app.route('/api/upcoming_time_off')
+@login_required
+def get_upcoming_time_off():
+    """Get time off entries for the next 2 weeks"""
+    try:
+        # Get current time in UTC since our database stores times inUTC
+        current_time = datetime.now(pytz.UTC)
+        two_weeks_later = current_time + timedelta(days=14)
+
+        # Query for upcoming time off entries
+        time_off_entries = (Schedule.query
+            .join(User)
+            .filter(
+                Schedule.start_time >= current_time,
+                Schedule.start_time <= two_weeks_later,
+                Schedule.time_off == True
+            )
+            .with_entities(
+                User.username,
+                Schedule.start_time,
+                Schedule.end_time,
+                Schedule.description
+            )
+            .order_by(Schedule.start_time)
+            .all())
+
+        # Group entries by username and consolidate consecutive dates
+        user_entries = {}
+        formatted_entries = []
+        user_tz = pytz.timezone('America/Los_Angeles')  # Default timezone
+
+        for username, start_time, end_time, description in time_off_entries:
+            if username not in user_entries:
+                user_entries[username] = []
+
+            start_local = start_time.astimezone(user_tz)
+            end_local = end_time.astimezone(user_tz)
+
+            user_entries[username].append({
+                'start_date': start_local.date(),
+                'end_date': end_local.date(),
+                'description': description
+            })
+
+        # Consolidate consecutive dates for each user
+        for username, entries in user_entries.items():
+            entries.sort(key=lambda x: x['start_date'])
+            consolidated = []
+            current_entry = entries[0]
+
+            for entry in entries[1:]:
+                if (entry['start_date'] - current_entry['end_date']).days <= 1:                    # Consecutive days, extend the current entry
+                    current_entry['end_date'] = max(current_entry['end_date'], entry['end_date'])
+                else:
+                    # Non-consecutive, add current entry and start a new one
+                    consolidated.append(current_entry)
+                    current_entry = entry
+
+            consolidated.append(current_entry)
+
+            # Format consolidated entries
+            for entry in consolidated:
+                duration = (entry['end_date'] - entry['start_date']).days + 1
+                formatted_entries.append({
+                    'username': username,
+                    'start_date': entry['start_date'].strftime('%b %d'),
+                    'end_date': entry['end_date'].strftime('%b %d'),
+                    'duration': f"{duration} day{'s' if duration != 1 else ''}",
+                    'description': entry.get('description') or 'Time Off'
+                })
+
+        return jsonify(formatted_entries)
+    except Exception as e:
+        app.logger.error(f"Error in get_upcoming_time_off: {str(e)}")
+        return jsonify([])
+
+@app.route('/admin/backup')
+@login_required
+def admin_backup():
+    """Render the backup/restore interface"""
+    if not current_user.is_authenticated or not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('calendar'))
+    return render_template('admin/backup.html')
+
 @app.route('/admin/backup/download')
 @login_required
 def admin_backup_download():
+    """Generate and send a backup file"""
     if not current_user.is_authenticated or not current_user.is_admin:
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('calendar'))
@@ -918,6 +1013,7 @@ def admin_backup_download():
         # Create backup data structure
         backup_data = {
             'users': [{
+                'id': user.id,
                 'username': user.username,
                 'email': user.email,
                 'password_hash': user.password_hash,
@@ -948,10 +1044,11 @@ def admin_backup_download():
             } for link in quick_links]
         }
 
-        # Create backup file
+        # Generate backup file
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         backup_json = json.dumps(backup_data, indent=2)
 
+        # Create response with proper headers
         response = make_response(backup_json)
         response.headers['Content-Type'] = 'application/json'
         response.headers['Content-Disposition'] = f'attachment; filename=backup_{timestamp}.json'
@@ -967,6 +1064,7 @@ def admin_backup_download():
 @app.route('/admin/backup/restore', methods=['POST'])
 @login_required
 def admin_backup_restore():
+    """Restore data from a backup file"""
     if not current_user.is_authenticated or not current_user.is_admin:
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('calendar'))
@@ -987,7 +1085,6 @@ def admin_backup_restore():
     try:
         app.logger.info('Starting backup restoration process...')
         backup_content = file.read().decode('utf-8')
-        app.logger.debug(f'Backup content length: {len(backup_content)} bytes')
 
         try:
             backup_data = json.loads(backup_content)
@@ -999,22 +1096,23 @@ def admin_backup_restore():
 
         # Begin transaction
         try:
-            # Step 1: Restore Users first (they have no dependencies)
-            existing_users = {user.email: user.id for user in User.query.all()}
-            user_id_mapping = {}  # Map old IDs to new IDs
-
+            # Step 1: Restore Users
+            user_id_mapping = {}
             for user_data in backup_data.get('users', []):
                 email = user_data.get('email')
-                if email in existing_users:
-                    user = User.query.get(existing_users[email])
-                    app.logger.debug(f'Updating existing user: {email}')
+                if not email:
+                    continue
+
+                user = User.query.filter_by(email=email).first()
+                if user:
+                    # Update existing user
                     user.username = user_data.get('username')
-                    user.password_hash = user_data.get('password_hash')
                     user.is_admin = user_data.get('is_admin', False)
                     user.color = user_data.get('color', '#3498db')
                     user.timezone = user_data.get('timezone', 'America/Los_Angeles')
+                    user_id_mapping[user_data.get('id')] = user.id
                 else:
-                    app.logger.debug(f'Creating new user: {email}')
+                    # Create new user
                     new_user = User(
                         username=user_data.get('username'),
                         email=email,
@@ -1024,7 +1122,7 @@ def admin_backup_restore():
                         timezone=user_data.get('timezone', 'America/Los_Angeles')
                     )
                     db.session.add(new_user)
-                    db.session.flush()  # Get the new user's ID
+                    db.session.flush()
                     user_id_mapping[user_data.get('id')] = new_user.id
 
             db.session.commit()
@@ -1033,43 +1131,43 @@ def admin_backup_restore():
             # Step 2: Restore Locations
             location_id_mapping = {}
             for location_data in backup_data.get('locations', []):
-                old_id = location_data.get('id')
-                app.logger.debug(f'Looking for location with ID: {old_id}')
-                location = Location.query.get(old_id)
+                name = location_data.get('name')
+                if not name:
+                    continue
 
+                location = Location.query.filter_by(name=name).first()
                 if location:
-                    app.logger.debug(f'Updating existing location: {old_id}')
-                    location.name = location_data.get('name')
                     location.description = location_data.get('description')
                     location.active = location_data.get('active', True)
-                    location_id_mapping[old_id] = old_id
+                    location_id_mapping[location_data.get('id')] = location.id
                 else:
-                    app.logger.debug(f'Creating new location: {location_data.get("name")}')
                     new_location = Location(
-                        name=location_data.get('name'),
+                        name=name,
                         description=location_data.get('description'),
                         active=location_data.get('active', True)
                     )
                     db.session.add(new_location)
                     db.session.flush()
-                    location_id_mapping[old_id] = new_location.id
+                    location_id_mapping[location_data.get('id')] = new_location.id
 
             db.session.commit()
             app.logger.info('Locations restored successfully')
 
             # Step 3: Restore Quick Links
             for link_data in backup_data.get('quick_links', []):
-                link = QuickLink.query.filter_by(title=link_data.get('title')).first()
+                title = link_data.get('title')
+                if not title:
+                    continue
+
+                link = QuickLink.query.filter_by(title=title).first()
                 if link:
-                    app.logger.debug(f'Updating existing quick link: {link_data.get("title")}')
                     link.url = link_data.get('url')
                     link.icon = link_data.get('icon')
                     link.category = link_data.get('category')
                     link.order = link_data.get('order', 0)
                 else:
-                    app.logger.debug(f'Creating new quick link: {link_data.get("title")}')
                     new_link = QuickLink(
-                        title=link_data.get('title'),
+                        title=title,
                         url=link_data.get('url'),
                         icon=link_data.get('icon'),
                         category=link_data.get('category'),
@@ -1080,26 +1178,28 @@ def admin_backup_restore():
             db.session.commit()
             app.logger.info('Quick links restored successfully')
 
-            # Step 4: Restore Schedules (after all dependencies are restored)
+            # Step 4: Restore Schedules
+            schedules_restored = 0
+            schedules_skipped = 0
+
             for schedule_data in backup_data.get('schedules', []):
                 try:
-                    # Map the technician_id to the new user ID if it exists
                     old_tech_id = schedule_data.get('technician_id')
                     new_tech_id = user_id_mapping.get(old_tech_id)
 
                     if not new_tech_id:
                         app.logger.warning(f'Skipping schedule - technician {old_tech_id} not found')
+                        schedules_skipped += 1
                         continue
 
-                    # Map the location_id to the new location ID if it exists
                     old_location_id = schedule_data.get('location_id')
-                    new_location_id = location_id_mapping.get(old_location_id) if old_location_id else None
+                    new_location_id = location_id_mapping.get(old_location_id)
 
-                    # Convert ISO format strings to datetime objects
+                    # Convert schedule times
                     start_time = datetime.fromisoformat(schedule_data.get('start_time'))
                     end_time = datetime.fromisoformat(schedule_data.get('end_time'))
 
-                    app.logger.debug(f'Creating schedule for technician: {new_tech_id}')
+                    # Create new schedule
                     new_schedule = Schedule(
                         technician_id=new_tech_id,
                         start_time=start_time,
@@ -1109,79 +1209,72 @@ def admin_backup_restore():
                         location_id=new_location_id
                     )
                     db.session.add(new_schedule)
+                    schedules_restored += 1
 
                 except (ValueError, KeyError) as e:
                     app.logger.error(f'Error creating schedule: {str(e)}')
+                    schedules_skipped += 1
                     continue
 
             db.session.commit()
-            app.logger.info('Schedules restored successfully')
+            app.logger.info(f'Schedules restored successfully: {schedules_restored} restored, {schedules_skipped} skipped')
             flash('Backup restored successfully!')
 
         except Exception as e:
             db.session.rollback()
-            app.logger.error(f'Error during restoration: {str(e)}')
+            app.logger.error(f'Database error during restoration: {str(e)}')
             flash('Error restoring backup: Database error occurred.')
             return redirect(url_for('admin_backup'))
 
     except Exception as e:
         app.logger.error(f'Error restoring backup: {str(e)}')
         flash('Error restoring backup. Please check the file and try again.')
-        return redirect(url_for('admin_backup'))
 
     return redirect(url_for('admin_backup'))
 
-@app.route('/admin/backup')
+@app.route('/admin/locations/edit/<int:location_id>', methods=['POST'])
 @login_required
-def admin_backup():
-    if not current_user.is_authenticated or not current_user.is_admin:
-        flash('Access denied. Admin privileges required.')
+def admin_edit_location(location_id):
+    if not current_user.is_admin:
+        flash('Access denied.')
         return redirect(url_for('calendar'))
-    return render_template('admin/backup.html')
 
-@app.route('/api/upcoming_time_off')
-@login_required
-def get_upcoming_time_off():
-    """Get time off entries for the next 2 weeks"""
+    location = Location.query.get_or_404(location_id)
     try:
-        # Get current time in UTC since our database stores times in UTC
-        current_time = datetime.now(pytz.UTC)
-        two_weeks_later = current_time + timedelta(days=14)
+        location.name = request.form.get('name')
+        location.description = request.form.get('description')
+        location.active = request.form.get('active') == 'on'
 
-        # Query for upcoming time off entries
-        time_off_entries = (Schedule.query
-            .join(User)
-            .filter(
-                Schedule.start_time >= current_time,
-                Schedule.start_time <= two_weeks_later,
-                Schedule.time_off == True
-            )
-            .with_entities(
-                User.username,
-                Schedule.start_time,
-                Schedule.end_time,
-                Schedule.description
-            )
-            .order_by(Schedule.start_time)
-            .all())
-
-        # Format the entries
-        formatted_entries = []
-        user_tz = current_user.get_timezone()
-
-        for username, start_time, end_time, description in time_off_entries:
-            start_local = start_time.astimezone(user_tz)
-            end_local = end_time.astimezone(user_tz)
-
-            formatted_entries.append({
-                'username': username,
-                'start_date': start_local.strftime('%b %d'),
-                'end_date': end_local.strftime('%b %d'),
-                'duration': f"{(end_local.date() - start_local.date()).days + 1} days",
-                'description': description or 'Time Off'
-            })
-
-        return jsonify(formatted_entries)
+        db.session.commit()
+        flash('Location updated successfully!')
     except Exception as e:
-        app.logger.error(f"Error in get_upcoming_time_off: {str(e)}")
-        return jsonify([])
+        db.session.rollback()
+        app.logger.error(f"Error updating location: {str(e)}")
+        flash('Error updating location. Please try again.')
+
+    return redirect(url_for('admin_locations'))
+
+@app.route('/admin/locations/delete/<int:location_id>')
+@login_required
+def admin_delete_location(location_id):
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('calendar'))
+
+    location = Location.query.get_or_404(location_id)
+    try:
+        # Check if location is being used in any schedules
+        schedule_count = Schedule.query.filter_by(location_id=location_id).count()
+        if schedule_count > 0:
+            flash(f'Cannot delete location. It is being used in {schedule_count} schedules.')
+            return redirect(url_for('admin_locations'))
+
+        db.session.delete(location)
+        db.session.commit()
+        flash('Location deleted successfully!')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error deleting location: {str(e)}")
+        flash('Error deleting location.')
+
+    return redirect(url_for('admin_locations'))

@@ -33,6 +33,9 @@ def index():
 @login_required
 def get_active_users():
     """Get users who have schedules active at the current time"""
+    if not current_user.is_authenticated:
+        return jsonify({'error': 'Authentication required'}), 401
+
     try:
         # Get current time in UTC since our database stores times in UTC
         current_time = datetime.now(pytz.UTC)
@@ -51,26 +54,35 @@ def get_active_users():
             .all())
 
         # Convert times to user's timezone and format response
-        user_tz = current_user.get_timezone()
+        user_tz = pytz.timezone(current_user.timezone or 'UTC')
         result = []
-        for user, schedule, location in active_users:
-            # Convert schedule times to user's timezone
-            start_time = schedule.start_time.astimezone(user_tz)
-            end_time = schedule.end_time.astimezone(user_tz)
 
-            result.append({
-                'username': user.username,
-                'color': user.color,
-                'schedule': {
-                    'start_time': start_time.strftime('%H:%M'),
-                    'end_time': end_time.strftime('%H:%M'),
-                    'description': schedule.description or ''
-                },
-                'location': {
-                    'name': location.name if location else 'No Location',
-                    'description': location.description if location else ''
-                }
-            })
+        for user, schedule, location in active_users:
+            try:
+                # Ensure times are timezone-aware
+                start_time = schedule.start_time if schedule.start_time.tzinfo else pytz.UTC.localize(schedule.start_time)
+                end_time = schedule.end_time if schedule.end_time.tzinfo else pytz.UTC.localize(schedule.end_time)
+
+                # Convert to user's timezone
+                start_time = start_time.astimezone(user_tz)
+                end_time = end_time.astimezone(user_tz)
+
+                result.append({
+                    'username': user.username,
+                    'color': user.color or '#3498db',
+                    'schedule': {
+                        'start_time': start_time.strftime('%H:%M'),
+                        'end_time': end_time.strftime('%H:%M'),
+                        'description': schedule.description or ''
+                    },
+                    'location': {
+                        'name': location.name if location else 'No Location',
+                        'description': location.description if location else ''
+                    }
+                })
+            except Exception as e:
+                app.logger.error(f"Error processing user {user.username}: {str(e)}")
+                continue
 
         return jsonify(result)
     except Exception as e:
@@ -699,13 +711,14 @@ def export_schedules():
                 cell.font = header_font
                 cell.fill = header_fill
 
+            # Process schedules
             row = 7
             date_cursor = start_datetime.astimezone(user_tz)
             end_date = end_datetime.astimezone(user_tz)
 
             while date_cursor.date() < end_date.date():
                 day_schedules = [s for s in schedules 
-                               if s.start_time.astimezone(user_tz).date() == date_cursor.date()]
+                              if s.start_time.astimezone(user_tz).date() == date_cursor.date()]
 
                 if day_schedules:
                     for schedule in sorted(day_schedules, key=lambda s: s.start_time):
@@ -889,8 +902,8 @@ def admin_delete_quick_link(link_id):
 @app.route('/admin/backup/download')
 @login_required
 def admin_backup_download():
-    if not current_user.is_admin:
-        flash('Access denied.')
+    if not current_user.is_authenticated or not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
         return redirect(url_for('calendar'))
 
     try:
@@ -939,11 +952,11 @@ def admin_backup_download():
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         backup_json = json.dumps(backup_data, indent=2)
 
-        app.logger.info(f'Backup created successfully with {len(users)} users, {len(schedules)} schedules')
-
         response = make_response(backup_json)
         response.headers['Content-Type'] = 'application/json'
         response.headers['Content-Disposition'] = f'attachment; filename=backup_{timestamp}.json'
+
+        app.logger.info(f'Backup created successfully with {len(users)} users, {len(schedules)} schedules')
         return response
 
     except Exception as e:
@@ -954,8 +967,8 @@ def admin_backup_download():
 @app.route('/admin/backup/restore', methods=['POST'])
 @login_required
 def admin_backup_restore():
-    if not current_user.is_admin:
-        flash('Access denied.')
+    if not current_user.is_authenticated or not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
         return redirect(url_for('calendar'))
 
     try:
@@ -993,56 +1006,92 @@ def admin_backup_restore():
         try:
             # Restore locations
             for location_data in backup_data.get('locations', []):
-                location_id = location_data.pop('id')  # Remove id from the dict
-                location = Location.query.get(location_id)
-                if location:
-                    app.logger.debug(f'Updating existing location: {location_id}')
-                    for key, value in location_data.items():
-                        setattr(location, key, value)
-                else:
-                    app.logger.debug(f'Creating new location: {location_data["name"]}')
-                    location = Location(**location_data)
-                    db.session.add(location)
+                location_id = location_data.get('id')
+                if location_id:
+                    app.logger.debug(f'Looking for location with ID: {location_id}')
+                    location = Location.query.get(location_id)
+                    if location:
+                        app.logger.debug(f'Updating existing location: {location_id}')
+                        for key, value in location_data.items():
+                            if key != 'id':  # Skip the ID field
+                                setattr(location, key, value)
+                    else:
+                        app.logger.debug(f'Creating new location: {location_data.get("name")}')
+                        new_location = Location(
+                            name=location_data.get('name'),
+                            description=location_data.get('description'),
+                            active=location_data.get('active', True)
+                        )
+                        db.session.add(new_location)
 
-            # Restore quick links
-            for link_data in backup_data.get('quick_links', []):
-                link = QuickLink.query.filter_by(title=link_data['title']).first()
-                if link:
-                    app.logger.debug(f'Updating existing quick link: {link_data["title"]}')
-                    for key, value in link_data.items():
-                        setattr(link, key, value)
-                else:
-                    app.logger.debug(f'Creating new quick link: {link_data["title"]}')
-                    link = QuickLink(**link_data)
-                    db.session.add(link)
+            db.session.commit()  # Commit locations first
 
             # Restore users
             for user_data in backup_data.get('users', []):
-                user = User.query.filter_by(email=user_data['email']).first()
+                user = User.query.filter_by(email=user_data.get('email')).first()
                 if user:
-                    app.logger.debug(f'Updating existing user: {user_data["email"]}')
-                    for key, value in user_data.items():
-                        setattr(user, key, value)
+                    app.logger.debug(f'Updating existing user: {user_data.get("email")}')
+                    user.username = user_data.get('username')
+                    user.password_hash = user_data.get('password_hash')
+                    user.is_admin = user_data.get('is_admin', False)
+                    user.color = user_data.get('color', '#3498db')
+                    user.timezone = user_data.get('timezone', 'America/Los_Angeles')
                 else:
-                    app.logger.debug(f'Creating new user: {user_data["email"]}')
-                    user = User(**user_data)
-                    db.session.add(user)
+                    app.logger.debug(f'Creating new user: {user_data.get("email")}')
+                    new_user = User(
+                        username=user_data.get('username'),
+                        email=user_data.get('email'),
+                        password_hash=user_data.get('password_hash'),
+                        is_admin=user_data.get('is_admin', False),
+                        color=user_data.get('color', '#3498db'),
+                        timezone=user_data.get('timezone', 'America/Los_Angeles')
+                    )
+                    db.session.add(new_user)
 
-            # Restore schedules
+            db.session.commit()  # Commit users
+
+            # Restore quick links
+            for link_data in backup_data.get('quick_links', []):
+                link = QuickLink.query.filter_by(title=link_data.get('title')).first()
+                if link:
+                    app.logger.debug(f'Updating existing quick link: {link_data.get("title")}')
+                    for key, value in link_data.items():
+                        setattr(link, key, value)
+                else:
+                    app.logger.debug(f'Creating new quick link: {link_data.get("title")}')
+                    new_link = QuickLink(
+                        title=link_data.get('title'),
+                        url=link_data.get('url'),
+                        icon=link_data.get('icon'),
+                        category=link_data.get('category'),
+                        order=link_data.get('order', 0)
+                    )
+                    db.session.add(new_link)
+
+            db.session.commit()  # Commit quick links
+
+            # Restore schedules last since they depend on users and locations
             for schedule_data in backup_data.get('schedules', []):
-                # Convert ISO format strings back to datetime objects
                 try:
-                    schedule_data['start_time'] = datetime.fromisoformat(schedule_data['start_time'])
-                    schedule_data['end_time'] = datetime.fromisoformat(schedule_data['end_time'])
-                except ValueError as e:
-                    app.logger.error(f'Error parsing schedule dates: {str(e)}')
+                    # Convert ISO format strings back to datetime objects
+                    start_time = datetime.fromisoformat(schedule_data.get('start_time'))
+                    end_time = datetime.fromisoformat(schedule_data.get('end_time'))
+
+                    app.logger.debug(f'Creating schedule for technician: {schedule_data.get("technician_id")}')
+                    new_schedule = Schedule(
+                        technician_id=schedule_data.get('technician_id'),
+                        start_time=start_time,
+                        end_time=end_time,
+                        description=schedule_data.get('description'),
+                        time_off=schedule_data.get('time_off', False),
+                        location_id=schedule_data.get('location_id')
+                    )
+                    db.session.add(new_schedule)
+                except (ValueError, KeyError) as e:
+                    app.logger.error(f'Error creating schedule: {str(e)}')
                     continue
 
-                app.logger.debug(f'Creating schedule for technician: {schedule_data["technician_id"]}')
-                schedule = Schedule(**schedule_data)
-                db.session.add(schedule)
-
-            db.session.commit()
+            db.session.commit()  # Final commit for schedules
             app.logger.info('Backup restored successfully')
             flash('Backup restored successfully!')
 
@@ -1062,8 +1111,8 @@ def admin_backup_restore():
 @app.route('/admin/backup')
 @login_required
 def admin_backup():
-    if not current_user.is_admin:
-        flash('Access denied.')
+    if not current_user.is_authenticated or not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
         return redirect(url_for('calendar'))
     return render_template('admin/backup.html')
 

@@ -7,7 +7,11 @@ from flask import current_app
 
 @login_manager.user_loader
 def load_user(id):
-    return User.query.get(int(id))
+    """Load user by ID for Flask-Login"""
+    try:
+        return User.query.get(int(id))
+    except:
+        return None
 
 class Location(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -21,9 +25,8 @@ class Location(db.Model):
         return f'<Location {self.name}>'
 
     def to_dict(self):
-        """Serialize location data for backup"""
         return {
-            'id': self.id,  # Include ID for reference
+            'id': self.id,
             'name': self.name,
             'description': self.description,
             'active': self.active,

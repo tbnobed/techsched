@@ -16,6 +16,7 @@ from io import BytesIO
 import json
 import os
 from werkzeug.utils import secure_filename
+from flask import current_app
 
 @app.route('/')
 def index():
@@ -24,11 +25,9 @@ def index():
     return redirect(url_for('login'))
 
 @app.route('/api/active_users')
+@login_required
 def get_active_users():
     """Get users who have schedules active at the current time"""
-    if not current_user.is_authenticated:
-        return jsonify({'error': 'Authentication required'}), 401
-
     try:
         # Get current time in UTC since our database stores times in UTC
         current_time = datetime.now(pytz.UTC)
@@ -424,7 +423,11 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
-            return redirect(url_for('calendar'))
+            next_page = request.args.get('next')
+            # Ensure the next page is safe (relative URL)
+            if not next_page or not next_page.startswith('/'):
+                next_page = url_for('calendar')
+            return redirect(next_page)
         flash('Invalid email or password')
     return render_template('login.html', form=form)
 
@@ -769,14 +772,13 @@ def export_schedules():
                     ws.cell(row=row, column=4).value = "0"
                     ws.cell(row=row, column=5).value = "0:00"
                     row += 1
-
                 date_cursor += timedelta(days=1)
 
-            # Auto-adjustcolumn widths
+            # Auto-adjust column widths
             for column in ws.columns:
-                max_length =0
-                column =[cell for cell in column]
-                for cell in column:
+                max_length = 0
+                column_cells = [cell for cell in column]
+                for cell in column_cells:
                     try:
                         if len(str(cell.value)) > max_length:
                             max_length = len(str(cell.value))
@@ -784,6 +786,11 @@ def export_schedules():
                         pass
                 adjusted_width = (max_length + 2)
                 ws.column_dimensions[column[0].column_letter].width = adjusted_width
+
+            # Save to BytesIO
+            excel_file = BytesIO()
+            wb.save(excel_file)
+            excel_file.seek(0)
 
         # Save to BytesIO
         excel_file = BytesIO()
@@ -1318,20 +1325,30 @@ def admin_delete_location(location_id):
 @login_required
 def admin_toggle_location(location_id):
     """Toggle location active status"""
-    if not current_user.is_authenticated or not current_user.is_admin:
-        flash('Access denied. Admin privileges required.')
+    app.logger.info(f'Location toggle requested for ID: {location_id} by user: {current_user.username}')
+
+    if not current_user.is_admin:
+        app.logger.warning(f'Non-admin user {current_user.username} attempted to toggle location {location_id}')
+        flash('Access denied.')
         return redirect(url_for('calendar'))
 
     try:
         location = Location.query.get_or_404(location_id)
+        current_status = location.active
         location.active = not location.active
+        location.updated_at = datetime.now(pytz.UTC)
+
+        app.logger.info(f'Toggling location {location_id} ({location.name}) from {current_status} to {location.active}')
+
         db.session.commit()
 
         status = 'activated' if location.active else 'deactivated'
-        flash(f'Location {location.name} {status} successfully!')
+        flash(f'Location "{location.name}" {status} successfully!')
+        app.logger.info(f'Location {location_id} ({location.name}) successfully {status}')
+
     except Exception as e:
         db.session.rollback()
-        app.logger.error(f'Error toggling location status: {str(e)}')
+        app.logger.error(f'Error toggling location {location_id} status: {str(e)}')
         flash('Error updating location status.')
 
     return redirect(url_for('admin_locations'))

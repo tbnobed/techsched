@@ -17,6 +17,12 @@ import json
 import os
 from werkzeug.utils import secure_filename
 
+@app.context_processor
+def inject_quick_links():
+    def get_quick_links():
+        return QuickLink.query.order_by(QuickLink.order.asc(), QuickLink.category).all()
+    return dict(get_quick_links=get_quick_links)
+
 @app.route('/')
 def index():
     if current_user.is_authenticated:
@@ -784,504 +790,42 @@ def admin_quick_links():
     quick_links = QuickLink.query.order_by(QuickLink.order.asc()).all()
     return render_template('admin/quick_links.html', quick_links=quick_links, form=form)
 
-    @app.route('/admin/quick_links/create', methods=['POST'])
-    @login_required
-    def admin_create_quicklink():
-        if not current_user.is_admin:
-            flash('Access denied.')
-            return redirect(urlfor('calendar'))
-
-        try:
-            # Create new quick link
-            link = QuickLink(
-                title=request.form.get('title'),
-                url=request.form.get('url'),
-                icon=request.form.get('icon', 'link'),
-                category=request.form.get('category'),
-                order=request.form.get('order', 0)
-            )
-
-            db.session.add(link)
-            db.session.commit()
-            flash('Quick link created successfully!')
-        except Exception as e:
-            db.session.rollback()
-            app.logger.error(f"Error creating quick link: {str(e)}")
-            flash('Error creating quick link. Please try again.')
-
-        return redirect(url_for('admin_quick_links'))
-
-    @app.route('/admin/quick_links/edit/<int:link_id>', methods=['POST'])
-    @login_required
-    def admin_edit_quick_link(link_id):
-        if not current_user.is_admin:
-            flash('Access denied.')
-            return redirect(url_for('calendar'))
-
-        link = QuickLink.query.get_or_404(link_id)
-        try:
-            link.title = request.form.get('title')
-            link.url = request.form.get('url')
-            link.icon = request.form.get('icon')
-            link.category = request.form.get('category')
-            link.order = request.form.get('order', 0)
-
-            db.session.commit()
-            flash('Quick link updated successfully!')
-        except Exception as e:
-            db.session.rollback()
-            app.logger.error(f"Error updating quick link: {str(e)}")
-            flash('Error updating quick link. Please try again.')
-
-        return redirect(url_for('admin_quick_links'))
-
-    @app.route('/admin/quick_links/delete/<int:link_id>')
-    @login_required
-    def admin_delete_quick_link(link_id):
-        if not current_user.is_admin:
-            flash('Access denied.')
-            return redirect(url_for('calendar'))
-
-        link = QuickLink.query.get_or_404(link_id)
-        try:
-            db.session.delete(link)
-            db.session.commit()
-            flash('Quick link deleted successfully!')
-        except Exception as e:
-            db.session.rollback()
-            app.logger.error(f"Error deleting quick link: {str(e)}")
-            flash('Error deleting quick link.')
-
-        return redirect(url_for('admin_quick_links'))
-
-    @app.route('/admin/quick_links/reorder', methods=['POST'])
-    @login_required
-    def admin_reorder_quick_links():
-        if not current_user.is_admin:
-            return jsonify({'success': False, 'message': 'Access denied'}), 403
-
-        try:
-            new_order = request.json
-            # First, get all links and set a high order number to avoid conflicts
-            links = QuickLink.query.all()
-            for link in links:
-                link.order = 10000 + link.order
-
-            db.session.commit()
-
-            # Then update with new order
-            for item in new_order:
-                link = QuickLink.query.get(item['id'])
-                if link:
-                    link.order = int(item['order'])
-
-            db.session.commit()
-            return jsonify({'success': True})
-        except Exception as e:
-            db.session.rollback()
-            app.logger.error(f"Error reordering quick links: {str(e)}")
-            return jsonify({'success': False, 'message': str(e)}), 500
-
-    @app.context_processor
-    def inject_quick_links():
-        def get_quick_links():
-            return QuickLink.query.order_by(QuickLink.order.asc(), QuickLink.category).all()
-        return dict(get_quick_links=get_quick_links)
-
-    @app.route('/api/upcoming_time_off')
-    @login_required
-    def get_upcoming_time_off():
-        """Get time off entries for the next 2 weeks"""
-        try:
-            # Get current time in UTC since our database stores times inUTC
-            current_time = datetime.now(pytz.UTC)
-            two_weeks_later = current_time + timedelta(days=14)
-
-            # Query for upcoming time off entries
-            time_off_entries = (Schedule.query
-                .join(User)
-                .filter(
-                    Schedule.start_time >= current_time,
-                    Schedule.start_time <= two_weeks_later,
-                    Schedule.time_off == True
-                )
-                .with_entities(
-                    User.username,
-                    Schedule.start_time,
-                    Schedule.end_time,
-                    Schedule.description
-                )
-                .order_by(Schedule.start_time)
-                .all())
-
-            # Group entries by username and consolidate consecutive dates
-            user_entries = {}
-            formatted_entries = []
-            user_tz = pytz.timezone('America/Los_Angeles')  # Default timezone
-
-            for username, start_time, end_time, description in time_off_entries:
-                if username not in user_entries:
-                    user_entries[username] = []
-
-                start_local = start_time.astimezone(user_tz)
-                end_local = end_time.astimezone(user_tz)
-
-                user_entries[username].append({
-                    'start_date': start_local.date(),
-                    'end_date': end_local.date(),
-                    'description': description
-                })
-
-            # Consolidate consecutive dates for each user
-            for username, entries in user_entries.items():
-                entries.sort(key=lambda x: x['start_date'])
-                consolidated = []
-                current_entry = entries[0]
-
-                for entry in entries[1:]:
-                    if (entry['start_date'] - current_entry['end_date']).days <= 1:                    # Consecutive days, extend the current entry
-                        current_entry['end_date'] = max(current_entry['end_date'], entry['end_date'])
-                    else:
-                        # Non-consecutive, add current entry and start a new one
-                        consolidated.append(current_entry)
-                        current_entry = entry
-
-                consolidated.append(current_entry)
-
-                # Format consolidated entries
-                for entry in consolidated:
-                    duration = (entry['end_date'] - entry['start_date']).days + 1
-                    formatted_entries.append({
-                        'username': username,
-                        'start_date': entry['start_date'].strftime('%b %d'),
-                        'end_date': entry['end_date'].strftime('%b %d'),
-                        'duration': f"{duration} day{'s' if duration != 1 else ''}",
-                        'description': entry.get('description') or 'Time Off'
-                    })
-
-            return jsonify(formatted_entries)
-        except Exception as e:
-            app.logger.error(f"Error in get_upcoming_time_off: {str(e)}")
-            return jsonify([])
-
-    @app.route('/admin/backup')
-    @login_required
-    def admin_backup():
-        if not current_user.is_admin:
-            flash('Access denied.')
-            return redirect(url_for('calendar'))
-        return render_template('admin/backup.html')
-
-    @app.route('/admin/backup/download')
-    @login_required
-    def download_backup():
-        if not current_user.is_admin:
-            flash('Access denied.')
-            return redirect(url_for('calendar'))
-
-        try:
-            # Collect all data with complete reference information
-            backup_data = {
-                'users': [user.to_dict() for user in User.query.all()],
-                'locations': [location.to_dict() for location in Location.query.all()],
-                'schedules': [schedule.to_dict() for schedule in Schedule.query.all()],
-                'quick_links': [link.to_dict() for link in QuickLink.query.all()]
-            }
-
-            # Create the backup file
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            backup_json = json.dumps(backup_data, indent=2, default=str)
-
-            response = make_response(backup_json)
-            response.headers['Content-Type'] = 'application/json'
-            response.headers['Content-Disposition'] = f'attachment; filename=backup_{timestamp}.json'
-
-            app.logger.info(f"Backup created successfully with {len(backup_data['schedules'])} schedules")
-            return response
-
-        except Exception as e:
-            app.logger.error(f"Error creating backup: {str(e)}")
-            flash('Error creating backup')
-            return redirect(url_for('admin_backup'))
-
-    @app.route('/admin/restore', methods=['POST'])
-    @login_required
-    def restore_backup():
-        if not current_user.is_admin:
-            flash('Access denied.')
-            return redirect(url_for('calendar'))
-
-        if 'backup_file' not in request.files:
-            flash('No file uploaded')
-            return redirect(url_for('admin_backup'))
-
-        file = request.files['backup_file']
-        if not file.filename:
-            flash('No file selected')
-            return redirect(url_for('admin_backup'))
-
-        try:
-            backup_data = json.loads(file.read().decode('utf-8'))
-            app.logger.info("Starting backup restoration process...")
-
-            # Initialize mappings for existing data
-            existing_users = {user.username.lower(): user for user in User.query.all()}
-            existing_locations = {loc.name.lower(): loc for loc in Location.query.all()}
-            existing_quick_links = {(link.title.lower(), link.url.lower()): link for link in QuickLink.query.all()}
-
-            try:
-                # Process users first
-                if 'users' in backup_data:
-                    app.logger.info("Starting user restoration...")
-                    for user_data in backup_data['users']:
-                        try:
-                            username = user_data.get('username')
-                            email = user_data.get('email')
-
-                            if not username or not email:
-                                app.logger.warning(f"Skipping user with missing data")
-                                continue
-
-                            # Check if user exists (case-insensitive)
-                            existing_user = existing_users.get(username.lower())
-                            if existing_user:
-                                app.logger.info(f"User {username} already exists")
-                                continue
-
-                            # Create new user
-                            user = User(
-                                username=username,
-                                email=email,
-                                password_hash=user_data['password_hash'],
-                                color=user_data.get('color', '#3498db'),
-                                is_admin=user_data.get('is_admin', False),
-                                timezone=user_data.get('timezone', 'America/Los_Angeles')
-                            )
-                            db.session.add(user)
-                            app.logger.info(f"Created new user {username}")
-
-                        except Exception as e:
-                            app.logger.error(f"Error processing user {username}: {str(e)}")
-                            continue
-
-                    db.session.commit()
-                    app.logger.info("Users committed successfully")
-
-                # Process locations
-                if 'locations' in backup_data:
-                    app.logger.info("Starting location restoration...")
-                    for loc_data in backup_data['locations']:
-                        try:
-                            name = loc_data.get('name')
-                            if not name:
-                                continue
-
-                            # Check if location exists (case-insensitive)
-                            existing_location = existing_locations.get(name.lower())
-                            if existing_location:
-                                app.logger.info(f"Location {name} already exists")
-                                continue
-
-                            # Create new location
-                            location = Location(
-                                name=name,
-                                description=loc_data.get('description', ''),
-                                active=loc_data.get('active', True)
-                            )
-                            db.session.add(location)
-                            app.logger.info(f"Created new location {name}")
-
-                        except Exception as e:
-                            app.logger.error(f"Error processing location {name}: {str(e)}")
-                            continue
-
-                    db.session.commit()
-                    app.logger.info("Locations committed successfully")
-
-                # Process schedules
-                restored_count = 0
-                skipped_count = 0
-
-                if 'schedules' in backup_data:
-                    app.logger.info("Starting schedule restoration...")
-
-                    # Refresh user and location data after commits
-                    users_by_username = {user.username: user for user in User.query.all()}
-                    locations_by_name = {loc.name: loc for loc in Location.query.all()}
-
-                    for schedule_data in backup_data['schedules']:
-                        try:
-                            # Get technician by username
-                            tech_username = schedule_data.get('technician_username')
-                            if not tech_username:
-                                app.logger.warning("Schedule missing technician username")
-                                skipped_count += 1
-                                continue
-
-                            technician = users_by_username.get(tech_username)
-                            if not technician:
-                                app.logger.warning(f"Could not find technician: {tech_username}")
-                                skipped_count += 1
-                                continue
-
-                            # Get location by name if specified
-                            location_id = None
-                            location_name = schedule_data.get('location_name')
-                            if location_name:
-                                location = locations_by_name.get(location_name)
-                                if location:
-                                    location_id = location.id
-
-                            start_time = datetime.fromisoformat(schedule_data['start_time'])
-                            end_time = datetime.fromisoformat(schedule_data['end_time'])
-
-                            # Check for existing schedule with same technician, time, and location
-                            existing_schedule = Schedule.query.filter_by(
-                                technician_id=technician.id,
-                                start_time=start_time,
-                                end_time=end_time,
-                                location_id=location_id
-                            ).first()
-
-                            if existing_schedule:
-                                app.logger.info(f"Schedule already exists for {tech_username} at {start_time}")
-                                skipped_count += 1
-                                continue
-
-                            schedule = Schedule(
-                                technician_id=technician.id,
-                                location_id=location_id,
-                                start_time=start_time,
-                                end_time=end_time,
-                                description=schedule_data.get('description'),
-                                time_off=schedule_data.get('time_off', False)
-                            )
-                            db.session.add(schedule)
-                            restored_count += 1
-
-                        except Exception as e:
-                            app.logger.error(f"Error processing schedule: {str(e)}")
-                            skipped_count += 1
-                            continue
-
-                    db.session.commit()
-                    app.logger.info(f"Schedules committed successfully. Restored: {restored_count}, Skipped: {skipped_count}")
-
-                # Process quick links if present
-                if 'quick_links' in backup_data:
-                    app.logger.info("Starting quick links restoration...")
-                    for link_data in backup_data['quick_links']:
-                        try:
-                            title = link_data.get('title', '').lower()
-                            url = link_data.get('url', '').lower()
-
-                            # Skip if title or url is missing
-                            if not title or not url:
-                                continue
-
-                            # Check if link already exists
-                            if (title, url) in existing_quick_links:
-                                app.logger.info(f"Quick link already exists: {title}")
-                                continue
-
-                            link = QuickLink(
-                                title=link_data['title'],
-                                url=link_data['url'],
-                                icon=link_data.get('icon', 'link'),
-                                category=link_data['category'],
-                                order=link_data.get('order', 0)
-                            )
-                            db.session.add(link)
-                            app.logger.info(f"Created new quick link: {title}")
-
-                        except Exception as e:
-                            app.logger.error(f"Error processing quick link: {str(e)}")
-                            continue
-
-                    db.session.commit()
-                    app.logger.info("Quick links committed successfully")
-
-                flash(f'Backup restored successfully! {restored_count} schedules restored, {skipped_count} skipped.')
-                app.logger.info("Backup restore completed successfully")
-
-            except Exception as e:
-                db.session.rollback()
-                app.logger.error(f"Error in backup restoration: {str(e)}")
-                flash('Error restoring backup')
-                raise
-
-        except json.JSONDecodeError:
-            flash('Invalid backup file format')
-        except Exception as e:
-            flash('Error restoring backup')
-            app.logger.error(f"Unexpected error in restore_backup: {str(e)}")
-
-        return redirect(url_for('admin_backup'))
-
-    @app.route('/admin/locations/edit/<int:location_id>', methods=['POST'])
-    @login_required
-    def admin_edit_location(location_id):
-        if not current_user.is_admin:
-            flash('Access denied.')
-            return redirect(url_for('calendar'))
-
-        location = Location.query.get_or_404(location_id)
-        try:
-            location.name = request.form.get('name')
-            location.description = request.form.get('description')
-            location.active = request.form.get('active') == 'on'
-
-            db.session.commit()
-            flash('Location updated successfully!')
-        except Exception as e:
-            db.session.rollback()
-            app.logger.error(f"Error updating location: {str(e)}")
-            flash('Error updating location. Please try again.')
-
-        return redirect(url_for('admin_locations'))
-
-    @app.route('/admin/locations/delete/<int:location_id>')
-    @login_required
-    def admin_delete_location(location_id):
-        if not current_user.is_admin:
-            flash('Access denied.')
-            return redirect(url_for('calendar'))
-
-        location = Location.query.get_or_404(location_id)
-        try:
-            # Check if location is being used in any schedules
-            schedule_count = Schedule.query.filter_by(location_id=location_id).count()
-            if schedule_count > 0:
-                flash(f'Cannot delete location. It is being used in {schedule_count} schedules.')
-                return redirect(url_for('admin_locations'))
-
-            db.session.delete(location)
-            db.session.commit()
-            flash('Location deleted successfully!')
-        except Exception as e:
-            db.session.rollback()
-            app.logger.error(f"Error deleting location: {str(e)}")
-            flash('Error deleting location.')
-
-        return redirect(url_for('admin_locations'))
-
-@app.route('/admin/backup')
+@app.route('/admin/quicklinks/reorder', methods=['POST'])
 @login_required
-def admin_backup():
+def admin_reorder_quick_links():
     if not current_user.is_admin:
-        flash('Access denied.')
-        return redirect(url_for('calendar'))
-    return render_template('admin/backup.html')
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+
+    try:
+        new_order = request.json
+        # First, get all links and set a high order number to avoid conflicts
+        links = QuickLink.query.all()
+        for link in links:
+            link.order = 10000 + link.order
+
+        db.session.commit()
+
+        # Then update with new order
+        for item in new_order:
+            link = QuickLink.query.get(item['id'])
+            if link:
+                link.order = int(item['order'])
+
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error reordering quick links: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/admin/quick_links/create', methods=['POST'])
 @login_required
-def admin_create_quicklink():
+def admin_create_quick_link():
     if not current_user.is_admin:
         flash('Access denied.')
         return redirect(url_for('calendar'))
 
     try:
-        # Create new quick link
         link = QuickLink(
             title=request.form.get('title'),
             url=request.form.get('url'),
@@ -1289,7 +833,6 @@ def admin_create_quicklink():
             category=request.form.get('category'),
             order=request.form.get('order', 0)
         )
-
         db.session.add(link)
         db.session.commit()
         flash('Quick link created successfully!')
@@ -1299,6 +842,85 @@ def admin_create_quicklink():
         flash('Error creating quick link. Please try again.')
 
     return redirect(url_for('admin_quick_links'))
+
+@app.route('/admin/quick_links/edit/<int:link_id>', methods=['POST'])
+@login_required
+def admin_edit_quick_link(link_id):
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('calendar'))
+
+    link = QuickLink.query.get_or_404(link_id)
+    try:
+        link.title = request.form.get('title')
+        link.url = request.form.get('url')
+        link.icon = request.form.get('icon')
+        link.category = request.form.get('category')
+        link.order = request.form.get('order', 0)
+
+        db.session.commit()
+        flash('Quick link updated successfully!')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error updating quick link: {str(e)}")
+        flash('Error updating quick link. Please try again.')
+
+    return redirect(url_for('admin_quick_links'))
+
+@app.route('/admin/quick_links/delete/<int:link_id>')
+@login_required
+def admin_delete_quick_link(link_id):
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('calendar'))
+
+    link = QuickLink.query.get_or_404(link_id)
+    try:
+        db.session.delete(link)
+        db.session.commit()
+        flash('Quick link deleted successfully!')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error deleting quick link: {str(e)}")
+        flash('Error deleting quick link.')
+
+    return redirect(url_for('admin_quick_links'))
+
+@app.route('/admin/backup')
+@login_required
+def admin_backup():
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('calendar'))
+    return render_template('admin/backup.html')
+
+@app.route('/admin/backup/download')
+@login_required
+def download_backup():
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('calendar'))
+
+    try:
+        backup_data = {
+            'users': [user.to_dict() for user in User.query.all()],
+            'locations': [location.to_dict() for location in Location.query.all()],
+            'schedules': [schedule.to_dict() for schedule in Schedule.query.all()],
+            'quick_links': [link.to_dict() for link in QuickLink.query.all()]
+        }
+
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_json = json.dumps(backup_data, indent=2, default=str)
+
+        response = make_response(backup_json)
+        response.headers['Content-Type'] = 'application/json'
+        response.headers['Content-Disposition'] = f'attachment; filename=backup_{timestamp}.json'
+
+        return response
+    except Exception as e:
+        app.logger.error(f"Error creating backup: {str(e)}")
+        flash('Error creating backup')
+        return redirect(url_for('admin_backup'))
 
 @app.route('/api/upcoming_time_off')
 @login_required

@@ -75,7 +75,7 @@ def get_active_users():
         return jsonify(result)
     except Exception as e:
         app.logger.error(f"Error in get_active_users: {str(e)}")
-        return jsonify([])
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/profile')
 @login_required
@@ -886,6 +886,179 @@ def admin_delete_quick_link(link_id):
 
     return redirect(url_for('admin_quick_links'))
 
+@app.route('/admin/backup/download')
+@login_required
+def admin_backup_download():
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('calendar'))
+
+    try:
+        app.logger.info('Starting backup creation process...')
+
+        # Fetch all data from database
+        users = User.query.all()
+        schedules = Schedule.query.all()
+        locations = Location.query.all()
+        quick_links = QuickLink.query.all()
+
+        # Create backup data structure
+        backup_data = {
+            'users': [{
+                'username': user.username,
+                'email': user.email,
+                'password_hash': user.password_hash,
+                'is_admin': user.is_admin,
+                'color': user.color,
+                'timezone': user.timezone
+            } for user in users],
+            'schedules': [{
+                'technician_id': schedule.technician_id,
+                'start_time': schedule.start_time.isoformat(),
+                'end_time': schedule.end_time.isoformat(),
+                'description': schedule.description,
+                'time_off': schedule.time_off,
+                'location_id': schedule.location_id
+            } for schedule in schedules],
+            'locations': [{
+                'id': location.id,
+                'name': location.name,
+                'description': location.description,
+                'active': location.active
+            } for location in locations],
+            'quick_links': [{
+                'title': link.title,
+                'url': link.url,
+                'icon': link.icon,
+                'category': link.category,
+                'order': link.order
+            } for link in quick_links]
+        }
+
+        # Create backup file
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_json = json.dumps(backup_data, indent=2)
+
+        app.logger.info(f'Backup created successfully with {len(users)} users, {len(schedules)} schedules')
+
+        response = make_response(backup_json)
+        response.headers['Content-Type'] = 'application/json'
+        response.headers['Content-Disposition'] = f'attachment; filename=backup_{timestamp}.json'
+        return response
+
+    except Exception as e:
+        app.logger.error(f'Error creating backup: {str(e)}')
+        flash('Error creating backup. Please try again.')
+        return redirect(url_for('admin_backup'))
+
+@app.route('/admin/backup/restore', methods=['POST'])
+@login_required
+def admin_backup_restore():
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('calendar'))
+
+    try:
+        app.logger.info('Starting backup restoration process...')
+
+        if 'backup_file' not in request.files:
+            app.logger.warning('No backup file provided in request')
+            flash('No backup file provided')
+            return redirect(url_for('admin_backup'))
+
+        file = request.files['backup_file']
+        if file.filename == '':
+            app.logger.warning('Empty filename provided')
+            flash('No backup file selected')
+            return redirect(url_for('admin_backup'))
+
+        if not file.filename.endswith('.json'):
+            app.logger.warning(f'Invalid file type: {file.filename}')
+            flash('Invalid file type. Please upload a JSON backup file.')
+            return redirect(url_for('admin_backup'))
+
+        # Read and parse backup data
+        backup_content = file.read().decode('utf-8')
+        app.logger.debug(f'Backup content length: {len(backup_content)} bytes')
+
+        try:
+            backup_data = json.loads(backup_content)
+            app.logger.info('Backup file loaded and parsed successfully')
+        except json.JSONDecodeError as e:
+            app.logger.error(f'Invalid JSON format in backup file: {str(e)}')
+            flash('Invalid backup file format.')
+            return redirect(url_for('admin_backup'))
+
+        # Begin transaction
+        try:
+            # Restore locations
+            for location_data in backup_data.get('locations', []):
+                location_id = location_data.pop('id')  # Remove id from the dict
+                location = Location.query.get(location_id)
+                if location:
+                    app.logger.debug(f'Updating existing location: {location_id}')
+                    for key, value in location_data.items():
+                        setattr(location, key, value)
+                else:
+                    app.logger.debug(f'Creating new location: {location_data["name"]}')
+                    location = Location(**location_data)
+                    db.session.add(location)
+
+            # Restore quick links
+            for link_data in backup_data.get('quick_links', []):
+                link = QuickLink.query.filter_by(title=link_data['title']).first()
+                if link:
+                    app.logger.debug(f'Updating existing quick link: {link_data["title"]}')
+                    for key, value in link_data.items():
+                        setattr(link, key, value)
+                else:
+                    app.logger.debug(f'Creating new quick link: {link_data["title"]}')
+                    link = QuickLink(**link_data)
+                    db.session.add(link)
+
+            # Restore users
+            for user_data in backup_data.get('users', []):
+                user = User.query.filter_by(email=user_data['email']).first()
+                if user:
+                    app.logger.debug(f'Updating existing user: {user_data["email"]}')
+                    for key, value in user_data.items():
+                        setattr(user, key, value)
+                else:
+                    app.logger.debug(f'Creating new user: {user_data["email"]}')
+                    user = User(**user_data)
+                    db.session.add(user)
+
+            # Restore schedules
+            for schedule_data in backup_data.get('schedules', []):
+                # Convert ISO format strings back to datetime objects
+                try:
+                    schedule_data['start_time'] = datetime.fromisoformat(schedule_data['start_time'])
+                    schedule_data['end_time'] = datetime.fromisoformat(schedule_data['end_time'])
+                except ValueError as e:
+                    app.logger.error(f'Error parsing schedule dates: {str(e)}')
+                    continue
+
+                app.logger.debug(f'Creating schedule for technician: {schedule_data["technician_id"]}')
+                schedule = Schedule(**schedule_data)
+                db.session.add(schedule)
+
+            db.session.commit()
+            app.logger.info('Backup restored successfully')
+            flash('Backup restored successfully!')
+
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f'Error during restoration: {str(e)}')
+            flash('Error restoring backup: Database error occurred.')
+            return redirect(url_for('admin_backup'))
+
+    except Exception as e:
+        app.logger.error(f'Error restoring backup: {str(e)}')
+        flash('Error restoring backup. Please check the file and try again.')
+        return redirect(url_for('admin_backup'))
+
+    return redirect(url_for('admin_backup'))
+
 @app.route('/admin/backup')
 @login_required
 def admin_backup():
@@ -893,34 +1066,6 @@ def admin_backup():
         flash('Access denied.')
         return redirect(url_for('calendar'))
     return render_template('admin/backup.html')
-
-@app.route('/admin/backup/download')
-@login_required
-def download_backup():
-    if not current_user.is_admin:
-        flash('Access denied.')
-        return redirect(url_for('calendar'))
-
-    try:
-        backup_data = {
-            'users': [user.to_dict() for user in User.query.all()],
-            'locations': [location.to_dict() for location in Location.query.all()],
-            'schedules': [schedule.to_dict() for schedule in Schedule.query.all()],
-            'quick_links': [link.to_dict() for link in QuickLink.query.all()]
-        }
-
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        backup_json = json.dumps(backup_data, indent=2, default=str)
-
-        response = make_response(backup_json)
-        response.headers['Content-Type'] = 'application/json'
-        response.headers['Content-Disposition'] = f'attachment; filename=backup_{timestamp}.json'
-
-        return response
-    except Exception as e:
-        app.logger.error(f"Error creating backup: {str(e)}")
-        flash('Error creating backup')
-        return redirect(url_for('admin_backup'))
 
 @app.route('/api/upcoming_time_off')
 @login_required
@@ -968,31 +1113,3 @@ def get_upcoming_time_off():
     except Exception as e:
         app.logger.error(f"Error in get_upcoming_time_off: {str(e)}")
         return jsonify([])
-
-@app.route('/admin/restore_backup', methods=['POST'])
-@login_required
-def restore_backup():
-    if not current_user.is_admin:
-        flash('Access denied.')
-        return redirect(url_for('calendar'))
-
-    if 'backup_file' not in request.files:
-        flash('No file uploaded')
-        return redirect(url_for('admin_backup'))
-
-    file = request.files['backup_file']
-    if not file.filename:
-        flash('No file selected')
-        return redirect(url_for('admin_backup'))
-
-    try:
-        backup_data = json.loads(file.read().decode('utf-8'))
-        app.logger.info("Starting backup restoration process...")
-        flash('Backup restored successfully!')
-    except json.JSONDecodeError:
-        flash('Invalid backup file format')
-    except Exception as e:
-        flash('Error restoring backup')
-        app.logger.error(f"Unexpected error in restore_backup: {str(e)}")
-
-    return redirect(url_for('admin_backup'))

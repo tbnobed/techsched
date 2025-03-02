@@ -789,7 +789,7 @@ def admin_quick_links():
     def admin_create_quicklink():
         if not current_user.is_admin:
             flash('Access denied.')
-            return redirect(url_for('calendar'))
+            return redirect(urlfor('calendar'))
 
         try:
             # Create new quick link
@@ -1264,3 +1264,85 @@ def admin_quick_links():
             flash('Error deleting location.')
 
         return redirect(url_for('admin_locations'))
+
+@app.route('/admin/backup')
+@login_required
+def admin_backup():
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('calendar'))
+    return render_template('admin/backup.html')
+
+@app.route('/admin/quick_links/create', methods=['POST'])
+@login_required
+def admin_create_quicklink():
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('calendar'))
+
+    try:
+        # Create new quick link
+        link = QuickLink(
+            title=request.form.get('title'),
+            url=request.form.get('url'),
+            icon=request.form.get('icon', 'link'),
+            category=request.form.get('category'),
+            order=request.form.get('order', 0)
+        )
+
+        db.session.add(link)
+        db.session.commit()
+        flash('Quick link created successfully!')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error creating quick link: {str(e)}")
+        flash('Error creating quick link. Please try again.')
+
+    return redirect(url_for('admin_quick_links'))
+
+@app.route('/api/upcoming_time_off')
+@login_required
+def get_upcoming_time_off():
+    """Get time off entries for the next 2 weeks"""
+    try:
+        # Get current time in UTC since our database stores times in UTC
+        current_time = datetime.now(pytz.UTC)
+        two_weeks_later = current_time + timedelta(days=14)
+
+        # Query for upcoming time off entries
+        time_off_entries = (Schedule.query
+            .join(User)
+            .filter(
+                Schedule.start_time >= current_time,
+                Schedule.start_time <= two_weeks_later,
+                Schedule.time_off == True
+            )
+            .with_entities(
+                User.username,
+                Schedule.start_time,
+                Schedule.end_time,
+                Schedule.description
+            )
+            .order_by(Schedule.start_time)
+            .all())
+
+        # Format the entries
+        formatted_entries = []
+        user_tz = current_user.get_timezone()
+
+        for username, start_time, end_time, description in time_off_entries:
+            start_local = start_time.astimezone(user_tz)
+            end_local = end_time.astimezone(user_tz)
+
+            formatted_entries.append({
+                'username': username,
+                'start_date': start_local.strftime('%b %d'),
+                'end_date': end_local.strftime('%b %d'),
+                'duration': f"{(end_local.date() - start_local.date()).days + 1} days",
+                'description': description or 'Time Off'
+            })
+
+        return jsonify(formatted_entries)
+    except Exception as e:
+        app.logger.error(f"Error in get_upcoming_time_off: {str(e)}")
+        return jsonify([])

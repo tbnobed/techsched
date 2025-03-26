@@ -7,6 +7,7 @@ from flask_login import LoginManager, login_required, current_user
 from sqlalchemy.orm import DeclarativeBase
 import pytz
 from flask_wtf.csrf import CSRFProtect
+from markupsafe import Markup
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -21,6 +22,14 @@ csrf = CSRFProtect()
 
 # Create the app
 app = Flask(__name__)
+
+# Custom Jinja2 filters
+@app.template_filter('nl2br')
+def nl2br_filter(s):
+    """Convert newlines to HTML line breaks"""
+    if not s:
+        return ""
+    return Markup(s.replace('\n', '<br>\n'))
 
 # Configuration
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "a secret key"

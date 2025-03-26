@@ -44,7 +44,7 @@
                 </ul>
             </div>
             {% endif %}
-            <a href="{{ url_for('tickets_dashboard') }}" class="btn btn-outline-primary">
+            <a href="{{ url_for('tickets.tickets_dashboard') }}" class="btn btn-outline-primary">
                 <i data-feather="arrow-left"></i> Back to List
             </a>
         </div>
@@ -115,9 +115,9 @@
                         </div>
                         {% endfor %}
                     </div>
-                    
+
                     <!-- Add Comment Form -->
-                    <form method="POST" action="{{ url_for('add_ticket_comment', ticket_id=ticket.id) }}">
+                    <form method="POST" action="{{ url_for('tickets.add_comment', ticket_id=ticket.id) }}">
                         {{ comment_form.hidden_tag() }}
                         <div class="mb-3">
                             {{ comment_form.content(class="form-control", rows="3", placeholder="Add a comment...") }}
@@ -187,7 +187,7 @@
     </div>
 </div>
 
-<!-- Modals -->
+<!-- Include modals -->
 {% include 'tickets/modals/assign_ticket.html' %}
 {% include 'tickets/modals/update_status.html' %}
 {% include 'tickets/modals/edit_ticket.html' %}

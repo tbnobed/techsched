@@ -11,23 +11,38 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         {{ form.title.label(class="form-label") }}
-                        {{ form.title(class="form-control", value=ticket.title) }}
+                        {{ form.title(class="form-control") }}
+                        {% for error in form.title.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
                     </div>
                     <div class="mb-3">
                         {{ form.description.label(class="form-label") }}
                         {{ form.description(class="form-control", rows="4") }}
+                        {% for error in form.description.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
                     </div>
                     <div class="mb-3">
                         {{ form.category_id.label(class="form-label") }}
                         {{ form.category_id(class="form-select") }}
+                        {% for error in form.category_id.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
                     </div>
                     <div class="mb-3">
                         {{ form.priority.label(class="form-label") }}
                         {{ form.priority(class="form-select") }}
+                        {% for error in form.priority.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
                     </div>
                     <div class="mb-3">
                         {{ form.due_date.label(class="form-label") }}
                         {{ form.due_date(class="form-control", type="datetime-local") }}
+                        {% for error in form.due_date.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
                     </div>
                 </div>
                 <div class="modal-footer">

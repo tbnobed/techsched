@@ -133,18 +133,37 @@ def create_ticket():
 def view_ticket(ticket_id):
     """View a specific ticket"""
     ticket = Ticket.query.get_or_404(ticket_id)
-    
+
     # Check if user has access to this ticket
     if not (current_user.is_admin or 
             ticket.created_by == current_user.id or 
             ticket.assigned_to == current_user.id):
         flash('You do not have permission to view this ticket', 'error')
         return redirect(url_for('tickets.tickets_dashboard'))
-    
+
+    # Create forms for comments and editing
     comment_form = TicketCommentForm()
+    form = TicketForm()
+
+    # Populate form with current ticket data
+    if request.method == 'GET':
+        form.title.data = ticket.title
+        form.description.data = ticket.description
+        form.category_id.data = ticket.category_id
+        form.priority.data = ticket.priority
+        form.due_date.data = ticket.due_date
+
+        # Populate category choices
+        form.category_id.choices = [(c.id, c.name) for c in TicketCategory.query.all()]
+
+        # Populate technician choices for admin users
+        if current_user.is_admin:
+            form.assigned_to.choices = [(u.id, u.username) for u in User.query.all()]
+
     return render_template('tickets/view.html', 
                          ticket=ticket,
                          comment_form=comment_form,
+                         form=form,
                          TicketStatus=TicketStatus)
 
 @tickets.route('/tickets/<int:ticket_id>/comment', methods=['POST'])

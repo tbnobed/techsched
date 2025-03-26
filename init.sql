@@ -27,10 +27,58 @@ CREATE TABLE quick_link (
     "order" INTEGER DEFAULT 0
 );
 
+-- New tables for ticket system
+CREATE TABLE ticket_category (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    icon VARCHAR(50) DEFAULT 'help-circle',
+    priority_level INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE ticket (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    description TEXT NOT NULL,
+    category_id INTEGER REFERENCES ticket_category(id),
+    status VARCHAR(20) DEFAULT 'open',
+    priority INTEGER DEFAULT 0,
+    assigned_to INTEGER REFERENCES users(id),
+    created_by INTEGER REFERENCES users(id) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    due_date TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE ticket_comment (
+    id SERIAL PRIMARY KEY,
+    ticket_id INTEGER REFERENCES ticket(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id),
+    content TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE ticket_history (
+    id SERIAL PRIMARY KEY,
+    ticket_id INTEGER REFERENCES ticket(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id),
+    action VARCHAR(50) NOT NULL,
+    details TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes
 CREATE INDEX idx_schedule_technician ON schedule(technician_id);
 CREATE INDEX idx_schedule_time ON schedule(start_time, end_time);
 CREATE INDEX idx_quick_link_order ON quick_link("order");
+CREATE INDEX idx_ticket_status ON ticket(status);
+CREATE INDEX idx_ticket_assigned_to ON ticket(assigned_to);
+CREATE INDEX idx_ticket_category ON ticket(category_id);
+CREATE INDEX idx_ticket_created_by ON ticket(created_by);
+CREATE INDEX idx_ticket_comment_ticket ON ticket_comment(ticket_id);
+CREATE INDEX idx_ticket_history_ticket ON ticket_history(ticket_id);
 
 -- Insert actual user data
 INSERT INTO users (username, email, password_hash, color, is_admin, timezone) VALUES 
@@ -45,16 +93,19 @@ INSERT INTO users (username, email, password_hash, color, is_admin, timezone) VA
 ('Marty C', 'MCruz@tbn.tv', 'scrypt:32768:8:1$6KwnqLHpzfp0tA07$a6c7f9d079fd75a87ed537ede7d7fa52f45898e7de48d5febef2c216748c0c986737f53db97a603ab2e659f00d7f27148e9d640788261ff69d05471ac2a8796a', '#3498db', false, 'America/Los_Angeles'),
 ('David H', 'DHarvilla@tbn.tv', 'scrypt:32768:8:1$igGtD8Nb2gevX5Uv$22778f15438c5bc52c557526070459637afbba7e2d813d948f64a6d5e3685aa4a0cab4c533880ddc33f323de0cd158dc9aee6a08984dff9e091308001683b62d', '#418171', true, 'America/Los_Angeles');
 
--- Let's get the schedules data
--- Note: You'll need to extract and add your actual schedule data here
-
--- Insert sample quick links
-INSERT INTO quick_link (title, url, icon, category, "order") VALUES
-('Documentation', 'https://docs.example.com', 'book', 'Resources', 1),
-('Support', 'https://support.example.com', 'help-circle', 'Resources', 2),
-('Dashboard', 'https://dashboard.example.com', 'grid', 'Quick Access', 3);
+-- Insert default ticket categories
+INSERT INTO ticket_category (name, description, icon, priority_level) VALUES
+('Hardware', 'Hardware-related issues and requests', 'hard-drive', 1),
+('Software', 'Software installation and configuration', 'settings', 1),
+('Network', 'Network connectivity issues', 'wifi', 2),
+('Access', 'Account access and permissions', 'key', 2),
+('General', 'General support requests', 'help-circle', 0);
 
 -- Reset sequences
 SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
 SELECT setval('schedule_id_seq', (SELECT MAX(id) FROM schedule));
 SELECT setval('quick_link_id_seq', (SELECT MAX(id) FROM quick_link));
+SELECT setval('ticket_category_id_seq', (SELECT MAX(id) FROM ticket_category));
+SELECT setval('ticket_id_seq', (SELECT MAX(id) FROM ticket));
+SELECT setval('ticket_comment_id_seq', (SELECT MAX(id) FROM ticket_comment));
+SELECT setval('ticket_history_id_seq', (SELECT MAX(id) FROM ticket_history));

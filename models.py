@@ -64,6 +64,14 @@ class User(UserMixin, db.Model):
     color = db.Column(db.String(7), default="#3498db")  # Default color for calendar
     timezone = db.Column(db.String(50), default='UTC')  # New timezone field
     schedules = db.relationship('Schedule', backref='technician', lazy='dynamic')
+    assigned_tickets = db.relationship('Ticket', 
+                                     foreign_keys='Ticket.assigned_to',
+                                     backref='assigned_technician', 
+                                     lazy='dynamic')
+    created_tickets = db.relationship('Ticket',
+                                    foreign_keys='Ticket.created_by',
+                                    backref='creator',
+                                    lazy='dynamic')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -81,14 +89,14 @@ class User(UserMixin, db.Model):
     def to_dict(self):
         """Serialize user data for backup"""
         return {
-            'id': self.id,  # Include ID for reference
+            'id': self.id,
             'username': self.username,
             'email': self.email,
             'password_hash': self.password_hash,
             'is_admin': self.is_admin,
             'color': self.color,
             'timezone': self.timezone,
-            'created_schedules': [schedule.id for schedule in self.schedules]  # Add reference to schedules
+            'created_schedules': [schedule.id for schedule in self.schedules]
         }
 
 class Schedule(db.Model):
@@ -105,17 +113,91 @@ class Schedule(db.Model):
     def to_dict(self):
         """Serialize schedule data for backup with reference data"""
         return {
-            'id': self.id,  # Include ID for reference
+            'id': self.id,
             'technician_id': self.technician_id,
-            'technician_username': self.technician.username,  # Add username for mapping
+            'technician_username': self.technician.username,
             'start_time': self.start_time.isoformat(),
             'end_time': self.end_time.isoformat(),
             'description': self.description,
             'location_id': self.location_id,
-            'location_name': self.location.name if self.location else None,  # Add location name for mapping
+            'location_name': self.location.name if self.location else None,
             'time_off': self.time_off,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
+class TicketCategory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    description = db.Column(db.String(200))
+    icon = db.Column(db.String(50), default='help-circle')  # Feather icon name
+    priority_level = db.Column(db.Integer, default=0)  # Higher number = higher priority
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(pytz.UTC))
+    tickets = db.relationship('Ticket', backref='category', lazy='dynamic')
+
+    def __repr__(self):
+        return f'<TicketCategory {self.name}>'
+
+class TicketStatus:
+    OPEN = 'open'
+    IN_PROGRESS = 'in_progress'
+    PENDING = 'pending'
+    RESOLVED = 'resolved'
+    CLOSED = 'closed'
+
+class Ticket(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('ticket_category.id'), nullable=False)
+    status = db.Column(db.String(20), default=TicketStatus.OPEN)
+    priority = db.Column(db.Integer, default=0)  # 0=Low, 1=Medium, 2=High, 3=Urgent
+    assigned_to = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+    due_date = db.Column(db.DateTime(timezone=True))
+
+    comments = db.relationship('TicketComment', backref='ticket', lazy='dynamic', cascade='all, delete-orphan')
+    history = db.relationship('TicketHistory', backref='ticket', lazy='dynamic', cascade='all, delete-orphan')
+
+    def add_comment(self, user: User, content: str) -> 'TicketComment':
+        comment = TicketComment(
+            ticket_id=self.id,
+            user_id=user.id,
+            content=content
+        )
+        db.session.add(comment)
+        return comment
+
+    def log_history(self, user: User, action: str, details: str = None):
+        history = TicketHistory(
+            ticket_id=self.id,
+            user_id=user.id,
+            action=action,
+            details=details
+        )
+        db.session.add(history)
+        return history
+
+class TicketComment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(pytz.UTC))
+    updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
+
+    user = db.relationship('User', backref='ticket_comments')
+
+class TicketHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    action = db.Column(db.String(50), nullable=False)  # e.g., "status_changed", "assigned", etc.
+    details = db.Column(db.Text)  # Additional details about the action
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(pytz.UTC))
+
+    user = db.relationship('User', backref='ticket_history_entries')
 
 class EmailSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)

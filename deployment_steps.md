@@ -1,3 +1,11 @@
+# Deployment Guide for Technician Scheduler
+
+## Prerequisites
+
+### 1. Install Docker and Docker Compose
+
+#### For Ubuntu/Debian:
+```bash
 # Update package index
 sudo apt-get update
 
@@ -53,250 +61,148 @@ sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker
 sudo chmod +x /usr/local/bin/docker-compose
 ```
 
-### 2. Install Git
+### 2. Configure SendGrid
 
-#### For Ubuntu/Debian:
+1. Verify Domain in SendGrid:
+   - Log in to SendGrid dashboard
+   - Go to Settings > Sender Authentication
+   - Click on "Authenticate Your Domain"
+   - Follow the DNS configuration steps for your domain
+   - Add DNS records for DKIM authentication
+   - Wait for verification (can take up to 48 hours)
+
+2. Verify Sender Email:
+   - Ensure alerts@obedtv.com is verified in SendGrid
+   - Follow SendGrid's sender verification process
+   - Test email sending functionality
+
+
+### 3. Database Management
+
+#### Regular Backups:
 ```bash
-sudo apt-get update
-sudo apt-get install -y git
+# Create backup script (save as backup.sh)
+#!/bin/bash
+BACKUP_DIR="/var/lib/technician-scheduler/backups"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="$BACKUP_DIR/backup_$TIMESTAMP.sql"
 
-# Verify installation
-git --version
+# Create backup
+docker-compose exec -T db pg_dump -U $POSTGRES_USER $POSTGRES_DB > $BACKUP_FILE
+
+# Compress backup
+gzip $BACKUP_FILE
+
+# Remove backups older than 30 days
+find $BACKUP_DIR -name "backup_*.sql.gz" -mtime +30 -delete
 ```
 
-#### For CentOS/RHEL:
+#### Setup automated backups:
 ```bash
-sudo yum install -y git
+# Make backup script executable
+chmod +x backup.sh
 
-# Verify installation
-git --version
+# Add to crontab (run daily at 2 AM)
+echo "0 2 * * * /path/to/backup.sh" | sudo tee -a /etc/crontab
 ```
 
-### 3. Install PostgreSQL Client
+### 4. Production Deployment Steps
 
-#### For Ubuntu/Debian:
+1. Clone repository and set up environment:
 ```bash
-# Add PostgreSQL repository
-sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+# Create deployment directory
+mkdir -p /opt/technician-scheduler
+cd /opt/technician-scheduler
 
-# Update package list
-sudo apt-get update
+# Copy project files
+cp -r /path/to/project/* .
 
-# Install PostgreSQL client
-sudo apt-get install -y postgresql-client-15
-
-# Verify installation
-psql --version
-```
-
-#### For CentOS/RHEL:
-```bash
-# Install PostgreSQL repository
-sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-
-# Install PostgreSQL client
-sudo yum install -y postgresql15
-
-# Verify installation
-psql --version
-```
-
-## Deployment Steps
-
-### Step 1: Project Setup
-1. Create deployment directory:
-```bash
-mkdir technician-scheduler
-cd technician-scheduler
-```
-
-2. Clone the repository or copy project files:
-```bash
-# If using git:
-git clone <repository-url> .
-
-# If copying files manually, ensure you have:
-# - Dockerfile
-# - docker-compose.yml
-# - All Python files
-# - templates/ directory
-# - static/ directory
-```
-
-### Step 2: Configuration
-1. Create and configure .env file:
-```bash
-# Copy example file
+# Create and configure .env file
 cp .env.example .env
 
 # Generate secure secret key
-echo "FLASK_SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_hex(32))')" >> .env
+echo "FLASK_SECRET_KEY=$(openssl rand -hex 32)" >> .env
 
-# Edit .env file with your values
-cat << EOF >> .env
-# Database Configuration
-POSTGRES_USER=your_db_user
-POSTGRES_PASSWORD=your_secure_password
-POSTGRES_DB=technician_scheduler
-POSTGRES_HOST=db
-POSTGRES_PORT=5432
-
-# Flask Configuration
-FLASK_ENV=production
-
-# Database URL
-DATABASE_URL=postgresql://\${POSTGRES_USER}:\${POSTGRES_PASSWORD}@\${POSTGRES_HOST}:\${POSTGRES_PORT}/\${POSTGRES_DB}
-EOF
+# Configure database credentials
+nano .env  # Set secure database password and other configurations
 ```
 
-### Step 3: Database Setup
-1. Create required directories:
+2. Start services:
 ```bash
-mkdir -p static/backups
-chmod -R 777 static/backups
-```
-
-2. Start PostgreSQL container:
-```bash
-docker-compose up -d db
-
-# Wait for database to be ready
-docker-compose logs -f db
-# Wait until you see "database system is ready to accept connections"
-```
-
-3. Initialize the database schema:
-```bash
-# Connect to the database container
-docker-compose exec db psql -U $POSTGRES_USER -d $POSTGRES_DB
-
-# Inside psql, run the update_database.sql commands
-\i update_database.sql
-
-# Exit psql
-\q
-```
-
-### Step 4: Application Deployment
-1. Build and start services:
-```bash
-# Build containers
-docker-compose build
-
-# Start all services
+# Build and start containers
 docker-compose up -d
 
-# Verify containers are running
+# Verify services are running
 docker-compose ps
 
 # Check logs
-docker-compose logs -f web
-```
-
-### Step 5: Create Admin User
-1. Create the first admin user:
-```bash
-docker-compose exec web python create_admin.py
-```
-
-### Step 6: Initial Backup
-1. Create initial backup directory:
-```bash
-mkdir -p /var/lib/technician-scheduler/backups
-chown -R 1000:1000 /var/lib/technician-scheduler/backups
-```
-
-### Step 7: Verify Deployment
-1. Access the application:
-   - Open http://your-server-ip:5000 in a web browser
-   - Log in with admin credentials
-   - Verify calendar functionality
-   - Test backup/restore feature
-
-2. Monitor the logs:
-```bash
 docker-compose logs -f
 ```
 
-## Maintenance Commands
-
-### Service Management
+3. Monitor and maintenance:
 ```bash
-# Restart services
-docker-compose restart
+# Monitor container health
+docker-compose ps
 
 # View logs
 docker-compose logs -f
 
-# Stop services
-docker-compose down
-
-# Start services
-docker-compose up -d
-```
-
-### Backup Operations
-```bash
-# Manual database backup
-docker-compose exec db pg_dump -U $POSTGRES_USER $POSTGRES_DB > backup.sql
-
-# Restore from backup
-docker-compose exec db psql -U $POSTGRES_USER $POSTGRES_DB < backup.sql
-```
-
-### Updates
-```bash
-# Pull new changes
-git pull
-
-# Rebuild and restart
-docker-compose down
-docker-compose build
-docker-compose up -d
-```
-
-## Troubleshooting
-
-### Common Issues
-1. If containers won't start:
-```bash
-# Check logs
-docker-compose logs
-
-# Verify environment variables
-docker-compose config
-
-# Check disk space
-df -h
-```
-
-2. Database connection issues:
-```bash
-# Check database container
-docker-compose ps db
-
-# View database logs
-docker-compose logs db
-
-# Verify DATABASE_URL in .env
-cat .env | grep DATABASE_URL
-```
-
-3. Permission issues:
-```bash
-# Fix backup directory permissions
-sudo chown -R 1000:1000 /var/lib/technician-scheduler/backups
-sudo chmod -R 755 /var/lib/technician-scheduler/backups
-```
-
-### Monitoring
-```bash
-# Check container health
-docker-compose ps
-
-# Monitor resource usage
-docker stats
-
 # Check database connections
 docker-compose exec db psql -U $POSTGRES_USER -d $POSTGRES_DB -c 'SELECT count(*) FROM pg_stat_activity;'
+```
+
+### Security Best Practices
+
+1. Network Security:
+   - Use UFW or similar firewall to restrict access
+   - Only expose necessary ports (5000 for web app)
+   - Set up SSL/TLS for secure communication
+
+2. Database Security:
+   - Use strong passwords
+   - Regular security updates
+   - Implement connection pooling
+   - Regular backup verification
+
+3. Application Security:
+   - Keep dependencies updated
+   - Regular security audits
+   - Monitor application logs
+   - Implement rate limiting
+
+### Troubleshooting
+
+1. Email Issues:
+```bash
+# Check SendGrid logs
+docker-compose logs web | grep "SendGrid"
+
+# Verify SendGrid API key
+docker-compose exec web python -c "import os; print(bool(os.environ.get('SENDGRID_API_KEY')))"
+```
+
+2. Database Issues:
+```bash
+# Check database logs
+docker-compose logs db
+
+# Verify database connectivity
+docker-compose exec web python -c "from app import db; print(db.engine.connect())"
+```
+
+3. Common Problems:
+
+- If emails aren't sending:
+  - Verify SendGrid API key is set correctly
+  - Check domain verification status
+  - Review email sending logs
+
+- If database connections fail:
+  - Check PostgreSQL logs
+  - Verify database credentials
+  - Check network connectivity
+
+- If application crashes:
+  - Review application logs
+  - Check memory usage
+  - Verify environment variables

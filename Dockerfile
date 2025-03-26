@@ -26,6 +26,7 @@ RUN pip install --no-cache-dir \
     psycopg2-binary>=2.9.10 \
     python-dotenv>=1.0.1 \
     pytz>=2024.2 \
+    sendgrid>=6.11.0 \
     sqlalchemy>=2.0.36 \
     werkzeug>=3.1.3 \
     wtforms>=3.2.1

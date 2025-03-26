@@ -76,3 +76,30 @@ class EmailSettingsForm(FlaskForm):
     notify_on_create = BooleanField('Send notifications for new schedules', default=True)
     notify_on_update = BooleanField('Send notifications for schedule updates', default=True)
     notify_on_delete = BooleanField('Send notifications for schedule deletions', default=True)
+
+class TicketForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired(), Length(max=200)])
+    description = TextAreaField('Description', validators=[DataRequired()])
+    category_id = SelectField('Category', coerce=int, validators=[DataRequired()])
+    priority = SelectField('Priority', choices=[
+        (0, 'Low'),
+        (1, 'Medium'),
+        (2, 'High'),
+        (3, 'Urgent')
+    ], coerce=int)
+    assigned_to = SelectField('Assign To', coerce=int, validators=[Optional()])
+    due_date = DateTimeField('Due Date', format='%Y-%m-%d %H:%M', validators=[Optional()])
+
+class TicketCommentForm(FlaskForm):
+    content = TextAreaField('Comment', validators=[DataRequired()])
+
+class TicketCategoryForm(FlaskForm):
+    name = StringField('Category Name', validators=[DataRequired(), Length(max=100)])
+    description = TextAreaField('Description', validators=[Length(max=200)])
+    icon = StringField('Icon', validators=[DataRequired(), Length(max=50)], default='help-circle')
+    priority_level = SelectField('Default Priority', choices=[
+        (0, 'Low'),
+        (1, 'Medium'),
+        (2, 'High'),
+        (3, 'Urgent')
+    ], coerce=int, default=0)

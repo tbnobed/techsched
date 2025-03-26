@@ -38,7 +38,10 @@ csrf.init_app(app)  # Initialize CSRF protection
 login_manager.login_view = 'login'
 
 with app.app_context():
-    from models import User, Schedule
+    from models import User, Schedule, Ticket, TicketCategory  # Add ticket models
     db.create_all()
 
+# Import and register blueprints
 from routes import *
+from ticket_routes import tickets  # Import the tickets blueprint
+app.register_blueprint(tickets)  # Register the tickets blueprint

@@ -40,6 +40,31 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('personal_schedule') }}">My Schedule</a>
                         </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="ticketDropdown" role="button" data-bs-toggle="dropdown">
+                                <i data-feather="life-buoy"></i> Help Desk
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('tickets.tickets_dashboard') }}">
+                                        <i data-feather="list"></i> All Tickets
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('tickets.create_ticket') }}">
+                                        <i data-feather="plus-circle"></i> New Ticket
+                                    </a>
+                                </li>
+                                {% if current_user.is_admin %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('tickets.manage_categories') }}">
+                                        <i data-feather="tag"></i> Manage Categories
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </li>
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">

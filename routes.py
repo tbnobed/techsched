@@ -1,76 +1,23 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, make_response
-from flask_login import login_user, logout_user, login_required, current_user
+from flask_login import login_required, current_user
 from app import app, db
 from models import User, Schedule, QuickLink, Location, EmailSettings
 from forms import (
-    LoginForm, RegistrationForm, ScheduleForm, AdminUserForm, EditUserForm, 
+    ScheduleForm, AdminUserForm, EditUserForm, 
     ChangePasswordForm, QuickLinkForm, LocationForm, EmailSettingsForm
 )
 from datetime import datetime, timedelta
 import pytz
-import csv
-from io import StringIO
+import json
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from io import BytesIO
-import json
-import os
-from werkzeug.utils import secure_filename
-from email_utils import send_schedule_notification
-from flask import session
 
 @app.route('/')
 def index():
     if current_user.is_authenticated:
-        return redirect(url_for('calendar'))
-    return redirect(url_for('login'))
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    app.logger.debug(f"Login attempt - Method: {request.method}")
-    app.logger.debug(f"Session before login: {session}")
-
-    if current_user.is_authenticated:
-        app.logger.debug(f"Already authenticated user: {current_user.username}")
-        app.logger.debug(f"Current session: {session}")
         return redirect(url_for('tickets.tickets_dashboard'))
-
-    form = LoginForm()
-    if form.validate_on_submit():
-        app.logger.debug(f"Login form submitted for email: {form.email.data}")
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and user.check_password(form.password.data):
-            login_user(user, remember=form.remember_me.data)
-            session.permanent = True  # Make the session persistent
-            app.logger.info(f"User {user.username} logged in successfully")
-            app.logger.debug(f"Session after login: {session}")
-            next_page = request.args.get('next')
-            app.logger.debug(f"Redirecting to: {next_page if next_page else 'tickets.tickets_dashboard'}")
-            return redirect(next_page if next_page else url_for('tickets.tickets_dashboard'))
-        app.logger.warning(f"Failed login attempt for email: {form.email.data}")
-        flash('Invalid email or password')
-    return render_template('login.html', form=form)
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('calendar'))
-
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data)
-        user.set_password(form.password.data)
-        db.session.add(user)
-        db.session.commit()
-        flash('Registration successful! Please log in.')
-        return redirect(url_for('login'))
-    return render_template('register.html', form=form)
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for('auth.login'))
 
 @app.route('/api/active_users')
 @login_required
@@ -825,7 +772,7 @@ def admin_quick_links():
 @app.route('/admin/quick_links/create', methods=['POST'])
 @login_required
 def admin_create_quick_link():
-    if not current_user.is_admin:
+    if not current_user.is_admin:  # Fix typo: currentuser -> current_user
         flash('Access denied.')
         return redirect(url_for('calendar'))
 

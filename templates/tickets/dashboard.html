@@ -26,12 +26,10 @@
                             <label class="form-label">Status</label>
                             <select name="status" class="form-select">
                                 <option value="all">All</option>
-                                {% for status in TicketStatus.__dict__.values() %}
-                                    {% if not status.startswith('_') %}
-                                    <option value="{{ status }}" {% if request.args.get('status') == status %}selected{% endif %}>
-                                        {{ status|replace('_', ' ')|title }}
-                                    </option>
-                                    {% endif %}
+                                {% for status in ticket_statuses %}
+                                <option value="{{ status }}" {% if request.args.get('status') == status %}selected{% endif %}>
+                                    {{ status|replace('_', ' ')|title }}
+                                </option>
                                 {% endfor %}
                             </select>
                         </div>

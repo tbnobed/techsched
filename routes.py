@@ -17,6 +17,7 @@ import json
 import os
 from werkzeug.utils import secure_filename
 from email_utils import send_schedule_notification
+from flask import session
 
 @app.route('/')
 def index():
@@ -27,8 +28,11 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     app.logger.debug(f"Login attempt - Method: {request.method}")
+    app.logger.debug(f"Session before login: {session}")
+
     if current_user.is_authenticated:
         app.logger.debug(f"Already authenticated user: {current_user.username}")
+        app.logger.debug(f"Current session: {session}")
         return redirect(url_for('calendar'))
 
     form = LoginForm()
@@ -38,6 +42,7 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             app.logger.info(f"User {user.username} logged in successfully")
+            app.logger.debug(f"Session after login: {session}")
             next_page = request.args.get('next')
             app.logger.debug(f"Redirecting to: {next_page if next_page else 'calendar'}")
             return redirect(next_page if next_page else url_for('calendar'))

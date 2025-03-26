@@ -1,6 +1,7 @@
 import os
 import logging
-from flask import Flask, jsonify, redirect, url_for, request
+from datetime import timedelta # Added import for timedelta
+from flask import Flask, jsonify, redirect, url_for, request, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, current_user
 from sqlalchemy.orm import DeclarativeBase
@@ -29,6 +30,11 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True,
 }
 
+# Set session configuration
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+
 # Set default timezone
 app.config['TIMEZONE'] = pytz.timezone('UTC')  # Default to UTC
 
@@ -44,6 +50,7 @@ login_manager.login_message_category = 'info'
 def load_user(user_id):
     from models import User
     logger.debug(f"Loading user with ID: {user_id}")
+    logger.debug(f"Current session data: {session}")
     user = User.query.get(int(user_id))
     logger.debug(f"User loaded: {user.username if user else None}")
     return user
@@ -53,6 +60,9 @@ def load_user(user_id):
 def unauthorized():
     logger.debug(f"Unauthorized access to path: {request.path}")
     logger.debug(f"Current user authenticated: {current_user.is_authenticated}")
+    logger.debug(f"Session data: {session}")
+    logger.debug(f"Request cookies: {request.cookies}")
+
     if request.path.startswith('/api/'):
         return jsonify({'error': 'Authentication required'}), 401
     return redirect(url_for('login', next=request.url))
@@ -72,6 +82,8 @@ app.register_blueprint(tickets)  # Register the tickets blueprint
 def api_active_users():
     """Get list of active users for the application"""
     logger.debug(f"Active users API called by user: {current_user.username if current_user.is_authenticated else 'Not authenticated'}")
+    logger.debug(f"Session data: {session}")
+    logger.debug(f"Request cookies: {request.cookies}")
 
     if not current_user.is_authenticated:
         logger.warning("Unauthenticated access to active_users API")

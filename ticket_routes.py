@@ -5,6 +5,7 @@ from models import db, Ticket, TicketCategory, TicketComment, TicketHistory, Use
 from datetime import datetime
 import pytz
 
+# Update Blueprint to use the correct template directory
 tickets = Blueprint('tickets', __name__)
 
 @tickets.route('/tickets/dashboard')
@@ -162,7 +163,7 @@ def manage_categories():
     if not current_user.is_admin:
         flash('Access denied. Admin privileges required.', 'error')
         return redirect(url_for('tickets.tickets_dashboard'))
-    
+
     form = TicketCategoryForm()
     if form.validate_on_submit():
         category = TicketCategory(
@@ -175,7 +176,7 @@ def manage_categories():
         db.session.commit()
         flash('Category added successfully', 'success')
         return redirect(url_for('tickets.manage_categories'))
-    
+
     categories = TicketCategory.query.order_by(TicketCategory.name).all()
     return render_template('tickets/manage_categories.html', 
                          categories=categories,

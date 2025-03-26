@@ -1,12 +1,12 @@
 import os
 import logging
-from datetime import timedelta # Added import for timedelta
+from datetime import timedelta
 from flask import Flask, jsonify, redirect, url_for, request, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, current_user
 from sqlalchemy.orm import DeclarativeBase
 import pytz
-from flask_wtf.csrf import CSRFProtect  # Add CSRF protection
+from flask_wtf.csrf import CSRFProtect
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -17,13 +17,13 @@ class Base(DeclarativeBase):
 
 db = SQLAlchemy(model_class=Base)
 login_manager = LoginManager()
-csrf = CSRFProtect()  # Create CSRF protection instance
+csrf = CSRFProtect()
 
 # Create the app
 app = Flask(__name__)
 
 # Configuration
-app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "dev_key_only_for_development"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "a secret key"
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
@@ -34,15 +34,17 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_PATH'] = '/'
 
 # Set default timezone
-app.config['TIMEZONE'] = pytz.timezone('UTC')  # Default to UTC
+app.config['TIMEZONE'] = pytz.timezone('UTC')
 
 # Initialize extensions
 db.init_app(app)
 login_manager.init_app(app)
-csrf.init_app(app)  # Initialize CSRF protection
-login_manager.login_view = 'login'  # Set to main route
+csrf.init_app(app)
+login_manager.login_view = 'login'
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.login_message_category = 'info'
 
@@ -51,6 +53,7 @@ def load_user(user_id):
     from models import User
     logger.debug(f"Loading user with ID: {user_id}")
     logger.debug(f"Current session data: {session}")
+    logger.debug(f"Request cookies: {request.cookies}")
     user = User.query.get(int(user_id))
     logger.debug(f"User loaded: {user.username if user else None}")
     return user
@@ -68,13 +71,13 @@ def unauthorized():
     return redirect(url_for('login', next=request.url))
 
 with app.app_context():
-    from models import User, Schedule, Ticket, TicketCategory
+    import models
     db.create_all()
 
 # Import and register blueprints
 from routes import *
-from ticket_routes import tickets  # Import the tickets blueprint
-app.register_blueprint(tickets)  # Register the tickets blueprint
+from ticket_routes import tickets
+app.register_blueprint(tickets)
 
 # API Routes
 @app.route('/api/active_users')
@@ -94,8 +97,8 @@ def api_active_users():
         logger.debug(f"Found {len(users)} active users")
         return jsonify([{
             'id': user.id,
-            'username': user.username,
-            'color': user.color
+            'username': user.username if user.username else 'Unknown',
+            'color': user.color if user.color else '#3498db'
         } for user in users])
     except Exception as e:
         logger.error(f"Error in active_users API: {str(e)}")

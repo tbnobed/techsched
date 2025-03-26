@@ -62,23 +62,34 @@ def create_ticket():
     # Populate technician choices for admin users
     if current_user.is_admin:
         form.assigned_to.choices = [(u.id, u.username) for u in User.query.all()]
-    
+
     if form.validate_on_submit():
-        ticket = Ticket(
-            title=form.title.data,
-            description=form.description.data,
-            category_id=form.category_id.data,
-            priority=form.priority.data,
-            created_by=current_user.id,
-            assigned_to=form.assigned_to.data if current_user.is_admin else None,
-            due_date=form.due_date.data
-        )
-        db.session.add(ticket)
-        ticket.log_history(current_user, "created")
-        db.session.commit()
-        flash('Ticket created successfully', 'success')
-        return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
-    
+        try:
+            # Create ticket first
+            ticket = Ticket(
+                title=form.title.data,
+                description=form.description.data,
+                category_id=form.category_id.data,
+                priority=form.priority.data,
+                created_by=current_user.id,
+                assigned_to=form.assigned_to.data if current_user.is_admin else None,
+                due_date=form.due_date.data
+            )
+            # Add and commit to get ticket ID
+            db.session.add(ticket)
+            db.session.commit()
+
+            # Now log history with valid ticket ID
+            ticket.log_history(current_user, "created")
+            db.session.commit()
+
+            flash('Ticket created successfully', 'success')
+            return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Error creating ticket: {str(e)}")
+            flash('Error creating ticket. Please try again.', 'error')
+
     return render_template('tickets/create.html', form=form)
 
 @tickets.route('/tickets/<int:ticket_id>')

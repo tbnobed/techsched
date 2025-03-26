@@ -40,6 +40,8 @@ def login():
         app.logger.debug(f"Login form submitted for email: {form.email.data}")
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
+            # Set session to be permanent (7 days)
+            session.permanent = True
             login_user(user, remember=form.remember_me.data)
             app.logger.info(f"User {user.username} logged in successfully")
             app.logger.debug(f"Session after login: {session}")
@@ -768,7 +770,7 @@ def export_schedules():
                         ws.cell(row=row, column=4).value = end_time.strftime('%-I:%M %p')
                         ws.cell(row=row, column=5).value = f"{hours}:00"
                         ws.cell(row=row, column=6).value = entry_type
-                        ws.cell(row=row, column=7).value = " | ".join(notes) if notes else ""
+                        ws.cell(row=row,column=7).value = " | ".join(notes) if notes else ""
                         row += 1
                 else:
                     # Write empty row for days with no schedule

@@ -169,7 +169,11 @@ class Ticket(db.Model):
         db.session.add(comment)
         return comment
 
-    def log_history(self, user: User, action: str, details: str = None):
+    def log_history(self, user: User, action: str, details: str = None) -> 'TicketHistory':
+        """Log an action in the ticket's history"""
+        if not self.id:
+            raise ValueError("Cannot log history for ticket with no ID")
+
         history = TicketHistory(
             ticket_id=self.id,
             user_id=user.id,

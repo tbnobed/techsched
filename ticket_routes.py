@@ -202,6 +202,52 @@ def assign_ticket(ticket_id):
     db.session.commit()
     return jsonify({'message': 'Ticket assigned successfully'})
 
+@tickets.route('/tickets/<int:ticket_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_ticket(ticket_id):
+    """Edit an existing ticket"""
+    ticket = Ticket.query.get_or_404(ticket_id)
+
+    # Check if user has permission to edit
+    if not (current_user.is_admin or ticket.created_by == current_user.id):
+        flash('You do not have permission to edit this ticket', 'error')
+        return redirect(url_for('tickets.tickets_dashboard'))
+
+    form = TicketForm()
+
+    if form.validate_on_submit():
+        old_title = ticket.title
+        old_description = ticket.description
+        old_category_id = ticket.category_id
+        old_priority = ticket.priority
+
+        ticket.title = form.title.data
+        ticket.description = form.description.data
+        ticket.category_id = form.category_id.data
+        ticket.priority = form.priority.data
+        ticket.due_date = form.due_date.data
+
+        # Log changes in ticket history
+        changes = []
+        if old_title != ticket.title:
+            changes.append(f"Title changed from '{old_title}' to '{ticket.title}'")
+        if old_description != ticket.description:
+            changes.append("Description updated")
+        if old_category_id != ticket.category_id:
+            changes.append(f"Category changed")
+        if old_priority != ticket.priority:
+            changes.append(f"Priority changed from {old_priority} to {ticket.priority}")
+
+        if changes:
+            ticket.log_history(current_user, "edited", ", ".join(changes))
+            db.session.commit()
+            flash('Ticket updated successfully', 'success')
+
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
+
+    return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
+
+
 # Admin routes for managing ticket categories
 @tickets.route('/tickets/categories', methods=['GET', 'POST'])
 @login_required

@@ -63,9 +63,20 @@ def load_user(user_id):
     logger.debug(f"Loading user with ID: {user_id}")
     logger.debug(f"Current session data: {session}")
     logger.debug(f"Request cookies: {request.cookies}")
-    user = User.query.get(int(user_id))
-    logger.debug(f"User loaded: {user.username if user else None}")
-    return user
+    logger.debug(f"Request path: {request.path}")
+    logger.debug(f"Request headers: {request.headers}")
+
+    try:
+        user = User.query.get(int(user_id))
+        if user:
+            logger.debug(f"Successfully loaded user: {user.username}")
+            logger.debug(f"User data: id={user.id}, email={user.email}, is_admin={getattr(user, 'is_admin', False)}")
+        else:
+            logger.warning(f"No user found with ID: {user_id}")
+        return user
+    except Exception as e:
+        logger.error(f"Error loading user {user_id}: {str(e)}")
+        return None
 
 # Custom unauthorized handler
 @login_manager.unauthorized_handler

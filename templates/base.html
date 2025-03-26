@@ -248,24 +248,31 @@
     <script>
         function updateActiveUsers() {
             fetch('/api/active_users')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(users => {
                     const container = document.getElementById('active-users');
-                    if (users.length === 0) {
+                    if (!Array.isArray(users) || users.length === 0) {
                         container.innerHTML = '<p class="text-muted">No active technicians</p>';
                         return;
                     }
 
                     let html = '';
                     users.forEach(user => {
-                        html += `
-                            <div class="mb-3 p-2 border rounded" style="border-left: 4px solid ${user.color} !important">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-0">${user.username}</h6>
-                                </div>
-                            </div>`;
+                        if (user && user.username) {
+                            html += `
+                                <div class="mb-3 p-2 border rounded" style="border-left: 4px solid ${user.color || '#cccccc'} !important">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">${user.username}</h6>
+                                    </div>
+                                </div>`;
+                        }
                     });
-                    container.innerHTML = html;
+                    container.innerHTML = html || '<p class="text-muted">No active technicians</p>';
                     feather.replace();
                 })
                 .catch(error => {

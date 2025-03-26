@@ -1,6 +1,6 @@
-from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, make_response
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file, make_response
 from flask_login import login_required, current_user
-from app import app, db
+from app import db
 from models import User, Schedule, QuickLink, Location, EmailSettings
 from forms import (
     ScheduleForm, AdminUserForm, EditUserForm, 
@@ -8,24 +8,24 @@ from forms import (
 )
 from datetime import datetime, timedelta
 import pytz
-import json
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from io import BytesIO
+import json
 
-@app.route('/')
+# Create blueprint
+main = Blueprint('main', __name__)
+
+@main.route('/')
 def index():
     if current_user.is_authenticated:
         return redirect(url_for('tickets.tickets_dashboard'))
     return redirect(url_for('auth.login'))
 
-@app.route('/api/active_users')
+@main.route('/api/active_users')
 @login_required
 def get_active_users():
     """Get users who have schedules active at the current time"""
-    if not current_user.is_authenticated:
-        return jsonify({'error': 'Authentication required'}), 401
-
     try:
         # Get current time in UTC since our database stores times in UTC
         current_time = datetime.now(pytz.UTC)
@@ -44,19 +44,14 @@ def get_active_users():
             .all())
 
         # Convert times to user's timezone and format response
-        user_tz = current_user.get_timezone()
         result = []
         for user, schedule, location in active_users:
-            # Convert schedule times to user's timezone
-            start_time = schedule.start_time.astimezone(user_tz)
-            end_time = schedule.end_time.astimezone(user_tz)
-
             result.append({
                 'username': user.username,
                 'color': user.color,
                 'schedule': {
-                    'start_time': start_time.strftime('%H:%M'),
-                    'end_time': end_time.strftime('%H:%M'),
+                    'start_time': schedule.start_time.strftime('%H:%M'),
+                    'end_time': schedule.end_time.strftime('%H:%M'),
                     'description': schedule.description or ''
                 },
                 'location': {
@@ -67,76 +62,9 @@ def get_active_users():
 
         return jsonify(result)
     except Exception as e:
-        app.logger.error(f"Error in get_active_users: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/profile')
-@login_required
-def profile():
-    form = EditUserForm(obj=current_user)
-    password_form = ChangePasswordForm()
-    return render_template('profile.html', form=form, password_form=password_form)
-
-@app.route('/profile/update', methods=['POST'])
-@login_required
-def update_profile():
-    color = request.form.get('color')
-    if color:
-        try:
-            current_user.color = color
-            db.session.commit()
-            flash('Profile updated successfully!')
-        except Exception as e:
-            db.session.rollback()
-            app.logger.error(f"Error updating profile: {str(e)}")
-            flash('Error updating profile. Please try again.')
-    return redirect(url_for('profile'))
-
-@app.route('/profile/change-password', methods=['POST'])
-@login_required
-def change_password():
-    form = ChangePasswordForm()
-    if form.validate_on_submit():
-        if current_user.check_password(form.current_password.data):
-            current_user.set_password(form.new_password.data)
-            db.session.commit()
-            flash('Password updated successfully!')
-            return redirect(url_for('profile'))
-        flash('Current password is incorrect')
-    else:
-        for field, errors in form.errors.items():
-            for error in errors:
-                flash(f'{getattr(form, field).label.text}: {error}')
-    return redirect(url_for('profile'))
-
-
-@app.route('/admin/locations', methods=['GET', 'POST'])
-@login_required
-def admin_locations():
-    if not current_user.is_admin:
-        flash('Access denied.')
-        return redirect(url_for('calendar'))
-
-    form = LocationForm()
-    if form.validate_on_submit():
-        try:
-            location = Location(
-                name=form.name.data,
-                description=form.description.data,
-                active=form.active.data
-            )
-            db.session.add(location)
-            db.session.commit()
-            flash('Location added successfully!')
-        except Exception as e:
-            db.session.rollback()
-            app.logger.error(f"Error creating location: {str(e)}")
-            flash('Error creating location. Please try again.')
-
-    locations = Location.query.order_by(Location.name).all()
-    return render_template('admin/locations.html', locations=locations, form=form)
-
-@app.route('/calendar')
+@main.route('/calendar')
 @login_required
 def calendar():
     week_start = request.args.get('week_start')
@@ -202,7 +130,7 @@ def calendar():
                          datetime=datetime,
                          timedelta=timedelta)
 
-@app.route('/schedule/new', methods=['GET', 'POST'])
+@main.route('/schedule/new', methods=['GET', 'POST'])
 @login_required
 def new_schedule():
     form = ScheduleForm()
@@ -239,7 +167,7 @@ def new_schedule():
 
             if end_time_utc <= start_time_utc:
                 flash('End time must be after start time.')
-                return redirect(url_for('calendar'))
+                return redirect(url_for('main.calendar'))
 
             overlapping_query = Schedule.query.filter(
                 Schedule.technician_id == technician_id,
@@ -252,13 +180,13 @@ def new_schedule():
 
             if overlapping_schedules and not form.time_off.data:
                 flash('Schedule conflicts with existing appointments.')
-                return redirect(url_for('calendar'))
+                return redirect(url_for('main.calendar'))
 
             if schedule_id:
                 schedule = Schedule.query.get_or_404(schedule_id)
                 if schedule.technician_id != current_user.id and not current_user.is_admin:
                     flash('You do not have permission to edit this schedule.')
-                    return redirect(url_for('calendar'))
+                    return redirect(url_for('main.calendar'))
 
                 old_desc = schedule.description
                 schedule.start_time = start_time_utc
@@ -283,24 +211,24 @@ def new_schedule():
 
             db.session.commit()
             flash('Schedule updated successfully!' if schedule_id else 'Schedule created successfully!')
-            return redirect(url_for('calendar'))
+            return redirect(url_for('main.calendar'))
 
         except Exception as e:
             db.session.rollback()
             flash('Error saving schedule. Please check the time entries.')
             app.logger.error(f"Error saving schedule: {str(e)}")
-            return redirect(url_for('calendar'))
+            return redirect(url_for('main.calendar'))
 
-    return redirect(url_for('calendar'))
+    return redirect(url_for('main.calendar'))
 
-@app.route('/schedule/delete/<int:schedule_id>')
+@main.route('/schedule/delete/<int:schedule_id>')
 @login_required
 def delete_schedule(schedule_id):
     schedule = Schedule.query.get_or_404(schedule_id)
 
     if schedule.technician_id != current_user.id and not current_user.is_admin:
         flash('You do not have permission to delete this schedule.')
-        return redirect(url_for('calendar'))
+        return redirect(url_for('main.calendar'))
 
     try:
         send_schedule_notification(schedule, 'deleted', f"Schedule deleted by {current_user.username}")
@@ -312,24 +240,24 @@ def delete_schedule(schedule_id):
         flash('Error deleting schedule.')
         app.logger.error(f"Error deleting schedule: {str(e)}")
 
-    return redirect(url_for('calendar'))
+    return redirect(url_for('main.calendar'))
 
-@app.route('/schedule/copy_previous_week', methods=['POST'])
+@main.route('/schedule/copy_previous_week', methods=['POST'])
 @login_required
 def copy_previous_week_schedules():
     if not current_user.is_admin:
         flash('Access denied.')
-        return redirect(url_for('calendar'))
+        return redirect(url_for('main.calendar'))
 
     try:
         if not request.form.get('csrf_token') or not request.form.get('csrf_token') == request.form.get('csrf_token'):
             flash('Invalid request. Please try again.')
-            return redirect(url_for('calendar'))
+            return redirect(url_for('main.calendar'))
 
         target_week_start_str = request.form.get('target_week_start')
         if not target_week_start_str:
             flash('Invalid week start date.')
-            return redirect(url_for('calendar'))
+            return redirect(url_for('main.calendar'))
 
         user_tz = current_user.get_timezone()
 
@@ -356,7 +284,7 @@ def copy_previous_week_schedules():
 
         if not previous_schedules:
             flash('No schedules found in previous week to copy.')
-            return redirect(url_for('calendar'))
+            return redirect(url_for('main.calendar'))
 
         try:
             # Delete existing schedules in target week
@@ -391,9 +319,9 @@ def copy_previous_week_schedules():
         app.logger.error(f"Error in copy_previous_week_schedules: {str(e)}")
         flash('Error copying schedules from previous week.')
 
-    return redirect(url_for('calendar', week_start=target_week_start_str))
+    return redirect(url_for('main.calendar', week_start=target_week_start_str))
 
-@app.route('/update_timezone', methods=['POST'])
+@main.route('/update_timezone', methods=['POST'])
 @login_required
 def update_timezone():
     timezone = request.form.get('timezone')
@@ -403,157 +331,9 @@ def update_timezone():
         flash('Timezone updated successfully!')
     else:
         flash('Invalid timezone')
-    return redirect(request.referrer or url_for('calendar'))
+    return redirect(request.referrer or url_for('main.calendar'))
 
-@app.route('/admin/dashboard', methods=['GET', 'POST'])
-@login_required
-def admin_dashboard():
-    if not current_user.is_admin:
-        flash('Access denied.')
-        return redirect(url_for('calendar'))
-
-    users = User.query.all()
-    quick_links = QuickLink.query.order_by(QuickLink.order.asc()).all()
-    form = AdminUserForm()
-    edit_form = EditUserForm()
-    return render_template('admin/dashboard.html', 
-                         users=users, 
-                         form=form, 
-                         edit_form=edit_form,
-                         quick_links=quick_links)
-
-@app.route('/admin/create_user', methods=['POST'])
-@login_required
-def admin_create_user():
-    if not current_user.is_admin:
-        flash('Access denied.')
-        return redirect(url_for('calendar'))
-
-    form = AdminUserForm()
-    if form.validate_on_submit():
-        try:
-            # Check if user already exists
-            existing_user = User.query.filter_by(email=form.email.data).first()
-            if existing_user:
-                flash('Email already registered.')
-                return redirect(url_for('admin_dashboard'))
-
-            # Create new user
-            user = User(
-                username=form.username.data,
-                email=form.email.data,
-                color=form.color.data or '#3498db',  # Default color if none provided
-                is_admin=form.is_admin.data,
-                timezone=form.timezone.data or 'America/Los_Angeles'  # Default timezone
-            )
-            user.set_password(form.password.data)
-
-            # Log the creation attempt
-            app.logger.info(f"Creating new user with username: {user.username}, email: {user.email}")
-
-            db.session.add(user)
-            db.session.commit()
-            flash('User created successfully!')
-
-        except Exception as e:
-            db.session.rollback()
-            app.logger.error(f"Error creating user: {str(e)}")
-            flash('Error creating user. Please check the form and try again.')
-    else:
-        # Log form validation errors
-        for field, errors in form.errors.items():
-            for error in errors:
-                flash(f"{field}: {error}")
-                app.logger.error(f"Form validation error - {field}: {error}")
-
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/edit_user/<int:user_id>', methods=['GET', 'POST'])
-@login_required
-def admin_edit_user(user_id):
-    if not current_user.is_admin:
-        flash('Access denied.')
-        return redirect(url_for('calendar'))
-
-    user = User.query.get_or_404(user_id)
-    form = EditUserForm()
-
-    # Debug log for incoming request
-    app.logger.debug(f"Edit user request for user_id {user_id}")
-    app.logger.debug(f"Request method: {request.method}")
-    app.logger.debug(f"Form data: {request.form}")
-
-    if request.method == 'GET':
-        form.username.data = user.username
-        form.email.data = user.email
-        form.color.data = user.color
-        form.is_admin.data = user.is_admin
-        return render_template('admin/dashboard.html', 
-                            users=User.query.all(),
-                            form=AdminUserForm(),
-                            edit_form=form)
-
-    if request.method == 'POST':
-        # Get form data directly from request.form
-        username = request.form.get('username')
-        email = request.form.get('email')
-        color = request.form.get('color')
-        password = request.form.get('password')
-        is_admin = request.form.get('is_admin') == 'on'
-
-        app.logger.debug(f"Processed form data: username={username}, email={email}, color={color}, is_admin={is_admin}")
-
-        try:
-            # Update user fields
-            user.username = username
-            user.email = email
-            user.color = color
-            user.is_admin = is_admin
-
-            if password:
-                user.set_password(password)
-
-            # Commit changes and verify
-            db.session.commit()
-
-            # Verify the changes were saved
-            updated_user = User.query.get(user_id)
-            app.logger.debug(f"Updated user values: username={updated_user.username}, email={updated_user.email}, color={updated_user.color}, is_admin={updated_user.is_admin}")
-
-            flash('User updated successfully!')
-        except Exception as e:
-            db.session.rollback()
-            app.logger.error(f"Error updating user: {str(e)}")
-            flash('Error updating user. Please try again.')
-
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete_user/<int:user_id>')
-@login_required
-def admin_delete_user(user_id):
-    if not current_user.is_admin:
-        flash('Access denied.')
-        return redirect(url_for('calendar'))
-
-    if current_user.id == user_id:
-        flash('Cannot delete your own account.')
-        return redirect(url_for('admin_dashboard'))
-
-    user = User.query.get_or_404(user_id)
-    try:
-        # Delete associated schedules first
-        Schedule.query.filter_by(technician_id=user_id).delete()
-        db.session.delete(user)
-        db.session.commit()
-        flash('User and associated schedules deleted successfully!')
-    except Exception as e:
-        db.session.rollback()
-        flash('Error deleting user.')
-        app.logger.error(f"Error deleting user: {str(e)}")
-
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/personal_schedule')
+@main.route('/personal_schedule')
 @login_required
 def personal_schedule():
     week_start = request.args.get('week_start')
@@ -605,12 +385,12 @@ def personal_schedule():
                          timedelta=timedelta,
                          personal_view=True)
 
-@app.route('/admin/export_schedules')
+@main.route('/admin/export_schedules')
 @login_required
 def export_schedules():
     if not current_user.is_admin:
         flash('Access denied.')
-        return redirect(url_for('calendar'))
+        return redirect(url_for('main.calendar'))
 
     try:
         start_date = request.args.get('start_date')
@@ -618,7 +398,7 @@ def export_schedules():
 
         if not start_date or not end_date:
             flash('Please select both start and end dates.')
-            return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('main.admin_dashboard'))
 
         # Convert dates to UTC datetime objects
         start_datetime = pytz.timezone('America/Chicago').localize(
@@ -756,124 +536,9 @@ def export_schedules():
     except Exception as e:
         app.logger.error(f"Error exporting schedules: {str(e)}")
         flash('Error exporting schedules. Please try again.')
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('main.admin_dashboard'))
 
-@app.route('/admin/quick_links')
-@login_required
-def admin_quick_links():
-    if not current_user.is_admin:
-        flash('Access denied.')
-        return redirect(url_for('calendar'))
-
-    form = QuickLinkForm()
-    quick_links = QuickLink.query.order_by(QuickLink.order.asc()).all()
-    return render_template('admin/quick_links.html', quick_links=quick_links, form=form)
-
-@app.route('/admin/quick_links/create', methods=['POST'])
-@login_required
-def admin_create_quick_link():
-    if not current_user.is_admin:  # Fix typo: currentuser -> current_user
-        flash('Access denied.')
-        return redirect(url_for('calendar'))
-
-    try:
-        # Create new quick link
-        link = QuickLink(
-            title=request.form.get('title'),
-            url=request.form.get('url'),
-            icon=request.form.get('icon', 'link'),
-            category=request.form.get('category'),
-            order=request.form.get('order', 0)
-        )
-
-        db.session.add(link)
-        db.session.commit()
-        flash('Quick link created successfully!')
-    except Exception as e:
-        db.session.rollback()
-        app.logger.error(f"Error creating quick link: {str(e)}")
-        flash('Error creating quick link. Please try again.')
-
-    return redirect(url_for('admin_quick_links'))
-
-@app.route('/admin/quick_links/edit/<int:link_id>', methods=['POST'])
-@login_required
-def admin_edit_quick_link(link_id):
-    if not current_user.is_admin:
-        flash('Access denied.')
-        return redirect(url_for('calendar'))
-
-    link = QuickLink.query.get_or_404(link_id)
-    try:
-        link.title = request.form.get('title')
-        link.url = request.form.get('url')
-        link.icon = request.form.get('icon')
-        link.category = request.form.get('category')
-        link.order = request.form.get('order', 0)
-
-        db.session.commit()
-        flash('Quick link updated successfully!')
-    except Exception as e:
-        db.session.rollback()
-        app.logger.error(f"Error updating quick link: {str(e)}")
-        flash('Error updating quick link. Please try again.')
-
-    return redirect(url_for('admin_quick_links'))
-
-@app.route('/admin/quick_links/delete/<int:link_id>')
-@login_required
-def admin_delete_quick_link(link_id):
-    if not current_user.is_admin:
-        flash('Access denied.')
-        return redirect(url_for('calendar'))
-
-    link = QuickLink.query.get_or_404(link_id)
-    try:
-        db.session.delete(link)
-        db.session.commit()
-        flash('Quick link deleted successfully!')
-    except Exception as e:
-        db.session.rollback()
-        app.logger.error(f"Error deleting quick link: {str(e)}")
-        flash('Error deleting quick link.')
-
-    return redirect(url_for('admin_quick_links'))
-
-@app.route('/admin/quick_links/reorder', methods=['POST'])
-@login_required
-def admin_reorder_quick_links():
-    if not current_user.is_admin:
-        return jsonify({'success': False, 'message': 'Access denied'}), 403
-
-    try:
-        new_order = request.json
-        # First, get all links and set a high order number to avoid conflicts
-        links = QuickLink.query.all()
-        for link in links:
-            link.order = 10000 + link.order
-
-        db.session.commit()
-
-        # Then update with new order
-        for item in new_order:
-            link = QuickLink.query.get(item['id'])
-            if link:
-                link.order = int(item['order'])
-
-        db.session.commit()
-        return jsonify({'success': True})
-    except Exception as e:
-        db.session.rollback()
-        app.logger.error(f"Error reordering quick links: {str(e)}")
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-@app.context_processor
-def inject_quick_links():
-    def get_quick_links():
-        return QuickLink.query.order_by(QuickLink.order.asc(), QuickLink.category).all()
-    return dict(get_quick_links=get_quick_links)
-
-@app.route('/api/upcoming_time_off')
+@main.route('/api/upcoming_time_off')
 @login_required
 def get_upcoming_time_off():
     """Get time off entries for the next 2 weeks"""
@@ -949,20 +614,20 @@ def get_upcoming_time_off():
         app.logger.error(f"Error in get_upcoming_time_off: {str(e)}")
         return jsonify([])
 
-@app.route('/admin/backup')
+@main.route('/admin/backup')
 @login_required
 def admin_backup():
     if not current_user.is_admin:
         flash('Access denied.')
-        return redirect(url_for('calendar'))
+        return redirect(url_for('main.calendar'))
     return render_template('admin/backup.html')
 
-@app.route('/admin/backup/download')
+@main.route('/admin/backup/download')
 @login_required
 def download_backup():
     if not current_user.is_admin:
         flash('Access denied.')
-        return redirect(url_for('calendar'))
+        return redirect(url_for('main.calendar'))
 
     try:
         # Collect all data with complete reference information
@@ -987,23 +652,23 @@ def download_backup():
     except Exception as e:
         app.logger.error(f"Error creating backup: {str(e)}")
         flash('Error creating backup')
-        return redirect(url_for('admin_backup'))
+        return redirect(url_for('main.admin_backup'))
 
-@app.route('/admin/restore', methods=['POST'])
+@main.route('/admin/restore', methods=['POST'])
 @login_required
 def restore_backup():
     if not current_user.is_admin:
         flash('Access denied.')
-        return redirect(url_for('calendar'))
+        return redirect(url_for('main.calendar'))
 
     if 'backup_file' not in request.files:
         flash('No file uploaded')
-        return redirect(url_for('admin_backup'))
+        return redirect(url_for('main.admin_backup'))
 
     file = request.files['backup_file']
     if not file.filename:
         flash('No file selected')
-        return redirect(url_for('admin_backup'))
+        return redirect(url_for('main.admin_backup'))
 
     try:
         backup_data = json.loads(file.read().decode('utf-8'))
@@ -1201,14 +866,14 @@ def restore_backup():
         flash('Error restoring backup')
         app.logger.error(f"Unexpected error in restore_backup: {str(e)}")
 
-    return redirect(url_for('admin_backup'))
+    return redirect(url_for('main.admin_backup'))
 
-@app.route('/admin/locations/edit/<int:location_id>', methods=['POST'])
+@main.route('/admin/locations/edit/<int:location_id>', methods=['POST'])
 @login_required
 def admin_edit_location(location_id):
     if not current_user.is_admin:
         flash('Access denied.')
-        return redirect(url_for('calendar'))
+        return redirect(url_for('main.calendar'))
 
     location = Location.query.get_or_404(location_id)
     try:
@@ -1221,7 +886,7 @@ def admin_edit_location(location_id):
         # Validate required fields
         if not name:
             flash('Location name is required.')
-            return redirect(url_for('admin_locations'))
+            return redirect(url_for('main.admin_locations'))
 
         # Track if status changed
         status_changed = location.active != active
@@ -1245,21 +910,21 @@ def admin_edit_location(location_id):
         app.logger.error(f"Error updating location: {str(e)}")
         flash('Error updating location. Please try again.')
 
-    return redirect(url_for('admin_locations'))
+    return redirect(url_for('main.admin_locations'))
 
-@app.route('/admin/locations/delete/<int:location_id>')
+@main.route('/admin/locations/delete/<int:location_id>')
 @login_required
 def admin_delete_location(location_id):
     if not current_user.is_admin:
         flash('Access denied.')
-        return redirect(url_for('calendar'))
+        return redirect(url_for('main.calendar'))
 
     location = Location.query.get_or_404(location_id)
 
     # Check if location is being used in any schedules
     if location.schedules:
         flash('Cannot delete location that has associated schedules.')
-        return redirect(url_for('admin_locations'))
+        return redirect(url_for('main.admin_locations'))
 
     try:
         db.session.delete(location)
@@ -1270,13 +935,13 @@ def admin_delete_location(location_id):
         app.logger.error(f"Error deleting location: {str(e)}")
         flash('Error deleting location. Please try again.')
 
-    return redirect(url_for('admin_locations'))
-@app.route('/admin/email-settings', methods=['GET', 'POST'])
+    return redirect(url_for('main.admin_locations'))
+@main.route('/admin/email-settings', methods=['GET', 'POST'])
 @login_required
 def admin_email_settings():
     if not current_user.is_admin:
         flash('Access denied.')
-        return redirect(url_for('calendar'))
+        return redirect(url_for('main.calendar'))
 
     settings = EmailSettings.query.first()
     if not settings:
@@ -1300,3 +965,199 @@ def admin_email_settings():
             flash('Error updating email settings.')
 
     return render_template('admin/email_settings.html', form=form)
+
+@main.route('/admin/quick_links')
+@login_required
+def admin_quick_links():
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('main.calendar'))
+
+    form = QuickLinkForm()
+    quick_links = QuickLink.query.order_by(QuickLink.order.asc()).all()
+    return render_template('admin/quick_links.html', quick_links=quick_links, form=form)
+
+@main.route('/admin/quick_links/create', methods=['POST'])
+@login_required
+def admin_create_quick_link():
+    if not current_user.is_admin:  # Fix typo: currentuser -> current_user
+        flash('Access denied.')
+        return redirect(url_for('main.calendar'))
+
+    try:
+        # Create new quick link
+        link = QuickLink(
+            title=request.form.get('title'),
+            url=request.form.get('url'),
+            icon=request.form.get('icon', 'link'),
+            category=request.form.get('category'),
+            order=request.form.get('order', 0)
+        )
+
+        db.session.add(link)
+        db.session.commit()
+        flash('Quick link created successfully!')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error creating quick link: {str(e)}")
+        flash('Error creating quick link. Please try again.')
+
+    return redirect(url_for('main.admin_quick_links'))
+
+@main.route('/admin/quick_links/edit/<int:link_id>', methods=['POST'])
+@login_required
+def admin_edit_quick_link(link_id):
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('main.calendar'))
+
+    link = QuickLink.query.get_or_404(link_id)
+    try:
+        link.title = request.form.get('title')
+        link.url = request.form.get('url')
+        link.icon = request.form.get('icon')
+        link.category = request.form.get('category')
+        link.order = request.form.get('order', 0)
+
+        db.session.commit()
+        flash('Quick link updated successfully!')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error updating quick link: {str(e)}")
+        flash('Error updating quick link. Please try again.')
+
+    return redirect(url_for('main.admin_quick_links'))
+
+@main.route('/admin/quick_links/delete/<int:link_id>')
+@login_required
+def admin_delete_quick_link(link_id):
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('main.calendar'))
+
+    link = QuickLink.query.get_or_404(link_id)
+    try:
+        db.session.delete(link)
+        db.session.commit()
+        flash('Quick link deleted successfully!')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error deleting quick link: {str(e)}")
+        flash('Error deleting quick link.')
+
+    return redirect(url_for('main.admin_quick_links'))
+
+@main.route('/admin/quick_links/reorder', methods=['POST'])
+@login_required
+def admin_reorder_quick_links():
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+
+    try:
+        new_order = request.json
+        # First, get all links and set a high order number to avoid conflicts
+        links = QuickLink.query.all()
+        for link in links:
+            link.order = 10000 + link.order
+
+        db.session.commit()
+
+        # Then update with new order
+        for item in new_order:
+            link = QuickLink.query.get(item['id'])
+            if link:
+                link.order = int(item['order'])
+
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error reordering quick links: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@main.context_processor
+def inject_quick_links():
+    def get_quick_links():
+        return QuickLink.query.order_by(QuickLink.order.asc(), QuickLink.category).all()
+    return dict(get_quick_links=get_quick_links)
+
+@main.route('/admin/dashboard', methods=['GET', 'POST'])
+@login_required
+def admin_dashboard():
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('main.calendar'))
+
+    users = User.query.all()
+    quick_links = QuickLink.query.order_by(QuickLink.order.asc()).all()
+    form = AdminUserForm()
+    edit_form = EditUserForm()
+    return render_template('admin/dashboard.html', 
+                         users=users, 
+                         form=form, 
+                         edit_form=edit_form,
+                         quick_links=quick_links)
+
+@main.route('/admin/locations', methods=['GET', 'POST'])
+@login_required
+def admin_locations():
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('main.calendar'))
+
+    form = LocationForm()
+    if form.validate_on_submit():
+        try:
+            location = Location(
+                name=form.name.data,
+                description=form.description.data,
+                active=form.active.data
+            )
+            db.session.add(location)
+            db.session.commit()
+            flash('Location added successfully!')
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Error creating location: {str(e)}")
+            flash('Error creating location. Please try again.')
+
+    locations = Location.query.order_by(Location.name).all()
+    return render_template('admin/locations.html', locations=locations, form=form)
+
+@main.route('/profile')
+@login_required
+def profile():
+    form = EditUserForm(obj=current_user)
+    password_form = ChangePasswordForm()
+    return render_template('profile.html', form=form, password_form=password_form)
+
+@main.route('/profile/update', methods=['POST'])
+@login_required
+def update_profile():
+    color = request.form.get('color')
+    if color:
+        try:
+            current_user.color = color
+            db.session.commit()
+            flash('Profile updated successfully!')
+        except Exception as e:
+            db.session.rollback()
+            flash('Error updating profile. Please try again.')
+    return redirect(url_for('main.profile'))
+
+@main.route('/profile/change-password', methods=['POST'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if current_user.check_password(form.current_password.data):
+            current_user.set_password(form.new_password.data)
+            db.session.commit()
+            flash('Password updated successfully!')
+            return redirect(url_for('main.profile'))
+        flash('Current password is incorrect')
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f'{getattr(form, field).label.text}: {error}')
+    return redirect(url_for('main.profile'))

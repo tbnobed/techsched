@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from sqlalchemy.orm import DeclarativeBase
@@ -52,6 +52,13 @@ with app.app_context():
     # Register blueprints
     from auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint)
+
+    from ticket_routes import tickets as tickets_blueprint
+    app.register_blueprint(tickets_blueprint)
+
+    # Register main routes blueprint
+    from routes import main as main_blueprint
+    app.register_blueprint(main_blueprint)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

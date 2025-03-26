@@ -4,6 +4,7 @@ from forms import TicketForm, TicketCommentForm, TicketCategoryForm
 from models import db, Ticket, TicketCategory, TicketComment, TicketHistory, User, TicketStatus
 from datetime import datetime
 import pytz
+from app import app  # Import app for logging
 
 # Update Blueprint to use the correct template directory
 tickets = Blueprint('tickets', __name__)
@@ -57,15 +58,20 @@ def tickets_dashboard():
 def create_ticket():
     """Create a new ticket"""
     form = TicketForm()
+
     # Populate category choices
     form.category_id.choices = [(c.id, c.name) for c in TicketCategory.query.all()]
+
     # Populate technician choices for admin users
     if current_user.is_admin:
         form.assigned_to.choices = [(u.id, u.username) for u in User.query.all()]
 
     if form.validate_on_submit():
         try:
-            # Create ticket first
+            # Start a transaction
+            app.logger.debug("Starting ticket creation transaction")
+
+            # Create the ticket first
             ticket = Ticket(
                 title=form.title.data,
                 description=form.description.data,
@@ -75,20 +81,50 @@ def create_ticket():
                 assigned_to=form.assigned_to.data if current_user.is_admin else None,
                 due_date=form.due_date.data
             )
-            # Add and commit to get ticket ID
-            db.session.add(ticket)
-            db.session.commit()
 
-            # Now log history with valid ticket ID
-            ticket.log_history(current_user, "created")
+            # Add ticket to session
+            db.session.add(ticket)
+            db.session.flush()  # This assigns the ID but doesn't commit
+
+            app.logger.debug(f"Created ticket with ID: {ticket.id}")
+
+            if not ticket.id:
+                raise ValueError("Failed to generate ticket ID")
+
+            # Create history entry
+            history = TicketHistory(
+                ticket_id=ticket.id,
+                user_id=current_user.id,
+                action="created",
+                details="Ticket created",
+                created_at=datetime.now(pytz.UTC)
+            )
+
+            # Add history to session
+            db.session.add(history)
+
+            # Verify both objects are valid before committing
+            if not history.ticket_id or not history.user_id:
+                raise ValueError("Invalid history entry data")
+
+            # Commit both changes
             db.session.commit()
+            app.logger.info(f"Successfully created ticket {ticket.id} with history entry")
 
             flash('Ticket created successfully', 'success')
             return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
+
+        except ValueError as ve:
+            db.session.rollback()
+            app.logger.error(f"Validation error in ticket creation: {str(ve)}")
+            flash('Error validating ticket data. Please try again.', 'error')
+            return render_template('tickets/create.html', form=form)
+
         except Exception as e:
             db.session.rollback()
             app.logger.error(f"Error creating ticket: {str(e)}")
             flash('Error creating ticket. Please try again.', 'error')
+            return render_template('tickets/create.html', form=form)
 
     return render_template('tickets/create.html', form=form)
 

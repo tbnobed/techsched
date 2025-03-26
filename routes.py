@@ -33,7 +33,7 @@ def login():
     if current_user.is_authenticated:
         app.logger.debug(f"Already authenticated user: {current_user.username}")
         app.logger.debug(f"Current session: {session}")
-        return redirect(url_for('calendar'))
+        return redirect(url_for('tickets.tickets_dashboard'))
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -41,11 +41,12 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
+            session.permanent = True  # Make the session persistent
             app.logger.info(f"User {user.username} logged in successfully")
             app.logger.debug(f"Session after login: {session}")
             next_page = request.args.get('next')
-            app.logger.debug(f"Redirecting to: {next_page if next_page else 'calendar'}")
-            return redirect(next_page if next_page else url_for('calendar'))
+            app.logger.debug(f"Redirecting to: {next_page if next_page else 'tickets.tickets_dashboard'}")
+            return redirect(next_page if next_page else url_for('tickets.tickets_dashboard'))
         app.logger.warning(f"Failed login attempt for email: {form.email.data}")
         flash('Invalid email or password')
     return render_template('login.html', form=form)

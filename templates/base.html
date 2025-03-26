@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>PostSupport Scheduler</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.css" rel="stylesheet">
@@ -28,7 +27,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.calendar') }}">PostSupport Scheduler</a>
+            <a class="navbar-brand" href="{{ url_for('calendar') }}">PostSupport Scheduler</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -36,10 +35,10 @@
                 <ul class="navbar-nav me-auto">
                     {% if current_user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.calendar') }}">All Schedules</a>
+                            <a class="nav-link" href="{{ url_for('calendar') }}">All Schedules</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.personal_schedule') }}">My Schedule</a>
+                            <a class="nav-link" href="{{ url_for('personal_schedule') }}">My Schedule</a>
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="ticketDropdown" role="button" data-bs-toggle="dropdown">
@@ -77,22 +76,22 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <a class="dropdown-item" href="{{ url_for('main.admin_dashboard') }}">
+                                    <a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">
                                         <i data-feather="users"></i> User Management
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="{{ url_for('main.admin_locations') }}">
+                                    <a class="dropdown-item" href="{{ url_for('admin_locations') }}">
                                         <i data-feather="map-pin"></i> Manage Locations
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="{{ url_for('main.admin_quick_links') }}">
+                                    <a class="dropdown-item" href="{{ url_for('admin_quick_links') }}">
                                         <i data-feather="link"></i> Manage Quick Links
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="{{ url_for('main.admin_backup') }}">
+                                    <a class="dropdown-item" href="{{ url_for('admin_backup') }}">
                                         <i data-feather="database"></i> Backup & Restore
                                     </a>
                                 </li>
@@ -105,12 +104,12 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <a class="dropdown-item" href="{{ url_for('main.profile') }}">
+                                    <a class="dropdown-item" href="{{ url_for('profile') }}">
                                         <i data-feather="settings"></i> Profile Settings
                                     </a>
                                 </li>
                                 <li>
-                                    <form method="POST" action="{{ url_for('main.update_timezone') }}" class="px-3 py-2">
+                                    <form method="POST" action="{{ url_for('update_timezone') }}" class="px-3 py-2">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <div class="mb-2">
                                             <label class="form-label">Timezone</label>
@@ -122,15 +121,15 @@
                                     </form>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
                             </ul>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+                            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('auth.register') }}">Register</a>
+                            <a class="nav-link" href="{{ url_for('register') }}">Register</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -159,7 +158,19 @@
                     </div>
                 </div>
 
-                <!-- Quick Links -->
+                <!-- Upcoming Time Off Panel -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Upcoming Time Off</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="upcoming-time-off">
+                            Loading time off entries...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Quick Links -->
                 <div class="card mt-3">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Quick Links</h5>
@@ -199,7 +210,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
     <script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
     <script>
         // Initialize Feather icons
@@ -236,48 +246,45 @@
         });
     </script>
     <script>
-        // Use our API utilities for active users
-        async function updateActiveUsers() {
-            try {
-                const users = await window.api.getActiveUsers();
-                const container = document.getElementById('active-users');
+        function updateActiveUsers() {
+            fetch('/api/active_users')
+                .then(response => response.json())
+                .then(users => {
+                    const container = document.getElementById('active-users');
+                    if (users.length === 0) {
+                        container.innerHTML = '<p class="text-muted">No active technicians</p>';
+                        return;
+                    }
 
-                if (users.length === 0) {
-                    container.innerHTML = '<p class="text-muted">No active technicians</p>';
-                    return;
-                }
-
-                let html = '';
-                users.forEach(user => {
-                    html += `
-                        <div class="mb-3 p-2 border rounded" style="border-left: 4px solid ${user.color} !important">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="mb-0">${user.username}</h6>
-                                <span class="badge bg-secondary">${user.schedule?.start_time || ''} - ${user.schedule?.end_time || ''}</span>
-                            </div>
-                            <div class="small">
-                                ${user.location ? `
+                    let html = '';
+                    users.forEach(user => {
+                        html += `
+                            <div class="mb-3 p-2 border rounded" style="border-left: 4px solid ${user.color} !important">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">${user.username}</h6>
+                                    <span class="badge bg-secondary">${user.schedule.start_time} - ${user.schedule.end_time}</span>
+                                </div>
+                                <div class="small">
                                     <div class="mb-1">
                                         <i data-feather="map-pin" class="feather-sm me-1"></i>
                                         ${user.location.name}
                                     </div>
-                                ` : ''}
-                                ${user.schedule?.description ? `
-                                    <div class="text-muted">
-                                        <i data-feather="info" class="feather-sm me-1"></i>
-                                        ${user.schedule.description}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>`;
+                                    ${user.schedule.description ? 
+                                        `<div class="text-muted">
+                                            <i data-feather="info" class="feather-sm me-1"></i>
+                                            ${user.schedule.description}
+                                        </div>` : ''}
+                                </div>
+                            </div>`;
+                    });
+                    container.innerHTML = html;
+                    feather.replace();
+                })
+                .catch(error => {
+                    console.error('Error fetching active users:', error);
+                    document.getElementById('active-users').innerHTML = 
+                        '<p class="text-danger">Error loading active users</p>';
                 });
-                container.innerHTML = html;
-                feather.replace();
-            } catch (error) {
-                console.error('Error fetching active users:', error);
-                document.getElementById('active-users').innerHTML = 
-                    '<p class="text-danger">Error loading active users</p>';
-            }
         }
 
         // Update active users immediately and every minute

@@ -13,6 +13,7 @@ def tickets_dashboard():
     """Display all tickets with filtering options"""
     status_filter = request.args.get('status', 'all')
     category_filter = request.args.get('category', 'all')
+    priority_filter = request.args.get('priority', 'all')
 
     # Base query
     query = Ticket.query
@@ -22,6 +23,8 @@ def tickets_dashboard():
         query = query.filter(Ticket.status == status_filter)
     if category_filter != 'all':
         query = query.filter(Ticket.category_id == category_filter)
+    if priority_filter != 'all':
+        query = query.filter(Ticket.priority == int(priority_filter))
 
     # Different views based on user role
     if current_user.is_admin:
@@ -34,9 +37,14 @@ def tickets_dashboard():
         ).order_by(Ticket.created_at.desc()).all()
 
     categories = TicketCategory.query.all()
-    # Convert TicketStatus class attributes to a list of status values
-    ticket_statuses = [status for status in vars(TicketStatus).values() 
-                      if isinstance(status, str) and not status.startswith('_')]
+    # Get all valid ticket statuses
+    ticket_statuses = [
+        TicketStatus.OPEN,
+        TicketStatus.IN_PROGRESS,
+        TicketStatus.PENDING,
+        TicketStatus.RESOLVED,
+        TicketStatus.CLOSED
+    ]
 
     return render_template('tickets/dashboard.html', 
                          tickets=tickets,

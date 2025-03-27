@@ -290,12 +290,16 @@ def update_status(ticket_id):
 @login_required
 def assign_ticket(ticket_id):
     """Assign ticket to a technician"""
-    if not current_user.is_admin:
-        flash('You do not have permission to assign tickets', 'error')
+    # Get the ticket first
+    ticket = Ticket.query.get_or_404(ticket_id)
+    
+    # Check if user has permission to assign this ticket
+    # Allow if user is admin or if they created the ticket
+    if not (current_user.is_admin or ticket.created_by == current_user.id):
+        flash('You do not have permission to assign this ticket', 'error')
         return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
     
     app.logger.info(f"Starting ticket assignment process for ticket #{ticket_id}")
-    ticket = Ticket.query.get_or_404(ticket_id)
     
     # Get the technician ID from the form - it's named 'assigned_to' in the template
     technician_id = request.form.get('assigned_to')

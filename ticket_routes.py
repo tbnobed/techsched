@@ -29,15 +29,8 @@ def tickets_dashboard():
     if priority_filter != 'all':
         query = query.filter(Ticket.priority == int(priority_filter))
 
-    # Different views based on user role
-    if current_user.is_admin:
-        tickets = query.order_by(Ticket.created_at.desc()).all()
-    else:
-        # Show tickets created by or assigned to the user
-        tickets = query.filter(
-            (Ticket.created_by == current_user.id) | 
-            (Ticket.assigned_to == current_user.id)
-        ).order_by(Ticket.created_at.desc()).all()
+    # Show all tickets for all users
+    tickets = query.order_by(Ticket.created_at.desc()).all()
 
     categories = TicketCategory.query.all()
     # Get all valid ticket statuses
@@ -159,12 +152,7 @@ def view_ticket(ticket_id):
     """View a specific ticket"""
     ticket = Ticket.query.get_or_404(ticket_id)
 
-    # Check if user has access to this ticket
-    if not (current_user.is_admin or 
-            ticket.created_by == current_user.id or 
-            ticket.assigned_to == current_user.id):
-        flash('You do not have permission to view this ticket', 'error')
-        return redirect(url_for('tickets.tickets_dashboard'))
+    # All users can view all tickets
 
     # Create forms for comments and editing
     comment_form = TicketCommentForm()

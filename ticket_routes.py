@@ -190,15 +190,16 @@ def add_comment(ticket_id):
         if ticket.assigned_to and ticket.assigned_to != current_user.id:
             try:
                 app.logger.debug(f"Sending comment notification for ticket #{ticket.id}")
-                # Ensure we're in the application context for URL generation
-                with app.app_context():
-                    send_ticket_comment_notification(
-                        ticket=ticket,
-                        comment=comment,
-                        commented_by=current_user
-                    )
+                # The email function will create an app context if needed
+                send_ticket_comment_notification(
+                    ticket=ticket,
+                    comment=comment,
+                    commented_by=current_user
+                )
             except Exception as e:
                 app.logger.error(f"Failed to send comment notification: {str(e)}")
+                import traceback
+                app.logger.error(f"Exception traceback: {traceback.format_exc()}")
         
         flash('Comment added successfully', 'success')
     
@@ -237,15 +238,14 @@ def update_status(ticket_id):
         try:
             app.logger.info(f"Sending status update notification for ticket #{ticket.id}")
             
-            # Ensure we're in the application context for URL generation
-            with app.app_context():
-                result = send_ticket_status_notification(
-                    ticket=ticket,
-                    old_status=old_status,
-                    new_status=new_status,
-                    updated_by=current_user,
-                    comment=comment if comment else None
-                )
+            # The email function will create an app context if needed
+            result = send_ticket_status_notification(
+                ticket=ticket,
+                old_status=old_status,
+                new_status=new_status,
+                updated_by=current_user,
+                comment=comment if comment else None
+            )
             
             app.logger.info(f"Status notification result: {result}")
             if not result:
@@ -255,6 +255,8 @@ def update_status(ticket_id):
                 
         except Exception as e:
             app.logger.error(f"Failed to send status update notification: {str(e)}")
+            import traceback
+            app.logger.error(f"Exception traceback: {traceback.format_exc()}")
     
     flash('Ticket status updated successfully', 'success')
     return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))

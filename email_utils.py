@@ -309,8 +309,25 @@ def send_ticket_comment_notification(
     """
     Send a notification when a comment is added to a ticket
     """
+    # Check if we're in an app context
+    from flask import has_app_context, current_app as app_or_none
+    app_context_created = False
+    
+    # Get access to the app object for logging
+    if has_app_context():
+        logger = current_app.logger
+        logger.info("==== Starting send_ticket_comment_notification (in existing app context) ====")
+    else:
+        # We need to import the app and create an app context
+        from app import app
+        logger = app.logger
+        logger.info("==== Starting send_ticket_comment_notification (creating new app context) ====")
+        ctx = app.app_context()
+        ctx.push()
+        app_context_created = True
+        
     try:
-        current_app.logger.debug(f"Starting comment notification for ticket #{ticket.id}")
+        logger.debug(f"Starting comment notification for ticket #{ticket.id}")
         
         # Get the assigned technician (if any)
         recipients = []
@@ -318,33 +335,32 @@ def send_ticket_comment_notification(
             technician = User.query.get(ticket.assigned_to)
             if technician and technician.email:
                 recipients.append(technician.email)
-                current_app.logger.debug(f"Added technician email to recipients: {technician.email}")
+                logger.debug(f"Added technician email to recipients: {technician.email}")
             else:
-                current_app.logger.warning(f"Could not find valid email for technician ID {ticket.assigned_to}")
+                logger.warning(f"Could not find valid email for technician ID {ticket.assigned_to}")
         
         # Skip if no recipients
         if not recipients:
-            current_app.logger.warning("No recipients for comment notification, skipping")
+            logger.warning("No recipients for comment notification, skipping")
             return False
             
         settings = get_email_settings()
-        current_app.logger.debug(f"Email settings: admin_email_group={settings.admin_email_group}")
+        logger.debug(f"Email settings: admin_email_group={settings.admin_email_group}")
             
         # Add admin email for monitoring
         if settings.admin_email_group not in recipients:
             recipients.append(settings.admin_email_group)
-            current_app.logger.debug(f"Added admin email to recipients: {settings.admin_email_group}")
+            logger.debug(f"Added admin email to recipients: {settings.admin_email_group}")
         
         # Build ticket URL - manually constructing because SERVER_NAME causes issues
         domain = current_app.config.get('EMAIL_DOMAIN', 'localhost:5000')
         scheme = current_app.config.get('PREFERRED_URL_SCHEME', 'http')
         
-        # Generate the URL path without _external=True to avoid SERVER_NAME issues
-        path = url_for('tickets.view_ticket', ticket_id=ticket.id)
-        ticket_url = f"{scheme}://{domain}{path}"
+        # Use a direct URL construction approach
+        ticket_url = f"{scheme}://{domain}/tickets/{ticket.id}"
         
-        current_app.logger.debug(f"Using domain: {domain} for email URLs")
-        current_app.logger.debug(f"Generated ticket URL: {ticket_url}")
+        logger.debug(f"Using domain: {domain} for email URLs")
+        logger.debug(f"Generated ticket URL: {ticket_url}")
         
         subject = f"New comment on Ticket #{ticket.id}"
         
@@ -371,14 +387,25 @@ def send_ticket_comment_notification(
         )
         
         if not success:
-            current_app.logger.warning(f"Failed to send email notification for ticket comment")
+            logger.warning(f"Failed to send email notification for ticket comment")
             return False
             
         return success
             
     except Exception as e:
-        current_app.logger.error(f"Error in send_ticket_comment_notification: {str(e)}")
+        if has_app_context():
+            current_app.logger.error(f"Error in send_ticket_comment_notification: {str(e)}")
+            # Print full exception traceback for debugging
+            import traceback
+            current_app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+        else:
+            print(f"Error in send_ticket_comment_notification: {str(e)}")
         return False
+    finally:
+        # Pop the app context if we created one
+        if app_context_created:
+            ctx.pop()
+            logger.info("Popped app context")
         
 def send_ticket_status_notification(
     ticket: Ticket,
@@ -390,8 +417,25 @@ def send_ticket_status_notification(
     """
     Send a notification when a ticket's status is updated
     """
+    # Check if we're in an app context
+    from flask import has_app_context, current_app as app_or_none
+    app_context_created = False
+    
+    # Get access to the app object for logging
+    if has_app_context():
+        logger = current_app.logger
+        logger.info("==== Starting send_ticket_status_notification (in existing app context) ====")
+    else:
+        # We need to import the app and create an app context
+        from app import app
+        logger = app.logger
+        logger.info("==== Starting send_ticket_status_notification (creating new app context) ====")
+        ctx = app.app_context()
+        ctx.push()
+        app_context_created = True
+    
     try:
-        current_app.logger.debug(f"Starting status notification for ticket #{ticket.id}: {old_status} -> {new_status}")
+        logger.debug(f"Starting status notification for ticket #{ticket.id}: {old_status} -> {new_status}")
         
         # Get the assigned technician (if any)
         recipients = []
@@ -399,33 +443,32 @@ def send_ticket_status_notification(
             technician = User.query.get(ticket.assigned_to)
             if technician and technician.email:
                 recipients.append(technician.email)
-                current_app.logger.debug(f"Added technician email to recipients: {technician.email}")
+                logger.debug(f"Added technician email to recipients: {technician.email}")
             else:
-                current_app.logger.warning(f"Could not find valid email for technician ID {ticket.assigned_to}")
+                logger.warning(f"Could not find valid email for technician ID {ticket.assigned_to}")
         
         # Skip if no recipients
         if not recipients:
-            current_app.logger.warning("No recipients for status notification, skipping")
+            logger.warning("No recipients for status notification, skipping")
             return False
             
         settings = get_email_settings()
-        current_app.logger.debug(f"Email settings: admin_email_group={settings.admin_email_group}")
+        logger.debug(f"Email settings: admin_email_group={settings.admin_email_group}")
             
         # Add admin email for monitoring
         if settings.admin_email_group not in recipients:
             recipients.append(settings.admin_email_group)
-            current_app.logger.debug(f"Added admin email to recipients: {settings.admin_email_group}")
+            logger.debug(f"Added admin email to recipients: {settings.admin_email_group}")
         
         # Build ticket URL - manually constructing because SERVER_NAME causes issues
         domain = current_app.config.get('EMAIL_DOMAIN', 'localhost:5000')
         scheme = current_app.config.get('PREFERRED_URL_SCHEME', 'http')
         
-        # Generate the URL path without _external=True to avoid SERVER_NAME issues
-        path = url_for('tickets.view_ticket', ticket_id=ticket.id)
-        ticket_url = f"{scheme}://{domain}{path}"
+        # Use a direct URL construction approach
+        ticket_url = f"{scheme}://{domain}/tickets/{ticket.id}"
         
-        current_app.logger.debug(f"Using domain: {domain} for email URLs")
-        current_app.logger.debug(f"Generated ticket URL: {ticket_url}")
+        logger.debug(f"Using domain: {domain} for email URLs")
+        logger.debug(f"Generated ticket URL: {ticket_url}")
         
         subject = f"Status changed on Ticket #{ticket.id}"
         
@@ -464,11 +507,22 @@ def send_ticket_status_notification(
         )
         
         if not success:
-            current_app.logger.warning(f"Failed to send email notification for ticket status change")
+            logger.warning(f"Failed to send email notification for ticket status change")
             return False
             
         return success
             
     except Exception as e:
-        current_app.logger.error(f"Error in send_ticket_status_notification: {str(e)}")
+        if has_app_context():
+            current_app.logger.error(f"Error in send_ticket_status_notification: {str(e)}")
+            # Print full exception traceback for debugging
+            import traceback
+            current_app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+        else:
+            print(f"Error in send_ticket_status_notification: {str(e)}")
         return False
+    finally:
+        # Pop the app context if we created one
+        if app_context_created:
+            ctx.pop()
+            logger.info("Popped app context")

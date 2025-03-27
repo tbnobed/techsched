@@ -298,12 +298,28 @@ def assign_ticket(ticket_id):
         try:
             app.logger.info(f"Sending assignment notification for ticket #{ticket.id}")
             
-            # Ensure we're in the application context for URL generation
-            with app.app_context():
-                result = send_ticket_assigned_notification(
-                    ticket=ticket,
-                    assigned_by=current_user
-                )
+            # Additional debug info
+            app.logger.info(f"Ticket assigned to user ID: {ticket.assigned_to}")
+            tech = User.query.get(ticket.assigned_to)
+            app.logger.info(f"Assigned technician: {tech.username}, Email: {tech.email}")
+            app.logger.info(f"Current user (assigner): {current_user.username}, Email: {current_user.email}")
+            
+            # Check email settings
+            from email_utils import get_email_settings
+            settings = get_email_settings()
+            app.logger.info(f"Email settings: Admin email = {settings.admin_email_group}")
+            
+            # Check if we're in an application context
+            from flask import has_app_context
+            app.logger.info(f"Before with clause: has_app_context = {has_app_context()}")
+            
+            # Instead of using nested app_context, use send_ticket_assigned_notification directly
+            app.logger.info("Calling send_ticket_assigned_notification directly")
+            from email_utils import send_ticket_assigned_notification
+            result = send_ticket_assigned_notification(
+                ticket=ticket,
+                assigned_by=current_user
+            )
             
             app.logger.info(f"Assignment notification result: {result}")
             if not result:
@@ -312,6 +328,9 @@ def assign_ticket(ticket_id):
                 app.logger.info("Ticket assignment notification sent successfully!")
         except Exception as e:
             app.logger.error(f"Failed to send assignment notification: {str(e)}")
+            # Print full exception traceback for debugging
+            import traceback
+            app.logger.error(f"Exception traceback: {traceback.format_exc()}")
     else:
         # Unassigning ticket
         ticket.assigned_to = None

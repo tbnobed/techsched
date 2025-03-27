@@ -27,46 +27,87 @@ def send_email(
     Send an email using SendGrid
     Returns True if successful, False otherwise
     """
+    current_app.logger.info("=== Starting email sending process ===")
     current_app.logger.info(f"Attempting to send email to {to_emails} with subject: {subject}")
     
     try:
+        # Get API key
         api_key = os.environ.get('SENDGRID_API_KEY')
         if not api_key:
-            current_app.logger.error("SendGrid API key is not set")
+            current_app.logger.error("ERROR: SendGrid API key is not set in environment variables")
             return False
         
         # Log first few characters of API key to confirm it's available (safely)
         key_preview = api_key[:4] + '...' if len(api_key) > 4 else '***'
         current_app.logger.info(f"Using SendGrid API key starting with: {key_preview}")
-
-        sg = SendGridAPIClient(api_key)
-        message = Mail(
-            from_email=from_email,
-            to_emails=to_emails,
-            subject=subject,
-            html_content=html_content
-        )
         
+        # Check that we have recipients
+        if not to_emails or len(to_emails) == 0:
+            current_app.logger.error("ERROR: No recipients specified for email")
+            return False
+            
+        current_app.logger.info(f"Recipients: {to_emails}")
+        current_app.logger.info(f"From: {from_email}")
+        current_app.logger.info(f"Subject: {subject}")
+        
+        # Create the email message
+        current_app.logger.info("Creating SendGrid Mail object")
+        try:
+            message = Mail(
+                from_email=from_email,
+                to_emails=to_emails,
+                subject=subject,
+                html_content=html_content
+            )
+            current_app.logger.info("Mail object created successfully")
+        except Exception as mail_error:
+            current_app.logger.error(f"Error creating Mail object: {str(mail_error)}")
+            return False
+
+        # Initialize SendGrid client
+        current_app.logger.info("Initializing SendGrid client")
+        try:
+            sg = SendGridAPIClient(api_key)
+            current_app.logger.info("SendGrid client initialized successfully")
+        except Exception as client_error:
+            current_app.logger.error(f"Error initializing SendGrid client: {str(client_error)}")
+            return False
+        
+        # Send the message
         current_app.logger.info(f"Sending email from {from_email} to {to_emails}")
-        response = sg.send(message)
-        success = response.status_code == 202
-
-        if success:
-            current_app.logger.info(f"Email sent successfully with status code {response.status_code}")
-        else:
-            current_app.logger.error(f"SendGrid error: Status code {response.status_code}")
-            current_app.logger.error(f"Response body: {response.body}")
-
-        return success
+        try:
+            response = sg.send(message)
+            current_app.logger.info(f"Got response with status code: {response.status_code}")
+            
+            # Check response status code
+            success = response.status_code == 202
+            if success:
+                current_app.logger.info(f"SUCCESS: Email sent successfully with status code {response.status_code}")
+            else:
+                current_app.logger.error(f"ERROR: SendGrid error with status code {response.status_code}")
+                current_app.logger.error(f"Response body: {response.body}")
+            
+            return success
+        except Exception as send_error:
+            current_app.logger.error(f"ERROR: Failed to send email: {str(send_error)}")
+            return False
+            
     except Exception as e:
         error_message = str(e)
-        current_app.logger.error(f"Exception while sending email: {error_message}")
+        current_app.logger.error(f"EXCEPTION during email sending: {error_message}")
         
         if "The from address does not match a verified Sender Identity" in error_message:
             current_app.logger.error(f"SendGrid error: Sender email '{from_email}' is not verified. Please verify this domain in your SendGrid account.")
         else:
             current_app.logger.error(f"SendGrid error: {error_message}")
+        
+        # Print full exception traceback for debugging
+        import traceback
+        current_app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+        
         return False
+    finally:
+        current_app.logger.info("=== Email sending process completed ===")
 
 def send_schedule_notification(
     schedule: Schedule,
@@ -133,42 +174,68 @@ def send_ticket_assigned_notification(
     """
     Send a notification when a ticket is assigned to a technician
     """
+    # Check if we're in an app context
+    from flask import has_app_context, current_app as app_or_none
+    app_context_created = False
+    
+    # Get access to the app object for logging
+    if has_app_context():
+        logger = current_app.logger
+        logger.info("==== Starting send_ticket_assigned_notification (in existing app context) ====")
+    else:
+        # We need to import the app and create an app context
+        from app import app
+        logger = app.logger
+        logger.info("==== Starting send_ticket_assigned_notification (creating new app context) ====")
+        ctx = app.app_context()
+        ctx.push()
+        app_context_created = True
+        
     try:
         # Make sure the ticket is assigned to someone
         if not ticket.assigned_to:
-            current_app.logger.warning("Cannot send notification: ticket is not assigned to anyone")
+            logger.warning("Cannot send notification: ticket is not assigned to anyone")
             return False
             
         # Get the assigned technician
+        logger.info(f"Looking up technician with ID {ticket.assigned_to}")
         technician = User.query.get(ticket.assigned_to)
-        if not technician or not technician.email:
-            current_app.logger.warning(f"Could not find email for technician ID {ticket.assigned_to}")
+        if not technician:
+            logger.warning(f"Could not find technician with ID {ticket.assigned_to}")
             return False
             
+        if not technician.email:
+            logger.warning(f"Technician {technician.username} has no email address")
+            return False
+            
+        logger.info(f"Found technician: {technician.username}, Email: {technician.email}")
+        
         settings = get_email_settings()
-        current_app.logger.debug(f"Email settings: admin_email_group={settings.admin_email_group}")
+        logger.info(f"Email settings: admin_email_group={settings.admin_email_group}")
         
         # Build recipient list - the assigned technician
         recipients = [technician.email]
-        current_app.logger.debug(f"Added technician email to recipients: {technician.email}")
+        logger.info(f"Added technician email to recipients: {technician.email}")
         
         # Add admin email for monitoring
         if settings.admin_email_group not in recipients:
             recipients.append(settings.admin_email_group)
-            current_app.logger.debug(f"Added admin email to recipients: {settings.admin_email_group}")
+            logger.info(f"Added admin email to recipients: {settings.admin_email_group}")
             
         # Build ticket URL - manually constructing because SERVER_NAME causes issues
         domain = current_app.config.get('EMAIL_DOMAIN', 'localhost:5000')
         scheme = current_app.config.get('PREFERRED_URL_SCHEME', 'http')
         
         # Generate the URL path without _external=True to avoid SERVER_NAME issues
-        path = url_for('tickets.view_ticket', ticket_id=ticket.id)
-        ticket_url = f"{scheme}://{domain}{path}"
+        logger.info(f"Generating URL for ticket ID: {ticket.id}")
         
-        current_app.logger.debug(f"Using domain: {domain} for email URLs")
-        current_app.logger.debug(f"Generated ticket URL: {ticket_url}")
+        # Use a direct URL construction approach
+        ticket_url = f"{scheme}://{domain}/tickets/{ticket.id}"
+        logger.info(f"Using domain: {domain} for email URLs")
+        logger.info(f"Generated ticket URL: {ticket_url}")
         
         subject = f"Ticket #{ticket.id} has been assigned to you"
+        logger.info(f"Email subject: {subject}")
         
         priority_labels = {
             0: 'Low',
@@ -176,6 +243,10 @@ def send_ticket_assigned_notification(
             2: 'High',
             3: 'Urgent'
         }
+        
+        # Log ticket details
+        logger.info(f"Ticket details - ID: {ticket.id}, Title: {ticket.title}, Priority: {priority_labels.get(ticket.priority, 'Unknown')}")
+        logger.info(f"Assigned by: {assigned_by.username}")
         
         html_content = f"""
         <h3>Ticket Assigned</h3>
@@ -195,21 +266,40 @@ def send_ticket_assigned_notification(
         </p>
         """
         
+        # Log number of recipients before sending
+        logger.info(f"About to send email to {len(recipients)} recipients: {recipients}")
+        
+        # Call send_email function with direct parameters (avoid URL generation inside)
+        logger.info("Calling send_email function...")
         success = send_email(
             to_emails=recipients,
             subject=subject,
             html_content=html_content
         )
         
-        if not success:
-            current_app.logger.warning(f"Failed to send email notification for ticket assignment")
-            return False
+        # Check result
+        if success:
+            logger.info("Email sent successfully!")
+        else:
+            logger.warning("Failed to send email notification for ticket assignment")
             
+        logger.info("==== Completed send_ticket_assigned_notification ====")
         return success
             
     except Exception as e:
-        current_app.logger.error(f"Error in send_ticket_assigned_notification: {str(e)}")
+        if has_app_context():
+            current_app.logger.error(f"Error in send_ticket_assigned_notification: {str(e)}")
+            # Print full exception traceback for debugging
+            import traceback
+            current_app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+        else:
+            print(f"Error in send_ticket_assigned_notification: {str(e)}")
         return False
+    finally:
+        # Pop the app context if we created one
+        if app_context_created:
+            ctx.pop()
+            logger.info("Popped app context")
         
 def send_ticket_comment_notification(
     ticket: Ticket,

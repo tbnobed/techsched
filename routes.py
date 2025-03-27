@@ -1028,11 +1028,41 @@ def admin_reorder_quick_links():
         app.logger.error(f"Error reordering quick links: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
+def get_open_tickets(limit=5):
+    """Get open tickets for the current user (assigned to or created by)"""
+    from models import Ticket, TicketStatus
+    from flask_login import current_user
+    
+    if not current_user.is_authenticated:
+        return []
+    
+    # Get tickets that are not closed or resolved and either assigned to the user or created by them
+    query = Ticket.query.filter(
+        Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.PENDING]),
+        db.or_(
+            Ticket.assigned_to == current_user.id,
+            Ticket.created_by == current_user.id
+        )
+    ).order_by(
+        # Order by priority (highest first) and then creation date (newest first)
+        Ticket.priority.desc(),
+        Ticket.created_at.desc()
+    ).limit(limit)
+    
+    return query.all()
+
 @app.context_processor
 def inject_quick_links():
     def get_quick_links():
         return QuickLink.query.order_by(QuickLink.order.asc(), QuickLink.category).all()
-    return dict(get_quick_links=get_quick_links)
+    
+    def get_user_tickets():
+        return get_open_tickets(5)  # Limit to 5 tickets
+    
+    return dict(
+        get_quick_links=get_quick_links,
+        get_user_tickets=get_user_tickets
+    )
 
 @app.route('/api/upcoming_time_off')
 @login_required

@@ -235,16 +235,22 @@ def update_status(ticket_id):
     # Send notification email if the ticket is assigned to someone
     if ticket.assigned_to and ticket.assigned_to != current_user.id:
         try:
-            app.logger.debug(f"Sending status update notification for ticket #{ticket.id}")
-            # Ensure we're in the application context for URL generation
-            with app.app_context():
-                send_ticket_status_notification(
-                    ticket=ticket,
-                    old_status=old_status,
-                    new_status=new_status,
-                    updated_by=current_user,
-                    comment=comment if comment else None
-                )
+            app.logger.info(f"Sending status update notification for ticket #{ticket.id}")
+            
+            result = send_ticket_status_notification(
+                ticket=ticket,
+                old_status=old_status,
+                new_status=new_status,
+                updated_by=current_user,
+                comment=comment if comment else None
+            )
+            
+            app.logger.info(f"Status notification result: {result}")
+            if not result:
+                app.logger.error("Ticket status notification failed!")
+            else:
+                app.logger.info("Ticket status notification sent successfully!")
+                
         except Exception as e:
             app.logger.error(f"Failed to send status update notification: {str(e)}")
     
@@ -259,40 +265,55 @@ def assign_ticket(ticket_id):
         flash('You do not have permission to assign tickets', 'error')
         return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
     
+    app.logger.info(f"Starting ticket assignment process for ticket #{ticket_id}")
     ticket = Ticket.query.get_or_404(ticket_id)
+    
     # Get the technician ID from the form - it's named 'assigned_to' in the template
     technician_id = request.form.get('assigned_to')
     note = request.form.get('note', '')
     
+    app.logger.info(f"Request form data: technician_id={technician_id}, note={note}")
+    
     if technician_id:
+        # Assigning ticket to technician
         technician = User.query.get_or_404(technician_id)
+        app.logger.info(f"Found technician: {technician.username} (ID: {technician.id}), email: {technician.email}")
+        
+        # Update ticket
         ticket.assigned_to = technician.id
         details = f"Assigned to {technician.username}"
         if note:
             details += f" - Note: {note}"
-            
+        
+        app.logger.info(f"Updating ticket #{ticket.id} assigned_to: {ticket.assigned_to}")    
         ticket.log_history(current_user, "assigned", details)
+        
+        # Commit the assignment to the database
+        db.session.commit()
+        app.logger.info(f"Committed ticket assignment to database")
         
         # Send notification email to the assigned technician
         try:
-            print(f"TICKET DEBUG: Sending assignment notification for ticket #{ticket.id} to technician ID {ticket.assigned_to}")
-            app.logger.debug(f"Sending ticket assignment notification for ticket #{ticket.id}")
-            # Ensure we're in the application context for URL generation
-            with app.app_context():
-                print(f"TICKET DEBUG: Inside app context for ticket #{ticket.id}")
-                result = send_ticket_assigned_notification(
-                    ticket=ticket,
-                    assigned_by=current_user
-                )
-                print(f"TICKET DEBUG: Assignment notification result: {result}")
+            app.logger.info(f"Sending assignment notification for ticket #{ticket.id}")
+            result = send_ticket_assigned_notification(
+                ticket=ticket,
+                assigned_by=current_user
+            )
+            
+            app.logger.info(f"Assignment notification result: {result}")
+            if not result:
+                app.logger.error("Ticket assignment notification failed!")
+            else:
+                app.logger.info("Ticket assignment notification sent successfully!")
         except Exception as e:
-            print(f"TICKET DEBUG ERROR: {str(e)}")
             app.logger.error(f"Failed to send assignment notification: {str(e)}")
     else:
+        # Unassigning ticket
         ticket.assigned_to = None
         ticket.log_history(current_user, "unassigned")
+        app.logger.info(f"Unassigned ticket #{ticket.id}")
+        db.session.commit()
     
-    db.session.commit()
     flash('Ticket assigned successfully', 'success')
     return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
 

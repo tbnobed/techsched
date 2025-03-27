@@ -15,9 +15,17 @@ def test_email_with_url():
             print("ERROR: SendGrid API key is not set in environment variables")
             return
             
-        # Generate a URL using Flask's url_for
+        # Generate a URL using our custom approach
         try:
-            tickets_url = url_for('tickets.tickets_dashboard', _external=True)
+            # Get the path without _external=True
+            path = url_for('tickets.tickets_dashboard')
+            
+            # Set domain and scheme
+            domain = app.config.get('EMAIL_DOMAIN', 'localhost:5000')
+            scheme = app.config.get('PREFERRED_URL_SCHEME', 'http')
+            
+            # Build complete URL
+            tickets_url = f"{scheme}://{domain}{path}"
             print(f"Generated URL: {tickets_url}")
         except Exception as e:
             print(f"Error generating URL: {str(e)}")
@@ -26,7 +34,7 @@ def test_email_with_url():
         # Create message with the URL
         message = Mail(
             from_email='alerts@obedtv.com',
-            to_emails='engsched-alerts@tbn.tv',
+            to_emails='alerts@obedtv.com',
             subject='Flask URL Test Email',
             html_content=f'<p>This is a test email with a Flask URL: <a href="{tickets_url}">View Tickets</a></p>'
         )

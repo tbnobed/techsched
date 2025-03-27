@@ -205,7 +205,7 @@ class TicketHistory(db.Model):
 
 class EmailSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    admin_email_group = db.Column(db.String(120), nullable=False, default='engsched-alerts@tbn.tv')
+    admin_email_group = db.Column(db.String(120), nullable=False, default='alerts@obedtv.com')
     notify_on_create = db.Column(db.Boolean, default=True)
     notify_on_update = db.Column(db.Boolean, default=True)
     notify_on_delete = db.Column(db.Boolean, default=True)

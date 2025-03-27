@@ -73,7 +73,7 @@ class TimezoneForm(FlaskForm):
 class EmailSettingsForm(FlaskForm):
     admin_email_group = StringField('Admin Email Group', 
                                   validators=[DataRequired(), Email(), Length(max=120)],
-                                  default='engsched-alerts@tbn.tv')
+                                  default='alerts@obedtv.com')
     notify_on_create = BooleanField('Send notifications for new schedules', default=True)
     notify_on_update = BooleanField('Send notifications for schedule updates', default=True)
     notify_on_delete = BooleanField('Send notifications for schedule deletions', default=True)

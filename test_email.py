@@ -20,7 +20,7 @@ def test_sendgrid():
     # Create message
     message = Mail(
         from_email='alerts@obedtv.com',
-        to_emails='engsched-alerts@tbn.tv',  # Using the admin email
+        to_emails='alerts@obedtv.com',  # Using the admin email
         subject='SendGrid Test Email',
         html_content='<p>This is a test email sent from the OBE TV application.</p>'
     )

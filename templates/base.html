@@ -268,8 +268,31 @@
                                 <div class="mb-3 p-2 border rounded" style="border-left: 4px solid ${user.color || '#cccccc'} !important">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h6 class="mb-0">${user.username}</h6>
-                                    </div>
-                                </div>`;
+                                    </div>`;
+                            
+                            // Add schedule information if available
+                            if (user.schedule) {
+                                html += `
+                                    <div class="mt-1 small">
+                                        <i data-feather="clock" class="me-1" style="width: 14px; height: 14px;"></i>
+                                        ${user.schedule.start_time} - ${user.schedule.end_time}
+                                    </div>`;
+                                
+                                if (user.schedule.description) {
+                                    html += `<div class="small mt-1 text-muted fst-italic">${user.schedule.description}</div>`;
+                                }
+                            }
+                            
+                            // Add location information if available
+                            if (user.location && user.location.name && user.location.name !== 'No Location') {
+                                html += `
+                                    <div class="mt-1 small">
+                                        <i data-feather="map-pin" class="me-1" style="width: 14px; height: 14px;"></i>
+                                        ${user.location.name}
+                                    </div>`;
+                            }
+                            
+                            html += `</div>`;
                         }
                     });
                     container.innerHTML = html || '<p class="text-muted">No active technicians</p>';

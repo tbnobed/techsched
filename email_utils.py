@@ -2,8 +2,8 @@ import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Email, To, Content
 from typing import List, Optional
-from models import Schedule, EmailSettings
-from flask import current_app
+from models import Schedule, EmailSettings, Ticket, User, TicketComment
+from flask import current_app, url_for
 
 def get_email_settings() -> EmailSettings:
     """Get the current email settings or create default settings if none exist"""
@@ -109,3 +109,204 @@ def send_schedule_notification(
 
     except Exception as e:
         current_app.logger.error(f"Error in send_schedule_notification: {str(e)}")
+        
+def send_ticket_assigned_notification(
+    ticket: Ticket,
+    assigned_by: User
+) -> None:
+    """
+    Send a notification when a ticket is assigned to a technician
+    """
+    try:
+        # Make sure the ticket is assigned to someone
+        if not ticket.assigned_to:
+            return
+            
+        # Get the assigned technician
+        technician = User.query.get(ticket.assigned_to)
+        if not technician or not technician.email:
+            current_app.logger.warning(f"Could not find email for technician ID {ticket.assigned_to}")
+            return
+            
+        settings = get_email_settings()
+        
+        # Build recipient list - the assigned technician
+        recipients = [technician.email]
+        
+        # Add admin email for monitoring
+        if settings.admin_email_group not in recipients:
+            recipients.append(settings.admin_email_group)
+            
+        # Build ticket URL
+        ticket_url = url_for('tickets.view_ticket', ticket_id=ticket.id, _external=True)
+        
+        subject = f"Ticket #{ticket.id} has been assigned to you"
+        
+        priority_labels = {
+            0: 'Low',
+            1: 'Medium',
+            2: 'High',
+            3: 'Urgent'
+        }
+        
+        html_content = f"""
+        <h3>Ticket Assigned</h3>
+        <p>A ticket has been assigned to you by {assigned_by.username}:</p>
+        <ul>
+            <li><strong>Ticket ID:</strong> #{ticket.id}</li>
+            <li><strong>Title:</strong> {ticket.title}</li>
+            <li><strong>Priority:</strong> {priority_labels.get(ticket.priority, 'Unknown')}</li>
+            <li><strong>Category:</strong> {ticket.category.name if ticket.category else 'Uncategorized'}</li>
+            <li><strong>Status:</strong> {ticket.status.replace('_', ' ').title()}</li>
+        </ul>
+        <p><strong>Description:</strong><br>
+        {ticket.description}
+        </p>
+        <p>
+        <a href="{ticket_url}" style="background-color: #007bff; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">View Ticket</a>
+        </p>
+        """
+        
+        success = send_email(
+            to_emails=recipients,
+            subject=subject,
+            html_content=html_content
+        )
+        
+        if not success:
+            current_app.logger.warning(f"Failed to send email notification for ticket assignment")
+            
+    except Exception as e:
+        current_app.logger.error(f"Error in send_ticket_assigned_notification: {str(e)}")
+        
+def send_ticket_comment_notification(
+    ticket: Ticket,
+    comment: TicketComment,
+    commented_by: User
+) -> None:
+    """
+    Send a notification when a comment is added to a ticket
+    """
+    try:
+        # Get the assigned technician (if any)
+        recipients = []
+        if ticket.assigned_to:
+            technician = User.query.get(ticket.assigned_to)
+            if technician and technician.email:
+                recipients.append(technician.email)
+        
+        # Skip if no recipients
+        if not recipients:
+            return
+            
+        settings = get_email_settings()
+            
+        # Add admin email for monitoring
+        if settings.admin_email_group not in recipients:
+            recipients.append(settings.admin_email_group)
+        
+        # Build ticket URL
+        ticket_url = url_for('tickets.view_ticket', ticket_id=ticket.id, _external=True)
+        
+        subject = f"New comment on Ticket #{ticket.id}"
+        
+        html_content = f"""
+        <h3>New Comment on Ticket #{ticket.id}</h3>
+        <p><strong>{commented_by.username}</strong> added a comment to a ticket assigned to you:</p>
+        <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 20px 0;">
+            {comment.content}
+        </div>
+        <h4>Ticket Details</h4>
+        <ul>
+            <li><strong>Title:</strong> {ticket.title}</li>
+            <li><strong>Status:</strong> {ticket.status.replace('_', ' ').title()}</li>
+        </ul>
+        <p>
+        <a href="{ticket_url}" style="background-color: #007bff; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">View Ticket</a>
+        </p>
+        """
+        
+        success = send_email(
+            to_emails=recipients,
+            subject=subject,
+            html_content=html_content
+        )
+        
+        if not success:
+            current_app.logger.warning(f"Failed to send email notification for ticket comment")
+            
+    except Exception as e:
+        current_app.logger.error(f"Error in send_ticket_comment_notification: {str(e)}")
+        
+def send_ticket_status_notification(
+    ticket: Ticket,
+    old_status: str,
+    new_status: str,
+    updated_by: User,
+    comment: Optional[str] = None
+) -> None:
+    """
+    Send a notification when a ticket's status is updated
+    """
+    try:
+        # Get the assigned technician (if any)
+        recipients = []
+        if ticket.assigned_to:
+            technician = User.query.get(ticket.assigned_to)
+            if technician and technician.email:
+                recipients.append(technician.email)
+        
+        # Skip if no recipients
+        if not recipients:
+            return
+            
+        settings = get_email_settings()
+            
+        # Add admin email for monitoring
+        if settings.admin_email_group not in recipients:
+            recipients.append(settings.admin_email_group)
+        
+        # Build ticket URL
+        ticket_url = url_for('tickets.view_ticket', ticket_id=ticket.id, _external=True)
+        
+        subject = f"Status changed on Ticket #{ticket.id}"
+        
+        html_content = f"""
+        <h3>Ticket Status Changed</h3>
+        <p>The status of ticket #{ticket.id} has been changed:</p>
+        <ul>
+            <li><strong>Old Status:</strong> {old_status.replace('_', ' ').title()}</li>
+            <li><strong>New Status:</strong> {new_status.replace('_', ' ').title()}</li>
+            <li><strong>Changed by:</strong> {updated_by.username}</li>
+        </ul>
+        """
+        
+        if comment:
+            html_content += f"""
+            <p><strong>Comment:</strong></p>
+            <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 20px 0;">
+                {comment}
+            </div>
+            """
+            
+        html_content += f"""
+        <h4>Ticket Details</h4>
+        <ul>
+            <li><strong>Title:</strong> {ticket.title}</li>
+        </ul>
+        <p>
+        <a href="{ticket_url}" style="background-color: #007bff; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; display: inline-block;">View Ticket</a>
+        </p>
+        """
+        
+        success = send_email(
+            to_emails=recipients,
+            subject=subject,
+            html_content=html_content
+        )
+        
+        if not success:
+            current_app.logger.warning(f"Failed to send email notification for ticket status change")
+            
+    except Exception as e:
+        current_app.logger.error(f"Error in send_ticket_status_notification: {str(e)}")

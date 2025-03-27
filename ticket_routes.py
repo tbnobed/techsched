@@ -5,6 +5,7 @@ from models import db, Ticket, TicketCategory, TicketComment, TicketHistory, Use
 from datetime import datetime
 import pytz
 from app import app  # Import app for logging
+from email_utils import send_ticket_assigned_notification, send_ticket_comment_notification, send_ticket_status_notification
 
 # Update Blueprint to use the correct template directory
 tickets = Blueprint('tickets', __name__)
@@ -180,9 +181,23 @@ def add_comment(ticket_id):
     form = TicketCommentForm()
     
     if form.validate_on_submit():
+        # Add comment to the ticket
         comment = ticket.add_comment(current_user, form.content.data)
         ticket.log_history(current_user, "commented")
         db.session.commit()
+        
+        # Send notification email if the ticket is assigned to someone
+        if ticket.assigned_to and ticket.assigned_to != current_user.id:
+            try:
+                app.logger.debug(f"Sending comment notification for ticket #{ticket.id}")
+                send_ticket_comment_notification(
+                    ticket=ticket,
+                    comment=comment,
+                    commented_by=current_user
+                )
+            except Exception as e:
+                app.logger.error(f"Failed to send comment notification: {str(e)}")
+        
         flash('Comment added successfully', 'success')
     
     return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
@@ -215,6 +230,20 @@ def update_status(ticket_id):
         
     db.session.commit()
     
+    # Send notification email if the ticket is assigned to someone
+    if ticket.assigned_to and ticket.assigned_to != current_user.id:
+        try:
+            app.logger.debug(f"Sending status update notification for ticket #{ticket.id}")
+            send_ticket_status_notification(
+                ticket=ticket,
+                old_status=old_status,
+                new_status=new_status,
+                updated_by=current_user,
+                comment=comment if comment else None
+            )
+        except Exception as e:
+            app.logger.error(f"Failed to send status update notification: {str(e)}")
+    
     flash('Ticket status updated successfully', 'success')
     return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
 
@@ -239,6 +268,16 @@ def assign_ticket(ticket_id):
             details += f" - Note: {note}"
             
         ticket.log_history(current_user, "assigned", details)
+        
+        # Send notification email to the assigned technician
+        try:
+            app.logger.debug(f"Sending ticket assignment notification for ticket #{ticket.id}")
+            send_ticket_assigned_notification(
+                ticket=ticket,
+                assigned_by=current_user
+            )
+        except Exception as e:
+            app.logger.error(f"Failed to send assignment notification: {str(e)}")
     else:
         ticket.assigned_to = None
         ticket.log_history(current_user, "unassigned")

@@ -275,14 +275,18 @@ def assign_ticket(ticket_id):
         
         # Send notification email to the assigned technician
         try:
+            print(f"TICKET DEBUG: Sending assignment notification for ticket #{ticket.id} to technician ID {ticket.assigned_to}")
             app.logger.debug(f"Sending ticket assignment notification for ticket #{ticket.id}")
             # Ensure we're in the application context for URL generation
             with app.app_context():
-                send_ticket_assigned_notification(
+                print(f"TICKET DEBUG: Inside app context for ticket #{ticket.id}")
+                result = send_ticket_assigned_notification(
                     ticket=ticket,
                     assigned_by=current_user
                 )
+                print(f"TICKET DEBUG: Assignment notification result: {result}")
         except Exception as e:
+            print(f"TICKET DEBUG ERROR: {str(e)}")
             app.logger.error(f"Failed to send assignment notification: {str(e)}")
     else:
         ticket.assigned_to = None

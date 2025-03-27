@@ -129,7 +129,7 @@ def send_schedule_notification(
 def send_ticket_assigned_notification(
     ticket: Ticket,
     assigned_by: User
-) -> None:
+) -> bool:
     """
     Send a notification when a ticket is assigned to a technician
     """
@@ -137,13 +137,13 @@ def send_ticket_assigned_notification(
         # Make sure the ticket is assigned to someone
         if not ticket.assigned_to:
             current_app.logger.warning("Cannot send notification: ticket is not assigned to anyone")
-            return
+            return False
             
         # Get the assigned technician
         technician = User.query.get(ticket.assigned_to)
         if not technician or not technician.email:
             current_app.logger.warning(f"Could not find email for technician ID {ticket.assigned_to}")
-            return
+            return False
             
         settings = get_email_settings()
         current_app.logger.debug(f"Email settings: admin_email_group={settings.admin_email_group}")
@@ -157,11 +157,15 @@ def send_ticket_assigned_notification(
             recipients.append(settings.admin_email_group)
             current_app.logger.debug(f"Added admin email to recipients: {settings.admin_email_group}")
             
-        # Build ticket URL
-        server_name = current_app.config.get('SERVER_NAME')
-        current_app.logger.debug(f"Current SERVER_NAME config: {server_name}")
+        # Build ticket URL - manually constructing because SERVER_NAME causes issues
+        domain = current_app.config.get('EMAIL_DOMAIN', 'localhost:5000')
+        scheme = current_app.config.get('PREFERRED_URL_SCHEME', 'http')
         
-        ticket_url = url_for('tickets.view_ticket', ticket_id=ticket.id, _external=True)
+        # Generate the URL path without _external=True to avoid SERVER_NAME issues
+        path = url_for('tickets.view_ticket', ticket_id=ticket.id)
+        ticket_url = f"{scheme}://{domain}{path}"
+        
+        current_app.logger.debug(f"Using domain: {domain} for email URLs")
         current_app.logger.debug(f"Generated ticket URL: {ticket_url}")
         
         subject = f"Ticket #{ticket.id} has been assigned to you"
@@ -199,15 +203,19 @@ def send_ticket_assigned_notification(
         
         if not success:
             current_app.logger.warning(f"Failed to send email notification for ticket assignment")
+            return False
+            
+        return success
             
     except Exception as e:
         current_app.logger.error(f"Error in send_ticket_assigned_notification: {str(e)}")
+        return False
         
 def send_ticket_comment_notification(
     ticket: Ticket,
     comment: TicketComment,
     commented_by: User
-) -> None:
+) -> bool:
     """
     Send a notification when a comment is added to a ticket
     """
@@ -227,7 +235,7 @@ def send_ticket_comment_notification(
         # Skip if no recipients
         if not recipients:
             current_app.logger.warning("No recipients for comment notification, skipping")
-            return
+            return False
             
         settings = get_email_settings()
         current_app.logger.debug(f"Email settings: admin_email_group={settings.admin_email_group}")
@@ -237,11 +245,15 @@ def send_ticket_comment_notification(
             recipients.append(settings.admin_email_group)
             current_app.logger.debug(f"Added admin email to recipients: {settings.admin_email_group}")
         
-        # Build ticket URL
-        server_name = current_app.config.get('SERVER_NAME')
-        current_app.logger.debug(f"Current SERVER_NAME config: {server_name}")
+        # Build ticket URL - manually constructing because SERVER_NAME causes issues
+        domain = current_app.config.get('EMAIL_DOMAIN', 'localhost:5000')
+        scheme = current_app.config.get('PREFERRED_URL_SCHEME', 'http')
         
-        ticket_url = url_for('tickets.view_ticket', ticket_id=ticket.id, _external=True)
+        # Generate the URL path without _external=True to avoid SERVER_NAME issues
+        path = url_for('tickets.view_ticket', ticket_id=ticket.id)
+        ticket_url = f"{scheme}://{domain}{path}"
+        
+        current_app.logger.debug(f"Using domain: {domain} for email URLs")
         current_app.logger.debug(f"Generated ticket URL: {ticket_url}")
         
         subject = f"New comment on Ticket #{ticket.id}"
@@ -270,9 +282,13 @@ def send_ticket_comment_notification(
         
         if not success:
             current_app.logger.warning(f"Failed to send email notification for ticket comment")
+            return False
+            
+        return success
             
     except Exception as e:
         current_app.logger.error(f"Error in send_ticket_comment_notification: {str(e)}")
+        return False
         
 def send_ticket_status_notification(
     ticket: Ticket,
@@ -280,7 +296,7 @@ def send_ticket_status_notification(
     new_status: str,
     updated_by: User,
     comment: Optional[str] = None
-) -> None:
+) -> bool:
     """
     Send a notification when a ticket's status is updated
     """
@@ -300,7 +316,7 @@ def send_ticket_status_notification(
         # Skip if no recipients
         if not recipients:
             current_app.logger.warning("No recipients for status notification, skipping")
-            return
+            return False
             
         settings = get_email_settings()
         current_app.logger.debug(f"Email settings: admin_email_group={settings.admin_email_group}")
@@ -310,11 +326,15 @@ def send_ticket_status_notification(
             recipients.append(settings.admin_email_group)
             current_app.logger.debug(f"Added admin email to recipients: {settings.admin_email_group}")
         
-        # Build ticket URL
-        server_name = current_app.config.get('SERVER_NAME')
-        current_app.logger.debug(f"Current SERVER_NAME config: {server_name}")
+        # Build ticket URL - manually constructing because SERVER_NAME causes issues
+        domain = current_app.config.get('EMAIL_DOMAIN', 'localhost:5000')
+        scheme = current_app.config.get('PREFERRED_URL_SCHEME', 'http')
         
-        ticket_url = url_for('tickets.view_ticket', ticket_id=ticket.id, _external=True)
+        # Generate the URL path without _external=True to avoid SERVER_NAME issues
+        path = url_for('tickets.view_ticket', ticket_id=ticket.id)
+        ticket_url = f"{scheme}://{domain}{path}"
+        
+        current_app.logger.debug(f"Using domain: {domain} for email URLs")
         current_app.logger.debug(f"Generated ticket URL: {ticket_url}")
         
         subject = f"Status changed on Ticket #{ticket.id}"
@@ -355,6 +375,10 @@ def send_ticket_status_notification(
         
         if not success:
             current_app.logger.warning(f"Failed to send email notification for ticket status change")
+            return False
+            
+        return success
             
     except Exception as e:
         current_app.logger.error(f"Error in send_ticket_status_notification: {str(e)}")
+        return False

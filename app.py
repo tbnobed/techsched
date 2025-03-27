@@ -38,10 +38,12 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
 }
-# Set server name for URL generation outside of request context (used in emails)
-server_name = os.environ.get("SERVER_NAME", "localhost:5000")
-app.config["SERVER_NAME"] = server_name
+# Configuration for URL generation outside of request context (used in emails)
+# We're NOT setting SERVER_NAME directly as it breaks route matching in development
+# Instead, we'll use these values in email_utils.py
+app.config["APPLICATION_ROOT"] = "/"
 app.config["PREFERRED_URL_SCHEME"] = "http"
+app.config["EMAIL_DOMAIN"] = os.environ.get("EMAIL_DOMAIN", "localhost:5000")
 
 # Set session configuration
 app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production

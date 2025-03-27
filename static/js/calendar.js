@@ -567,7 +567,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('delete_button').addEventListener('click', function() {
         if (confirm('Are you sure you want to delete this schedule?')) {
             const scheduleId = document.getElementById('schedule_id').value;
-            window.location.href = `/schedule/delete/${scheduleId}`;
+            
+            // Get the current week_start from the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const weekStart = urlParams.get('week_start');
+            
+            // Redirect with the week_start parameter to maintain the same view
+            if (weekStart) {
+                window.location.href = `/schedule/delete/${scheduleId}?week_start=${weekStart}`;
+            } else {
+                window.location.href = `/schedule/delete/${scheduleId}`;
+            }
         }
     });
 

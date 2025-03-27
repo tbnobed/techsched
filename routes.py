@@ -84,12 +84,8 @@ def get_active_users():
         # Get current time in UTC since our database stores times in UTC
         current_time = datetime.now(pytz.UTC)
         app.logger.debug(f"Current time (UTC): {current_time}")
-
-        # Get all users first - we'll show everyone in the "active users" sidebar
-        all_users = User.query.all()
-        app.logger.debug(f"Found {len(all_users)} total users")
         
-        # Now find who is actively scheduled
+        # Find who is actively scheduled right now
         active_users_query = (db.session.query(
                 User, Schedule, Location
             )
@@ -105,10 +101,10 @@ def get_active_users():
         active_users_data = active_users_query.all()
         app.logger.debug(f"Found {len(active_users_data)} active schedules")
 
-        # Map of user ID to their active schedule data
-        user_schedules = {}
+        # Build the result - only show currently active users
+        result = []
         
-        # Process schedule data
+        # Process active users data
         user_tz = current_user.get_timezone()
         for user, schedule, location in active_users_data:
             # Skip if any key component is None
@@ -121,8 +117,8 @@ def get_active_users():
                 start_time = schedule.start_time.astimezone(user_tz)
                 end_time = schedule.end_time.astimezone(user_tz)
                 
-                # Store the schedule data for this user
-                user_schedules[user.id] = {
+                # Add this active user to the result
+                result.append({
                     'username': user.username,
                     'color': user.color,
                     'schedule': {
@@ -134,28 +130,12 @@ def get_active_users():
                         'name': location.name if location else 'No Location',
                         'description': location.description if location else ''
                     }
-                }
+                })
             except Exception as inner_e:
                 app.logger.error(f"Error processing schedule for user {user.id}: {str(inner_e)}")
                 # Continue processing other users
 
-        # Build the final result
-        result = []
-        
-        # First add users with active schedules
-        for user_id, data in user_schedules.items():
-            result.append(data)
-            
-        # Then add other users without active schedules
-        for user in all_users:
-            if user.id not in user_schedules:
-                result.append({
-                    'username': user.username,
-                    'color': user.color
-                    # No schedule or location data
-                })
-
-        app.logger.debug(f"Returning {len(result)} users (with and without schedules)")
+        app.logger.debug(f"Returning {len(result)} active users")
         return jsonify(result)
     except Exception as e:
         app.logger.error(f"Error in get_active_users: {str(e)}")

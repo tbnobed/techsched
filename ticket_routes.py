@@ -63,9 +63,8 @@ def create_ticket():
     # Populate category choices
     form.category_id.choices = [(c.id, c.name) for c in TicketCategory.query.all()]
 
-    # Populate technician choices for admin users
-    if current_user.is_admin:
-        form.assigned_to.choices = [(u.id, u.username) for u in User.query.all()]
+    # Populate technician choices for all users
+    form.assigned_to.choices = [(u.id, u.username) for u in User.query.all()]
 
     if form.validate_on_submit():
         try:
@@ -79,7 +78,7 @@ def create_ticket():
                 category_id=form.category_id.data,
                 priority=form.priority.data,
                 created_by=current_user.id,
-                assigned_to=form.assigned_to.data if current_user.is_admin else None,
+                assigned_to=form.assigned_to.data,
                 due_date=form.due_date.data
             )
 
@@ -186,8 +185,8 @@ def view_ticket(ticket_id):
         # Populate category choices
         form.category_id.choices = [(c.id, c.name) for c in categories]
 
-        # Populate technician choices for admin users
-        if current_user.is_admin:
+        # Populate technician choices for admin users and ticket creators
+        if current_user.is_admin or current_user.id == ticket.created_by:
             form.assigned_to.choices = [(u.id, u.username) for u in technicians]
 
     return render_template('tickets/view.html', 

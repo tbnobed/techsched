@@ -220,6 +220,24 @@ document.addEventListener('DOMContentLoaded', function() {
         startHourSelect.removeAttribute('onchange');
     }
 
+    // Toggle repeat days section
+    window.toggleRepeatDaysSelection = function() {
+        const repeatDaysContainer = document.getElementById('repeat_days_container');
+        const isChecked = document.getElementById('repeat_days_toggle').checked;
+        
+        repeatDaysContainer.style.display = isChecked ? 'block' : 'none';
+        
+        // If unchecking, clear all the checkboxes except the first one
+        if (!isChecked) {
+            const checkboxes = document.querySelectorAll('.repeat-day-checkbox');
+            checkboxes.forEach((checkbox, index) => {
+                if (index > 0) { // Skip the first one
+                    checkbox.checked = false;
+                }
+            });
+        }
+    };
+
     // Handle form submission
     document.getElementById('schedule_form').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -227,22 +245,37 @@ document.addEventListener('DOMContentLoaded', function() {
         const date = document.getElementById('schedule_date').value;
         const startHour = document.getElementById('start_hour').value;
         const endHour = document.getElementById('end_hour').value;
+        const isRepeatEnabled = document.getElementById('repeat_days_toggle').checked;
+
+        // Set the hidden datetime inputs for the first/main date
+        document.getElementById('start_time_input').value = `${date} ${startHour}:00`;
+        document.getElementById('end_time_input').value = `${date} ${endHour}:00`;
+        
+        // Handle repeat days if enabled
+        if (isRepeatEnabled) {
+            const selectedDays = [];
+            const checkboxes = document.querySelectorAll('.repeat-day-checkbox:checked');
+            
+            checkboxes.forEach(checkbox => {
+                selectedDays.push(checkbox.value);
+            });
+            
+            if (selectedDays.length > 0) {
+                document.getElementById('repeat_days_input').value = selectedDays.join(',');
+            }
+            
+            console.log('Repeat days selection:', selectedDays);
+        } else {
+            // Clear the repeat days input
+            document.getElementById('repeat_days_input').value = '';
+        }
 
         console.log('Form submission:', {
             date: date,
             startHour: startHour,
-            endHour: endHour
-        });
-
-        // Set the hidden datetime inputs
-        document.getElementById('start_time_input').value =
-            `${date} ${startHour}:00`;
-        document.getElementById('end_time_input').value =
-            `${date} ${endHour}:00`;
-
-        console.log('Setting datetime inputs:', {
-            start: document.getElementById('start_time_input').value,
-            end: document.getElementById('end_time_input').value
+            endHour: endHour,
+            repeatEnabled: isRepeatEnabled,
+            repeatDays: document.getElementById('repeat_days_input').value
         });
 
         // Submit the form

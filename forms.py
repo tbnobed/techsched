@@ -17,6 +17,7 @@ class ScheduleForm(FlaskForm):
     description = TextAreaField('Description', validators=[Length(max=200)])
     location_id = SelectField('Location', coerce=int, validators=[Optional()])
     time_off = BooleanField('Time Off')
+    repeat_days = StringField('Repeat Days', validators=[Optional()])
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])

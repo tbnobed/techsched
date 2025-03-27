@@ -326,7 +326,11 @@ def new_schedule():
                 flash('Schedule conflicts with existing appointments.')
                 return redirect(url_for('calendar'))
 
+            # Check if we have repeat days selected
+            repeat_days = form.repeat_days.data
+            
             if schedule_id:
+                # Editing an existing schedule - doesn't support multi-day editing
                 schedule = Schedule.query.get_or_404(schedule_id)
                 if schedule.technician_id != current_user.id and not current_user.is_admin:
                     flash('You do not have permission to edit this schedule.')
@@ -341,20 +345,94 @@ def new_schedule():
                 if current_user.is_admin:
                     schedule.technician_id = technician_id
                 send_schedule_notification(schedule, 'updated', f"Schedule updated by {current_user.username}")
+                
+                db.session.commit()
+                flash('Schedule updated successfully!')
+                
             else:
-                schedule = Schedule(
-                    technician_id=technician_id,
-                    start_time=start_time_utc,
-                    end_time=end_time_utc,
-                    description=form.description.data,
-                    time_off=form.time_off.data,
-                    location_id=form.location_id.data if form.location_id.data != 0 else None
-                )
-                db.session.add(schedule)
-                send_schedule_notification(schedule, 'created', f"Schedule created by {current_user.username}")
-
-            db.session.commit()
-            flash('Schedule updated successfully!' if schedule_id else 'Schedule created successfully!')
+                # Creating new schedule(s)
+                schedules_created = 0
+                
+                if repeat_days:
+                    # Multi-day scheduling
+                    dates = repeat_days.split(',')
+                    app.logger.debug(f"Creating schedules for multiple days: {dates}")
+                    
+                    if not dates:
+                        flash('No valid dates selected for scheduling.')
+                        return redirect(url_for('calendar'))
+                    
+                    # Create a schedule for each selected day
+                    for date_str in dates:
+                        # Parse the date
+                        day_date = datetime.strptime(date_str.strip(), '%Y-%m-%d').date()
+                        
+                        # Create a new datetime using the date from day_date and time from start_time/end_time
+                        day_start_time = user_tz.localize(
+                            datetime.combine(day_date, datetime.min.time().replace(
+                                hour=start_time.hour, minute=start_time.minute
+                            ))
+                        )
+                        day_end_time = user_tz.localize(
+                            datetime.combine(day_date, datetime.min.time().replace(
+                                hour=end_time.hour, minute=end_time.minute
+                            ))
+                        )
+                        
+                        # Convert to UTC
+                        day_start_time_utc = day_start_time.astimezone(pytz.UTC)
+                        day_end_time_utc = day_end_time.astimezone(pytz.UTC)
+                        
+                        # Handle midnight end time
+                        if end_time.hour == 0 and end_time.minute == 0:
+                            day_end_time_utc = day_end_time_utc + timedelta(days=1)
+                            
+                        # Check for overlapping schedules for this specific day
+                        overlapping_query = Schedule.query.filter(
+                            Schedule.technician_id == technician_id,
+                            Schedule.start_time < day_end_time_utc,
+                            Schedule.end_time > day_start_time_utc
+                        )
+                        overlapping_schedule = overlapping_query.first()
+                        
+                        if overlapping_schedule and not form.time_off.data:
+                            app.logger.warning(f"Skipping schedule for {date_str} due to conflict")
+                            continue
+                            
+                        # Create the schedule for this day
+                        schedule = Schedule(
+                            technician_id=technician_id,
+                            start_time=day_start_time_utc,
+                            end_time=day_end_time_utc,
+                            description=form.description.data,
+                            time_off=form.time_off.data,
+                            location_id=form.location_id.data if form.location_id.data != 0 else None
+                        )
+                        db.session.add(schedule)
+                        schedules_created += 1
+                        
+                    if schedules_created > 0:
+                        send_schedule_notification(schedule, 'created', 
+                            f"Multiple schedules created by {current_user.username}")
+                        db.session.commit()
+                        flash(f'{schedules_created} schedules created successfully!')
+                    else:
+                        flash('No schedules could be created due to conflicts with existing schedules.')
+                        
+                else:
+                    # Single day scheduling
+                    schedule = Schedule(
+                        technician_id=technician_id,
+                        start_time=start_time_utc,
+                        end_time=end_time_utc,
+                        description=form.description.data,
+                        time_off=form.time_off.data,
+                        location_id=form.location_id.data if form.location_id.data != 0 else None
+                    )
+                    db.session.add(schedule)
+                    send_schedule_notification(schedule, 'created', f"Schedule created by {current_user.username}")
+                    db.session.commit()
+                    flash('Schedule created successfully!')
             return redirect(url_for('calendar'))
 
         except Exception as e:

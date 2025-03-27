@@ -135,6 +135,33 @@
                             <label class="form-label">Date</label>
                             <input type="date" id="schedule_date" class="form-control">
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Repeat Schedule</label>
+                            <div class="mt-2">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="repeat_days_toggle" onchange="toggleRepeatDaysSelection()">
+                                    <label class="form-check-label" for="repeat_days_toggle">Schedule for multiple days</label>
+                                </div>
+                            </div>
+                            <div id="repeat_days_container" class="mt-2" style="display: none;">
+                                <div class="alert alert-info mb-2">
+                                    <small>Select the days to create this schedule. The same time and details will be used for all selected days.</small>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for i in range(14) %}
+                                        {% set day_date = week_start + timedelta(days=i) %}
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input repeat-day-checkbox" type="checkbox" 
+                                                id="repeat_day_{{ i }}" value="{{ day_date.strftime('%Y-%m-%d') }}"
+                                                {% if i == 0 %}disabled checked{% endif %}>
+                                            <label class="form-check-label" for="repeat_day_{{ i }}">
+                                                {{ day_date.strftime('%a %m/%d') }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
                         <div class="row mb-3">
                             <div class="col">
                                 <label class="form-label">Start Time</label>
@@ -160,6 +187,7 @@
                         </div>
                         {{ form.start_time(type="hidden", id="start_time_input") }}
                         {{ form.end_time(type="hidden", id="end_time_input") }}
+                        {{ form.repeat_days(type="hidden", id="repeat_days_input") }}
                         <div class="modal-footer">
                             <button type="button" id="delete_button" class="btn btn-danger" style="display: none;">Delete</button>
                             <button type="button" id="copy_button" class="btn btn-info" style="display: none;">Copy Schedule</button>

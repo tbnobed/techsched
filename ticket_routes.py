@@ -237,13 +237,15 @@ def update_status(ticket_id):
         try:
             app.logger.info(f"Sending status update notification for ticket #{ticket.id}")
             
-            result = send_ticket_status_notification(
-                ticket=ticket,
-                old_status=old_status,
-                new_status=new_status,
-                updated_by=current_user,
-                comment=comment if comment else None
-            )
+            # Ensure we're in the application context for URL generation
+            with app.app_context():
+                result = send_ticket_status_notification(
+                    ticket=ticket,
+                    old_status=old_status,
+                    new_status=new_status,
+                    updated_by=current_user,
+                    comment=comment if comment else None
+                )
             
             app.logger.info(f"Status notification result: {result}")
             if not result:
@@ -295,10 +297,13 @@ def assign_ticket(ticket_id):
         # Send notification email to the assigned technician
         try:
             app.logger.info(f"Sending assignment notification for ticket #{ticket.id}")
-            result = send_ticket_assigned_notification(
-                ticket=ticket,
-                assigned_by=current_user
-            )
+            
+            # Ensure we're in the application context for URL generation
+            with app.app_context():
+                result = send_ticket_assigned_notification(
+                    ticket=ticket,
+                    assigned_by=current_user
+                )
             
             app.logger.info(f"Assignment notification result: {result}")
             if not result:

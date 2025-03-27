@@ -1036,13 +1036,9 @@ def get_open_tickets(limit=5):
     if not current_user.is_authenticated:
         return []
     
-    # Get tickets that are not closed or resolved and either assigned to the user or created by them
+    # Get all open tickets
     query = Ticket.query.filter(
-        Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.PENDING]),
-        db.or_(
-            Ticket.assigned_to == current_user.id,
-            Ticket.created_by == current_user.id
-        )
+        Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.PENDING])
     ).order_by(
         # Order by priority (highest first) and then creation date (newest first)
         Ticket.priority.desc(),

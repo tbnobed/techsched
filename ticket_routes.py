@@ -18,6 +18,9 @@ def tickets_dashboard():
     category_filter = request.args.get('category', 'all')
     priority_filter = request.args.get('priority', 'all')
 
+    # Add debug logging to see what filters are being applied
+    app.logger.debug(f"Ticket dashboard filters - status: {status_filter}, category: {category_filter}, priority: {priority_filter}")
+
     # Base query
     query = Ticket.query
 
@@ -30,7 +33,9 @@ def tickets_dashboard():
         query = query.filter(Ticket.priority == int(priority_filter))
 
     # Show all tickets for all users
+    app.logger.debug(f"SQL Query for ticket dashboard: {str(query)}")
     tickets = query.order_by(Ticket.created_at.desc()).all()
+    app.logger.debug(f"Found {len(tickets)} tickets matching filters")
 
     categories = TicketCategory.query.all()
     # Get all valid ticket statuses

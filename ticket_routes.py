@@ -144,6 +144,10 @@ def view_ticket(ticket_id):
     # Create forms for comments and editing
     comment_form = TicketCommentForm()
     form = TicketForm()
+    
+    # Get categories and technicians for the modal forms
+    categories = TicketCategory.query.all()
+    technicians = User.query.all()
 
     # Populate form with current ticket data
     if request.method == 'GET':
@@ -154,16 +158,18 @@ def view_ticket(ticket_id):
         form.due_date.data = ticket.due_date
 
         # Populate category choices
-        form.category_id.choices = [(c.id, c.name) for c in TicketCategory.query.all()]
+        form.category_id.choices = [(c.id, c.name) for c in categories]
 
         # Populate technician choices for admin users
         if current_user.is_admin:
-            form.assigned_to.choices = [(u.id, u.username) for u in User.query.all()]
+            form.assigned_to.choices = [(u.id, u.username) for u in technicians]
 
     return render_template('tickets/view.html', 
                          ticket=ticket,
                          comment_form=comment_form,
                          form=form,
+                         categories=categories,
+                         technicians=technicians,
                          TicketStatus=TicketStatus)
 
 @tickets.route('/tickets/<int:ticket_id>/comment', methods=['POST'])
@@ -187,39 +193,59 @@ def update_status(ticket_id):
     """Update ticket status"""
     ticket = Ticket.query.get_or_404(ticket_id)
     new_status = request.form.get('status')
+    comment = request.form.get('comment', '')
     
     if new_status not in vars(TicketStatus).values():
-        return jsonify({'error': 'Invalid status'}), 400
+        flash('Invalid ticket status', 'error')
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
     
     old_status = ticket.status
     ticket.status = new_status
-    ticket.log_history(current_user, "status_changed", 
-                      f"Status changed from {old_status} to {new_status}")
+    
+    # Add status change to history
+    details = f"Status changed from {old_status} to {new_status}"
+    if comment:
+        details += f" - Comment: {comment}"
+        
+    ticket.log_history(current_user, "status_changed", details)
+    
+    # If a comment was provided, also add it as a separate comment
+    if comment:
+        ticket.add_comment(current_user, comment)
+        
     db.session.commit()
     
-    return jsonify({'message': 'Status updated successfully'})
+    flash('Ticket status updated successfully', 'success')
+    return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
 
 @tickets.route('/tickets/<int:ticket_id>/assign', methods=['POST'])
 @login_required
 def assign_ticket(ticket_id):
     """Assign ticket to a technician"""
     if not current_user.is_admin:
-        return jsonify({'error': 'Unauthorized'}), 403
+        flash('You do not have permission to assign tickets', 'error')
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
     
     ticket = Ticket.query.get_or_404(ticket_id)
-    technician_id = request.form.get('technician_id')
+    # Get the technician ID from the form - it's named 'assigned_to' in the template
+    technician_id = request.form.get('assigned_to')
+    note = request.form.get('note', '')
     
     if technician_id:
         technician = User.query.get_or_404(technician_id)
         ticket.assigned_to = technician.id
-        ticket.log_history(current_user, "assigned", 
-                         f"Assigned to {technician.username}")
+        details = f"Assigned to {technician.username}"
+        if note:
+            details += f" - Note: {note}"
+            
+        ticket.log_history(current_user, "assigned", details)
     else:
         ticket.assigned_to = None
         ticket.log_history(current_user, "unassigned")
     
     db.session.commit()
-    return jsonify({'message': 'Ticket assigned successfully'})
+    flash('Ticket assigned successfully', 'success')
+    return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
 
 @tickets.route('/tickets/<int:ticket_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -232,19 +258,32 @@ def edit_ticket(ticket_id):
         flash('You do not have permission to edit this ticket', 'error')
         return redirect(url_for('tickets.tickets_dashboard'))
 
-    form = TicketForm()
-
-    if form.validate_on_submit():
+    if request.method == 'POST':
+        # Get form data directly
         old_title = ticket.title
         old_description = ticket.description
         old_category_id = ticket.category_id
         old_priority = ticket.priority
 
-        ticket.title = form.title.data
-        ticket.description = form.description.data
-        ticket.category_id = form.category_id.data
-        ticket.priority = form.priority.data
-        ticket.due_date = form.due_date.data
+        # Update ticket with form data
+        ticket.title = request.form.get('title')
+        ticket.description = request.form.get('description')
+        ticket.category_id = request.form.get('category_id')
+        
+        # Handle priority conversion to int
+        priority_val = request.form.get('priority')
+        ticket.priority = int(priority_val) if priority_val else 0
+        
+        # Handle due date (could be empty)
+        due_date_val = request.form.get('due_date')
+        if due_date_val:
+            try:
+                ticket.due_date = datetime.fromisoformat(due_date_val)
+            except ValueError:
+                # If there's a parsing error, keep the existing date
+                app.logger.warning(f"Invalid due date format: {due_date_val}")
+        else:
+            ticket.due_date = None
 
         # Log changes in ticket history
         changes = []
@@ -252,7 +291,7 @@ def edit_ticket(ticket_id):
             changes.append(f"Title changed from '{old_title}' to '{ticket.title}'")
         if old_description != ticket.description:
             changes.append("Description updated")
-        if old_category_id != ticket.category_id:
+        if str(old_category_id) != str(ticket.category_id):
             changes.append(f"Category changed")
         if old_priority != ticket.priority:
             changes.append(f"Priority changed from {old_priority} to {ticket.priority}")
@@ -264,6 +303,7 @@ def edit_ticket(ticket_id):
 
         return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
 
+    # GET requests should go to view ticket page
     return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
 
 

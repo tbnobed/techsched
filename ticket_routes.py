@@ -111,7 +111,32 @@ def create_ticket():
             # Commit both changes
             db.session.commit()
             app.logger.info(f"Successfully created ticket {ticket.id} with history entry")
-
+            
+            # Send email notification if the ticket is assigned to someone
+            if ticket.assigned_to:
+                try:
+                    app.logger.info(f"Sending initial assignment notification for ticket #{ticket.id}")
+                    technician = User.query.get(ticket.assigned_to)
+                    app.logger.info(f"Assigned technician: {technician.username} (ID: {technician.id})")
+                    
+                    # Now send the notification
+                    from email_utils import send_ticket_assigned_notification
+                    result = send_ticket_assigned_notification(
+                        ticket=ticket,
+                        assigned_by=current_user
+                    )
+                    
+                    app.logger.info(f"Initial assignment notification result: {result}")
+                    if not result:
+                        app.logger.error("Initial ticket assignment notification failed!")
+                    else:
+                        app.logger.info("Initial ticket assignment notification sent successfully!")
+                except Exception as e:
+                    app.logger.error(f"Failed to send initial assignment notification: {str(e)}")
+                    # Print full exception traceback for debugging
+                    import traceback
+                    app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+            
             flash('Ticket created successfully', 'success')
             return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
 

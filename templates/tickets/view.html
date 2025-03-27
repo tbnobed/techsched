@@ -199,13 +199,13 @@
 
     function deleteTicket(ticketId) {
         if (confirm('Are you sure you want to delete this ticket? This action cannot be undone.')) {
-            window.location.href = "{{ url_for('tickets.tickets_dashboard') }}".replace('/dashboard', `/${ticketId}/delete`);
+            window.location.href = "{{ url_for('tickets.delete_ticket', ticket_id=0) }}".replace('/0/delete', `/${ticketId}/delete`);
         }
     }
 
     function deleteComment(commentId) {
         if (confirm('Are you sure you want to delete this comment?')) {
-            window.location.href = "{{ url_for('tickets.tickets_dashboard') }}".replace('/dashboard', `/comment/${commentId}/delete`);
+            window.location.href = "{{ url_for('tickets.delete_comment', comment_id=0) }}".replace('/0/delete', `/${commentId}/delete`);
         }
     }
 </script>

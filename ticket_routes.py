@@ -190,11 +190,13 @@ def add_comment(ticket_id):
         if ticket.assigned_to and ticket.assigned_to != current_user.id:
             try:
                 app.logger.debug(f"Sending comment notification for ticket #{ticket.id}")
-                send_ticket_comment_notification(
-                    ticket=ticket,
-                    comment=comment,
-                    commented_by=current_user
-                )
+                # Ensure we're in the application context for URL generation
+                with app.app_context():
+                    send_ticket_comment_notification(
+                        ticket=ticket,
+                        comment=comment,
+                        commented_by=current_user
+                    )
             except Exception as e:
                 app.logger.error(f"Failed to send comment notification: {str(e)}")
         
@@ -234,13 +236,15 @@ def update_status(ticket_id):
     if ticket.assigned_to and ticket.assigned_to != current_user.id:
         try:
             app.logger.debug(f"Sending status update notification for ticket #{ticket.id}")
-            send_ticket_status_notification(
-                ticket=ticket,
-                old_status=old_status,
-                new_status=new_status,
-                updated_by=current_user,
-                comment=comment if comment else None
-            )
+            # Ensure we're in the application context for URL generation
+            with app.app_context():
+                send_ticket_status_notification(
+                    ticket=ticket,
+                    old_status=old_status,
+                    new_status=new_status,
+                    updated_by=current_user,
+                    comment=comment if comment else None
+                )
         except Exception as e:
             app.logger.error(f"Failed to send status update notification: {str(e)}")
     
@@ -272,10 +276,12 @@ def assign_ticket(ticket_id):
         # Send notification email to the assigned technician
         try:
             app.logger.debug(f"Sending ticket assignment notification for ticket #{ticket.id}")
-            send_ticket_assigned_notification(
-                ticket=ticket,
-                assigned_by=current_user
-            )
+            # Ensure we're in the application context for URL generation
+            with app.app_context():
+                send_ticket_assigned_notification(
+                    ticket=ticket,
+                    assigned_by=current_user
+                )
         except Exception as e:
             app.logger.error(f"Failed to send assignment notification: {str(e)}")
     else:
@@ -345,6 +351,68 @@ def edit_ticket(ticket_id):
     # GET requests should go to view ticket page
     return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
 
+
+@tickets.route('/tickets/<int:ticket_id>/delete')
+@login_required
+def delete_ticket(ticket_id):
+    """Delete a ticket (admin only)"""
+    if not current_user.is_admin:
+        flash('You do not have permission to delete tickets', 'error')
+        return redirect(url_for('tickets.tickets_dashboard'))
+        
+    ticket = Ticket.query.get_or_404(ticket_id)
+    
+    try:
+        # Store data for logging
+        ticket_title = ticket.title
+        ticket_id_copy = ticket.id
+        
+        # Delete the ticket (comments and history are cascade deleted)
+        db.session.delete(ticket)
+        db.session.commit()
+        
+        app.logger.info(f"Ticket #{ticket_id_copy} ('{ticket_title}') deleted by {current_user.username}")
+        flash(f'Ticket #{ticket_id_copy} has been deleted', 'success')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error deleting ticket #{ticket_id}: {str(e)}")
+        flash('Error deleting ticket', 'error')
+        
+    return redirect(url_for('tickets.tickets_dashboard'))
+    
+@tickets.route('/tickets/comment/<int:comment_id>/delete')
+@login_required
+def delete_comment(comment_id):
+    """Delete a comment"""
+    comment = TicketComment.query.get_or_404(comment_id)
+    ticket_id = comment.ticket_id
+    
+    # Check if user has permission to delete this comment
+    if not (current_user.is_admin or comment.user_id == current_user.id):
+        flash('You do not have permission to delete this comment', 'error')
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
+        
+    try:
+        # Add history entry before deleting the comment
+        ticket = Ticket.query.get(ticket_id)
+        if ticket:
+            ticket.log_history(
+                current_user,
+                "deleted_comment",
+                f"Comment by {comment.user.username} deleted"
+            )
+            
+        # Delete the comment
+        db.session.delete(comment)
+        db.session.commit()
+        
+        flash('Comment deleted successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error deleting comment #{comment_id}: {str(e)}")
+        flash('Error deleting comment', 'error')
+        
+    return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
 
 # Admin routes for managing ticket categories
 @tickets.route('/tickets/categories', methods=['GET', 'POST'])

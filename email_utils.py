@@ -1,9 +1,12 @@
 import os
+import logging
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Email, To, Content
 from typing import List, Optional
 from models import Schedule, EmailSettings, Ticket, User, TicketComment
 from flask import current_app, url_for
+
+logger = logging.getLogger(__name__)
 
 def get_email_settings() -> EmailSettings:
     """Get the current email settings or create default settings if none exist"""
@@ -24,11 +27,17 @@ def send_email(
     Send an email using SendGrid
     Returns True if successful, False otherwise
     """
+    current_app.logger.info(f"Attempting to send email to {to_emails} with subject: {subject}")
+    
     try:
         api_key = os.environ.get('SENDGRID_API_KEY')
         if not api_key:
             current_app.logger.error("SendGrid API key is not set")
             return False
+        
+        # Log first few characters of API key to confirm it's available (safely)
+        key_preview = api_key[:4] + '...' if len(api_key) > 4 else '***'
+        current_app.logger.info(f"Using SendGrid API key starting with: {key_preview}")
 
         sg = SendGridAPIClient(api_key)
         message = Mail(
@@ -37,15 +46,22 @@ def send_email(
             subject=subject,
             html_content=html_content
         )
+        
+        current_app.logger.info(f"Sending email from {from_email} to {to_emails}")
         response = sg.send(message)
         success = response.status_code == 202
 
-        if not success:
+        if success:
+            current_app.logger.info(f"Email sent successfully with status code {response.status_code}")
+        else:
             current_app.logger.error(f"SendGrid error: Status code {response.status_code}")
+            current_app.logger.error(f"Response body: {response.body}")
 
         return success
     except Exception as e:
         error_message = str(e)
+        current_app.logger.error(f"Exception while sending email: {error_message}")
+        
         if "The from address does not match a verified Sender Identity" in error_message:
             current_app.logger.error(f"SendGrid error: Sender email '{from_email}' is not verified. Please verify this domain in your SendGrid account.")
         else:
@@ -120,6 +136,7 @@ def send_ticket_assigned_notification(
     try:
         # Make sure the ticket is assigned to someone
         if not ticket.assigned_to:
+            current_app.logger.warning("Cannot send notification: ticket is not assigned to anyone")
             return
             
         # Get the assigned technician
@@ -129,16 +146,23 @@ def send_ticket_assigned_notification(
             return
             
         settings = get_email_settings()
+        current_app.logger.debug(f"Email settings: admin_email_group={settings.admin_email_group}")
         
         # Build recipient list - the assigned technician
         recipients = [technician.email]
+        current_app.logger.debug(f"Added technician email to recipients: {technician.email}")
         
         # Add admin email for monitoring
         if settings.admin_email_group not in recipients:
             recipients.append(settings.admin_email_group)
+            current_app.logger.debug(f"Added admin email to recipients: {settings.admin_email_group}")
             
         # Build ticket URL
+        server_name = current_app.config.get('SERVER_NAME')
+        current_app.logger.debug(f"Current SERVER_NAME config: {server_name}")
+        
         ticket_url = url_for('tickets.view_ticket', ticket_id=ticket.id, _external=True)
+        current_app.logger.debug(f"Generated ticket URL: {ticket_url}")
         
         subject = f"Ticket #{ticket.id} has been assigned to you"
         
@@ -188,25 +212,37 @@ def send_ticket_comment_notification(
     Send a notification when a comment is added to a ticket
     """
     try:
+        current_app.logger.debug(f"Starting comment notification for ticket #{ticket.id}")
+        
         # Get the assigned technician (if any)
         recipients = []
         if ticket.assigned_to:
             technician = User.query.get(ticket.assigned_to)
             if technician and technician.email:
                 recipients.append(technician.email)
+                current_app.logger.debug(f"Added technician email to recipients: {technician.email}")
+            else:
+                current_app.logger.warning(f"Could not find valid email for technician ID {ticket.assigned_to}")
         
         # Skip if no recipients
         if not recipients:
+            current_app.logger.warning("No recipients for comment notification, skipping")
             return
             
         settings = get_email_settings()
+        current_app.logger.debug(f"Email settings: admin_email_group={settings.admin_email_group}")
             
         # Add admin email for monitoring
         if settings.admin_email_group not in recipients:
             recipients.append(settings.admin_email_group)
+            current_app.logger.debug(f"Added admin email to recipients: {settings.admin_email_group}")
         
         # Build ticket URL
+        server_name = current_app.config.get('SERVER_NAME')
+        current_app.logger.debug(f"Current SERVER_NAME config: {server_name}")
+        
         ticket_url = url_for('tickets.view_ticket', ticket_id=ticket.id, _external=True)
+        current_app.logger.debug(f"Generated ticket URL: {ticket_url}")
         
         subject = f"New comment on Ticket #{ticket.id}"
         
@@ -249,25 +285,37 @@ def send_ticket_status_notification(
     Send a notification when a ticket's status is updated
     """
     try:
+        current_app.logger.debug(f"Starting status notification for ticket #{ticket.id}: {old_status} -> {new_status}")
+        
         # Get the assigned technician (if any)
         recipients = []
         if ticket.assigned_to:
             technician = User.query.get(ticket.assigned_to)
             if technician and technician.email:
                 recipients.append(technician.email)
+                current_app.logger.debug(f"Added technician email to recipients: {technician.email}")
+            else:
+                current_app.logger.warning(f"Could not find valid email for technician ID {ticket.assigned_to}")
         
         # Skip if no recipients
         if not recipients:
+            current_app.logger.warning("No recipients for status notification, skipping")
             return
             
         settings = get_email_settings()
+        current_app.logger.debug(f"Email settings: admin_email_group={settings.admin_email_group}")
             
         # Add admin email for monitoring
         if settings.admin_email_group not in recipients:
             recipients.append(settings.admin_email_group)
+            current_app.logger.debug(f"Added admin email to recipients: {settings.admin_email_group}")
         
         # Build ticket URL
+        server_name = current_app.config.get('SERVER_NAME')
+        current_app.logger.debug(f"Current SERVER_NAME config: {server_name}")
+        
         ticket_url = url_for('tickets.view_ticket', ticket_id=ticket.id, _external=True)
+        current_app.logger.debug(f"Generated ticket URL: {ticket_url}")
         
         subject = f"Status changed on Ticket #{ticket.id}"
         

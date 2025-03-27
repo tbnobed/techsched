@@ -220,6 +220,13 @@ document.addEventListener('DOMContentLoaded', function() {
         startHourSelect.removeAttribute('onchange');
     }
 
+    // Mini-calendar for repeat days selection
+    let currentDate = new Date();
+    let selectedDates = new Set(); // Use a Set to store selected dates
+    let currentMonth = currentDate.getMonth();
+    let currentYear = currentDate.getFullYear();
+    let primaryDate = null; // The main date selected in the schedule form
+    
     // Toggle repeat days section
     window.toggleRepeatDaysSelection = function() {
         const repeatDaysContainer = document.getElementById('repeat_days_container');
@@ -227,16 +234,281 @@ document.addEventListener('DOMContentLoaded', function() {
         
         repeatDaysContainer.style.display = isChecked ? 'block' : 'none';
         
-        // If unchecking, clear all the checkboxes except the first one
-        if (!isChecked) {
-            const checkboxes = document.querySelectorAll('.repeat-day-checkbox');
-            checkboxes.forEach((checkbox, index) => {
-                if (index > 0) { // Skip the first one
-                    checkbox.checked = false;
-                }
-            });
+        if (isChecked) {
+            // Initialize the calendar
+            initMiniCalendar();
+        } else {
+            // Clear selections except for the primary date
+            clearDateSelection(true);
         }
     };
+    
+    // Initialize the mini-calendar
+    function initMiniCalendar() {
+        // Set the primary date from the date input
+        const dateInput = document.getElementById('schedule_date');
+        primaryDate = dateInput.value;
+        
+        // Update month/year display
+        updateCalendarHeader();
+        
+        // Generate calendar days
+        generateCalendarDays();
+        
+        // Add event listeners for navigation
+        document.getElementById('prev-month').addEventListener('click', function() {
+            navigateMonth(-1);
+        });
+        
+        document.getElementById('next-month').addEventListener('click', function() {
+            navigateMonth(1);
+        });
+        
+        // Clear selection button
+        document.getElementById('clear-selection').addEventListener('click', function() {
+            clearDateSelection();
+        });
+    }
+    
+    // Update the calendar header (month and year)
+    function updateCalendarHeader() {
+        const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        
+        document.getElementById('calendar-month-year').textContent = 
+            `${monthNames[currentMonth]} ${currentYear}`;
+    }
+    
+    // Generate calendar days for the current month
+    function generateCalendarDays() {
+        const calendarDays = document.getElementById('calendar-days');
+        calendarDays.innerHTML = '';
+        
+        // Create a date object for the first day of the current month
+        const firstDay = new Date(currentYear, currentMonth, 1);
+        const lastDay = new Date(currentYear, currentMonth + 1, 0);
+        
+        // Get the day of the week the month starts on (0 = Sunday, 6 = Saturday)
+        const startingDayOfWeek = firstDay.getDay();
+        
+        // Get number of days in the current month
+        const daysInMonth = lastDay.getDate();
+        
+        // Get today's date for highlighting
+        const today = new Date();
+        const todayFormatted = formatDate(today);
+        
+        // Add the days from the previous month to fill the first row
+        const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
+        for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+            const day = prevMonthLastDay - i;
+            const date = new Date(currentYear, currentMonth - 1, day);
+            const dateFormatted = formatDate(date);
+            
+            addDayToCalendar(calendarDays, day, dateFormatted, 'outside-month', 
+                dateFormatted === todayFormatted, 
+                dateFormatted === primaryDate,
+                selectedDates.has(dateFormatted));
+        }
+        
+        // Add the days of the current month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(currentYear, currentMonth, day);
+            const dateFormatted = formatDate(date);
+            
+            addDayToCalendar(calendarDays, day, dateFormatted, '', 
+                dateFormatted === todayFormatted, 
+                dateFormatted === primaryDate,
+                selectedDates.has(dateFormatted));
+        }
+        
+        // Add days from the next month to complete the grid (always show 6 rows)
+        const totalCells = 42; // 6 rows x 7 columns
+        const cellsToAdd = totalCells - (startingDayOfWeek + daysInMonth);
+        
+        for (let day = 1; day <= cellsToAdd; day++) {
+            const date = new Date(currentYear, currentMonth + 1, day);
+            const dateFormatted = formatDate(date);
+            
+            addDayToCalendar(calendarDays, day, dateFormatted, 'outside-month', 
+                dateFormatted === todayFormatted, 
+                dateFormatted === primaryDate,
+                selectedDates.has(dateFormatted));
+        }
+    }
+    
+    // Add a day to the calendar
+    function addDayToCalendar(container, day, dateFormatted, extraClass, isToday, isPrimary, isSelected) {
+        const dayItem = document.createElement('div');
+        dayItem.textContent = day;
+        dayItem.className = `day-item${extraClass ? ' ' + extraClass : ''}${isToday ? ' today' : ''}`;
+        
+        if (isPrimary) {
+            dayItem.classList.add('primary-date');
+            dayItem.setAttribute('title', 'Primary schedule date');
+        } else if (isSelected) {
+            dayItem.classList.add('selected');
+        }
+        
+        dayItem.setAttribute('data-date', dateFormatted);
+        
+        // Add click event to select/deselect the date
+        if (!isPrimary) { // Don't allow clicking on the primary date
+            dayItem.addEventListener('click', function() {
+                toggleDateSelection(dateFormatted, dayItem);
+            });
+        } else {
+            dayItem.classList.add('disabled');
+        }
+        
+        container.appendChild(dayItem);
+    }
+    
+    // Toggle date selection
+    function toggleDateSelection(dateStr, dayItem) {
+        if (selectedDates.has(dateStr)) {
+            // Deselect the date
+            selectedDates.delete(dateStr);
+            dayItem.classList.remove('selected');
+        } else {
+            // Select the date
+            selectedDates.add(dateStr);
+            dayItem.classList.add('selected');
+        }
+        
+        // Update the display of selected dates
+        updateSelectedDatesDisplay();
+        
+        // Update the hidden input
+        updateRepeatDaysInput();
+    }
+    
+    // Update the display of selected dates
+    function updateSelectedDatesDisplay() {
+        const container = document.getElementById('selected-dates-container');
+        
+        if (selectedDates.size === 0) {
+            container.innerHTML = '<span class="text-muted" id="no-dates-selected">No additional dates selected</span>';
+            return;
+        }
+        
+        // Sort the dates
+        const sortedDates = Array.from(selectedDates).sort();
+        container.innerHTML = '';
+        
+        // Add date tags
+        sortedDates.forEach(dateStr => {
+            const dateObj = parseDate(dateStr);
+            
+            const dateTag = document.createElement('div');
+            dateTag.className = 'date-tag';
+            
+            // Format the date nicely (e.g., "Mon 03/27")
+            const dateLabel = document.createElement('span');
+            dateLabel.textContent = new Date(dateObj).toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: '2-digit',
+                day: '2-digit'
+            });
+            
+            // Add a remove button
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'close ms-2';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                removeDateSelection(dateStr);
+            });
+            
+            dateTag.appendChild(dateLabel);
+            dateTag.appendChild(closeBtn);
+            container.appendChild(dateTag);
+        });
+    }
+    
+    // Remove a specific date from the selection
+    function removeDateSelection(dateStr) {
+        selectedDates.delete(dateStr);
+        
+        // Update the calendar if the date is currently visible
+        const dayItem = document.querySelector(`.day-item[data-date="${dateStr}"]`);
+        if (dayItem) {
+            dayItem.classList.remove('selected');
+        }
+        
+        // Update the display
+        updateSelectedDatesDisplay();
+        
+        // Update the hidden input
+        updateRepeatDaysInput();
+    }
+    
+    // Clear all selected dates
+    function clearDateSelection(keepHidden = false) {
+        selectedDates.clear();
+        
+        // Remove selected class from all visible days
+        document.querySelectorAll('.day-item.selected').forEach(item => {
+            item.classList.remove('selected');
+        });
+        
+        // Update the display
+        updateSelectedDatesDisplay();
+        
+        // Update the hidden input
+        if (!keepHidden) {
+            updateRepeatDaysInput();
+        }
+    }
+    
+    // Update the hidden input with selected dates
+    function updateRepeatDaysInput() {
+        const allDates = new Set(selectedDates);
+        
+        // Include the primary date
+        if (primaryDate) {
+            allDates.add(primaryDate);
+        }
+        
+        // Update the hidden input
+        if (allDates.size > 0) {
+            document.getElementById('repeat_days_input').value = Array.from(allDates).sort().join(',');
+        } else {
+            document.getElementById('repeat_days_input').value = '';
+        }
+    }
+    
+    // Navigate to previous/next month
+    function navigateMonth(direction) {
+        currentMonth += direction;
+        
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        } else if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        
+        updateCalendarHeader();
+        generateCalendarDays();
+    }
+    
+    // Format date as YYYY-MM-DD
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    
+    // Parse date string YYYY-MM-DD
+    function parseDate(dateStr) {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    }
 
     // Handle form submission
     document.getElementById('schedule_form').addEventListener('submit', function(e) {
@@ -247,27 +519,36 @@ document.addEventListener('DOMContentLoaded', function() {
         const endHour = document.getElementById('end_hour').value;
         const isRepeatEnabled = document.getElementById('repeat_days_toggle').checked;
 
+        // Update the primary date in case it changed
+        primaryDate = date;
+        
         // Set the hidden datetime inputs for the first/main date
         document.getElementById('start_time_input').value = `${date} ${startHour}:00`;
         document.getElementById('end_time_input').value = `${date} ${endHour}:00`;
         
         // Handle repeat days if enabled
         if (isRepeatEnabled) {
-            const selectedDays = [];
-            const checkboxes = document.querySelectorAll('.repeat-day-checkbox:checked');
+            // Update the repeat days input with all selected dates
+            updateRepeatDaysInput();
             
-            checkboxes.forEach(checkbox => {
-                selectedDays.push(checkbox.value);
-            });
-            
-            if (selectedDays.length > 0) {
-                document.getElementById('repeat_days_input').value = selectedDays.join(',');
-            }
-            
-            console.log('Repeat days selection:', selectedDays);
+            // Log selection for debugging
+            console.log('Repeat days selection:', Array.from(selectedDates));
         } else {
             // Clear the repeat days input
             document.getElementById('repeat_days_input').value = '';
+        }
+
+        // Make sure the primary date is included in the input
+        // But only if we have at least one additional day selected
+        if (isRepeatEnabled && selectedDates.size > 0) {
+            let currentValue = document.getElementById('repeat_days_input').value;
+            if (!currentValue.includes(primaryDate)) {
+                if (currentValue) {
+                    currentValue += ',';
+                }
+                currentValue += primaryDate;
+                document.getElementById('repeat_days_input').value = currentValue;
+            }
         }
 
         console.log('Form submission:', {

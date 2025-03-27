@@ -144,21 +144,44 @@
                                 </div>
                             </div>
                             <div id="repeat_days_container" class="mt-2" style="display: none;">
-                                <div class="alert alert-info mb-2">
+                                <div class="alert alert-info mb-3">
                                     <small>Select the days to create this schedule. The same time and details will be used for all selected days.</small>
                                 </div>
-                                <div class="d-flex flex-wrap gap-2">
-                                    {% for i in range(14) %}
-                                        {% set day_date = week_start + timedelta(days=i) %}
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input repeat-day-checkbox" type="checkbox" 
-                                                id="repeat_day_{{ i }}" value="{{ day_date.strftime('%Y-%m-%d') }}"
-                                                {% if i == 0 %}disabled checked{% endif %}>
-                                            <label class="form-check-label" for="repeat_day_{{ i }}">
-                                                {{ day_date.strftime('%a %m/%d') }}
-                                            </label>
+                                <div class="mini-calendar">
+                                    <div class="month-navigator d-flex justify-content-between align-items-center mb-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="prev-month">
+                                            <i data-feather="chevron-left"></i>
+                                        </button>
+                                        <h6 class="m-0" id="calendar-month-year">March 2025</h6>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="next-month">
+                                            <i data-feather="chevron-right"></i>
+                                        </button>
+                                    </div>
+                                    <div class="calendar-days">
+                                        <div class="day-names d-flex">
+                                            <div>Sun</div>
+                                            <div>Mon</div>
+                                            <div>Tue</div>
+                                            <div>Wed</div>
+                                            <div>Thu</div>
+                                            <div>Fri</div>
+                                            <div>Sat</div>
                                         </div>
-                                    {% endfor %}
+                                        <div class="day-grid" id="calendar-days">
+                                            <!-- Days will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="selected-dates mt-3">
+                                    <div class="d-flex mb-2">
+                                        <strong>Selected Dates:</strong>
+                                        <button type="button" class="btn btn-sm btn-link ms-auto" id="clear-selection">Clear All</button>
+                                    </div>
+                                    <div id="selected-dates-container" class="d-flex flex-wrap">
+                                        <!-- Selected dates will appear here -->
+                                        <span class="text-muted" id="no-dates-selected">No additional dates selected</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -234,6 +257,108 @@
     font-style: italic;
     font-size: 0.85em;
     opacity: 0.8;
+}
+
+/* Mini-calendar styles */
+.mini-calendar {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+.day-names {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-weight: 500;
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.day-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-gap: 3px;
+}
+
+.day-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 36px;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.9rem;
+}
+
+.day-item:hover:not(.disabled) {
+    background-color: #e2e6ea;
+}
+
+.day-item.outside-month {
+    color: #adb5bd;
+}
+
+.day-item.today {
+    border: 1px solid #007bff;
+    font-weight: bold;
+}
+
+.day-item.selected {
+    background-color: #007bff;
+    color: white;
+}
+
+.day-item.primary-date {
+    background-color: #28a745;
+    color: white;
+}
+
+.day-item.disabled {
+    color: #adb5bd;
+    cursor: not-allowed;
+    background-color: #e9ecef;
+}
+
+.day-item.has-schedule {
+    position: relative;
+}
+
+.day-item.has-schedule:after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: #dc3545;
+}
+
+.date-tag {
+    background-color: #e2e6ea;
+    border-radius: 0.25rem;
+    padding: 0.2rem 0.5rem;
+    margin: 0.25rem;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+}
+
+.date-tag .close {
+    margin-left: 0.5rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+#selected-dates-container {
+    min-height: 38px;
 }
 </style>
 

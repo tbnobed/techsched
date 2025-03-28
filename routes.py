@@ -1564,7 +1564,21 @@ def restore_backup():
                         if ticket_data.get('due_date'):
                             due_date = datetime.fromisoformat(ticket_data['due_date'])
                             
-                        # Create the ticket
+                        # Check if ticket with the original ID already exists
+                        ticket_id = ticket_data.get('id')
+                        existing_ticket = None
+                        if ticket_id:
+                            existing_ticket = Ticket.query.get(ticket_id)
+                            
+                        if existing_ticket:
+                            app.logger.info(f"Ticket ID {ticket_id} already exists, skipping")
+                            tickets_skipped += 1
+                            continue
+                            
+                        # Create the ticket with its original ID to properly restore it
+                        from sqlalchemy import text
+                        
+                        # First create the ticket without ID
                         ticket = Ticket(
                             title=title,
                             description=description,
@@ -1578,6 +1592,14 @@ def restore_backup():
                             due_date=due_date,
                             archived=ticket_data.get('archived', False)
                         )
+                        
+                        # Set the ID to match the original if provided
+                        if ticket_id:
+                            # Use raw SQL to set the ID explicitly
+                            db.session.execute(text("ALTER SEQUENCE ticket_id_seq RESTART WITH :next_id"), 
+                                            {"next_id": int(ticket_id) + 1})
+                            ticket.id = ticket_id
+                            
                         db.session.add(ticket)
                         db.session.flush()  # Get the ticket ID before adding comments
                         
@@ -1586,15 +1608,40 @@ def restore_backup():
                             for comment_data in ticket_data['comments']:
                                 user_username = comment_data.get('username')
                                 if not user_username or user_username not in users_by_username:
-                                    continue
+                                    # Try to use system user for comments if the original user isn't found
+                                    system_user = User.query.filter_by(username="System").first()
+                                    if not system_user:
+                                        # Create system user if needed
+                                        system_user = User(
+                                            username="System", 
+                                            email="system@example.com",
+                                            is_admin=False
+                                        )
+                                        system_user.set_password(''.join(random.choice(string.ascii_letters + string.digits) for _ in range(20)))
+                                        db.session.add(system_user)
+                                        db.session.flush()
+                                    user_id = system_user.id
+                                else:
+                                    user_id = users_by_username[user_username].id
                                     
+                                # Get original comment ID if available
+                                comment_id = comment_data.get('id')
+                                
+                                # Create the comment
                                 comment = TicketComment(
                                     ticket_id=ticket.id,
-                                    user_id=users_by_username[user_username].id,
+                                    user_id=user_id,
                                     content=comment_data.get('content', ''),
                                     created_at=datetime.fromisoformat(comment_data['created_at']) if comment_data.get('created_at') else None,
                                     updated_at=datetime.fromisoformat(comment_data['updated_at']) if comment_data.get('updated_at') else None
                                 )
+                                
+                                # Restore the original ID if possible
+                                if comment_id:
+                                    db.session.execute(text("ALTER SEQUENCE ticket_comment_id_seq RESTART WITH :next_id"), 
+                                                    {"next_id": int(comment_id) + 1})
+                                    comment.id = comment_id
+                                    
                                 db.session.add(comment)
                                 
                         # Process history entries if present
@@ -1602,15 +1649,40 @@ def restore_backup():
                             for history_data in ticket_data['history']:
                                 user_username = history_data.get('username')
                                 if not user_username or user_username not in users_by_username:
-                                    continue
-                                    
+                                    # Try to use system user for history entries if the original user isn't found
+                                    system_user = User.query.filter_by(username="System").first()
+                                    if not system_user:
+                                        # Create system user if needed
+                                        system_user = User(
+                                            username="System", 
+                                            email="system@example.com",
+                                            is_admin=False
+                                        )
+                                        system_user.set_password(''.join(random.choice(string.ascii_letters + string.digits) for _ in range(20)))
+                                        db.session.add(system_user)
+                                        db.session.flush()
+                                    user_id = system_user.id
+                                else:
+                                    user_id = users_by_username[user_username].id
+                                
+                                # Get original history ID if available
+                                history_id = history_data.get('id')
+                                
+                                # Create the history entry
                                 history = TicketHistory(
                                     ticket_id=ticket.id,
-                                    user_id=users_by_username[user_username].id,
+                                    user_id=user_id,
                                     action=history_data.get('action', ''),
                                     details=history_data.get('details', ''),
                                     created_at=datetime.fromisoformat(history_data['created_at']) if history_data.get('created_at') else None
                                 )
+                                
+                                # Restore the original ID if possible
+                                if history_id:
+                                    db.session.execute(text("ALTER SEQUENCE ticket_history_id_seq RESTART WITH :next_id"), 
+                                                    {"next_id": int(history_id) + 1})
+                                    history.id = history_id
+                                    
                                 db.session.add(history)
                                 
                         tickets_restored += 1

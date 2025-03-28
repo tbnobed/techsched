@@ -175,7 +175,10 @@
                 const priorityValue = document.getElementById('priority-filter').value;
                 
                 // Build URL with cache busting parameters
-                let url = `/tickets/dashboard?timestamp=${Date.now()}&rand=${Math.random()}`;
+                // Get the current URL path (either /tickets/dashboard or /tickets/standalone_dashboard)
+                const currentPath = window.location.pathname;
+                
+                let url = `${currentPath}?timestamp=${Date.now()}&rand=${Math.random()}`;
                 
                 // Add filter parameters - only if they have values
                 if (statusValue) {

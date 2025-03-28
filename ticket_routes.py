@@ -105,6 +105,12 @@ def standalone_dashboard():
         'timestamp': int(datetime.now().timestamp() * 1000)
     }
     
+    # Log the sidebar ticket information
+    app.logger.debug(f"STANDALONE DASHBOARD - Fetching sidebar ticket information")
+    from routes import get_open_tickets
+    sidebar_tickets = get_open_tickets(5)  # Get 5 active tickets for sidebar
+    app.logger.debug(f"STANDALONE DASHBOARD - Found {len(sidebar_tickets)} active tickets for sidebar")
+    
     # Disable caching for this request
     @after_this_request
     def add_no_cache(response):
@@ -119,7 +125,8 @@ def standalone_dashboard():
                            ticket_statuses=ticket_statuses,
                            ticket_count=len(ticket_dicts),
                            filter_info=filter_info,
-                           timestamp=filter_info['timestamp'])
+                           timestamp=filter_info['timestamp'],
+                           standalone_mode=True)
 
 @tickets.route('/tickets/dashboard')
 @login_required

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, session
 from flask_login import login_required, current_user
 from forms import TicketForm, TicketCommentForm, TicketCategoryForm
 from models import db, Ticket, TicketCategory, TicketComment, TicketHistory, User, TicketStatus
@@ -14,10 +14,18 @@ tickets = Blueprint('tickets', __name__)
 @login_required
 def tickets_dashboard():
     """Display all tickets with filtering options"""
+    app.logger.debug(f"Raw request URL: {request.url}")
+    app.logger.debug(f"Raw query args: {request.args}")
+    
     status_filter = request.args.get('status', 'all')
     category_filter = request.args.get('category', 'all')
     priority_filter = request.args.get('priority', 'all')
-
+    
+    # Override status filter if needed
+    if status_filter == 'open':
+        app.logger.debug("Default status filter detected. Forcing to 'all'")
+        status_filter = 'all'
+    
     # Add debug logging to see what filters are being applied
     app.logger.debug(f"Ticket dashboard filters - status: {status_filter}, category: {category_filter}, priority: {priority_filter}")
 

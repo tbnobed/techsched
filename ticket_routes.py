@@ -63,6 +63,17 @@ def tickets_dashboard():
     # Add debug information about each ticket found
     for ticket in tickets:
         app.logger.debug(f"Ticket #{ticket.id}: {ticket.title} - Status: {ticket.status}, Category: {ticket.category_id}, Priority: {ticket.priority}")
+        
+    # DEBUG TEST - Force filter again to verify
+    if priority_filter != 'all':
+        app.logger.debug(f"DOUBLE-CHECK: Filtering tickets by priority={priority_filter}")
+        tickets = [t for t in tickets if t.priority == int(priority_filter)]
+        app.logger.debug(f"AFTER DOUBLE-CHECK: {len(tickets)} tickets remain")
+        
+    # Add a temporary filter to show exactly what's going to the template
+    app.logger.debug(f"FINAL TICKETS TO TEMPLATE:")
+    for ticket in tickets:
+        app.logger.debug(f"FINAL Ticket #{ticket.id}: {ticket.title} - Priority: {ticket.priority}")
 
     categories = TicketCategory.query.all()
     # Get all valid ticket statuses

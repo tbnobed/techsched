@@ -345,18 +345,36 @@ def tickets_dashboard():
         'timestamp': timestamp
     }
     
+    # Get active tickets for the sidebar
+    from models import Ticket, TicketStatus
+    active_sidebar_tickets = Ticket.query.filter(
+        Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.PENDING])
+    ).order_by(
+        Ticket.priority.desc(),
+        Ticket.created_at.desc()
+    ).limit(5).all()
+    
     return render_template('tickets/dashboard.html', 
                          tickets=filtered_tickets,
                          categories=categories,
                          ticket_statuses=ticket_statuses,
                          ticket_count=len(filtered_tickets),
                          filter_info=filter_info,
-                         timestamp=timestamp)
+                         timestamp=timestamp,
+                         active_sidebar_tickets=active_sidebar_tickets)
 
 @tickets.route('/tickets/create', methods=['GET', 'POST'])
 @login_required
 def create_ticket():
     """Create a new ticket"""
+    # Get active tickets for the sidebar
+    active_sidebar_tickets = Ticket.query.filter(
+        Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.PENDING])
+    ).order_by(
+        Ticket.priority.desc(),
+        Ticket.created_at.desc()
+    ).limit(5).all()
+    
     form = TicketForm()
 
     # Populate category choices
@@ -442,15 +460,15 @@ def create_ticket():
             db.session.rollback()
             app.logger.error(f"Validation error in ticket creation: {str(ve)}")
             flash('Error validating ticket data. Please try again.', 'error')
-            return render_template('tickets/create.html', form=form)
+            return render_template('tickets/create.html', form=form, active_sidebar_tickets=active_sidebar_tickets)
 
         except Exception as e:
             db.session.rollback()
             app.logger.error(f"Error creating ticket: {str(e)}")
             flash('Error creating ticket. Please try again.', 'error')
-            return render_template('tickets/create.html', form=form)
+            return render_template('tickets/create.html', form=form, active_sidebar_tickets=active_sidebar_tickets)
 
-    return render_template('tickets/create.html', form=form)
+    return render_template('tickets/create.html', form=form, active_sidebar_tickets=active_sidebar_tickets)
 
 @tickets.route('/tickets/<int:ticket_id>')
 @login_required
@@ -547,12 +565,21 @@ def view_ticket(ticket_id):
         if current_user.is_admin or current_user.id == ticket_obj.created_by:
             form.assigned_to.choices = [(u.id, u.username) for u in technicians]
 
+    # Get active tickets for the sidebar
+    active_sidebar_tickets = Ticket.query.filter(
+        Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.PENDING])
+    ).order_by(
+        Ticket.priority.desc(),
+        Ticket.created_at.desc()
+    ).limit(5).all()
+    
     return render_template('tickets/view.html', 
                          ticket=ticket,
                          comment_form=comment_form,
                          form=form,
                          categories=categories,
                          technicians=technicians,
+                         active_sidebar_tickets=active_sidebar_tickets,
                          TicketStatus=TicketStatus)
 
 @tickets.route('/tickets/<int:ticket_id>/comment', methods=['POST'])
@@ -888,6 +915,16 @@ def manage_categories():
         return redirect(url_for('tickets.manage_categories'))
 
     categories = TicketCategory.query.order_by(TicketCategory.name).all()
+    
+    # Get active tickets for the sidebar
+    active_sidebar_tickets = Ticket.query.filter(
+        Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.PENDING])
+    ).order_by(
+        Ticket.priority.desc(),
+        Ticket.created_at.desc()
+    ).limit(5).all()
+    
     return render_template('tickets/manage_categories.html', 
                          categories=categories,
+                         active_sidebar_tickets=active_sidebar_tickets,
                          form=form)

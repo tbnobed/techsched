@@ -57,5 +57,21 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
+# Add a health check endpoint for monitoring
+RUN echo 'from flask import Blueprint, jsonify\n\
+health_bp = Blueprint("health", __name__)\n\
+\n\
+@health_bp.route("/health")\n\
+def health_check():\n\
+    return jsonify({"status": "healthy"})\n\
+' > /app/health.py
+
+# Modify app.py to register the health blueprint
+RUN echo '\n\
+# Register health check blueprint\n\
+from health import health_bp\n\
+app.register_blueprint(health_bp)\n\
+' >> /app/app.py
+
 # Run the application
 CMD ["python", "main.py"]

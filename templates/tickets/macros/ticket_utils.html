@@ -5,8 +5,8 @@
         It's independent of dashboard filters.
     #}
     
-    {# Use a custom helper function to get active tickets independently of dashboard filters #}
-    {% set active_tickets = get_active_sidebar_tickets() %}
+    {# Use the get_user_tickets function that's available in the global context #}
+    {% set active_tickets = get_user_tickets() %}
     
     {% if active_tickets %}
         {% for ticket in active_tickets %}

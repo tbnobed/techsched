@@ -426,8 +426,8 @@
                                 html += `
                                     <div class="active-user-entry mb-2" style="border-left: 3px solid ${user.color || '#3498db'}; padding-left: 8px; margin-bottom: 10px;">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <h6 class="mb-0 username" style="color: ${user.color || '#ffffff'}">${user.username}</h6>
-                                            <span class="badge text-muted">
+                                            <h6 class="mb-0 username" style="color: ${user.color || '#ffffff'}; ${document.body.classList.contains('light-theme') ? 'text-shadow: 0px 0px 1px #000000;' : ''}">${user.username}</h6>
+                                            <span class="badge ${document.body.classList.contains('light-theme') ? 'bg-light text-dark' : 'text-muted'}">
                                                 <i data-feather="clock" class="me-1" style="width: 12px; height: 12px;"></i>
                                                 ${user.schedule ? user.schedule.start_time : ''} - ${user.schedule ? user.schedule.end_time : ''}
                                             </span>
@@ -435,13 +435,13 @@
                                 
                                 // Add schedule description if available in a more compact format
                                 if (user.schedule && user.schedule.description) {
-                                    html += `<div class="small text-muted fst-italic text-truncate">${user.schedule.description}</div>`;
+                                    html += `<div class="small ${document.body.classList.contains('light-theme') ? 'text-dark-emphasis' : 'text-muted'} fst-italic text-truncate">${user.schedule.description}</div>`;
                                 }
                                 
                                 // Add location information if available, more compact
                                 if (user.location && user.location.name && user.location.name !== 'No Location') {
                                     html += `
-                                        <div class="small location">
+                                        <div class="small location ${document.body.classList.contains('light-theme') ? 'text-dark' : ''}">
                                             <i data-feather="map-pin" class="me-1" style="width: 12px; height: 12px;"></i>
                                             ${user.location.name}
                                         </div>`;
@@ -450,7 +450,7 @@
                                 html += `</div>`;
                             }
                         });
-                        container.innerHTML = html || '<p class="text-muted">No active technicians</p>';
+                        container.innerHTML = html || `<p class="${document.body.classList.contains('light-theme') ? 'text-dark' : 'text-muted'}">No active technicians</p>`;
                         feather.replace();
                     })
                     .catch(error => {
@@ -472,7 +472,7 @@
                     .then(timeOffEntries => {
                         const container = document.getElementById('upcoming-time-off');
                         if (!Array.isArray(timeOffEntries) || timeOffEntries.length === 0) {
-                            container.innerHTML = '<p class="text-muted">No upcoming time off</p>';
+                            container.innerHTML = `<p class="${document.body.classList.contains('light-theme') ? 'text-dark' : 'text-muted'}">No upcoming time off</p>`;
                             return;
                         }
 
@@ -481,16 +481,16 @@
                             html += `
                                 <div class="time-off-entry mb-2" style="border-left: 3px solid ${entry.color || '#3498db'}; padding-left: 8px; margin-bottom: 10px;">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="mb-0 username" style="color: ${entry.color || '#ffffff'}">${entry.username}</h6>
-                                        <span class="badge text-muted">
+                                        <h6 class="mb-0 username" style="color: ${entry.color || '#ffffff'}; ${document.body.classList.contains('light-theme') ? 'text-shadow: 0px 0px 1px #000000;' : ''}">${entry.username}</h6>
+                                        <span class="badge ${document.body.classList.contains('light-theme') ? 'bg-light text-dark' : 'text-muted'}">
                                             <i data-feather="calendar" class="me-1" style="width: 12px; height: 12px;"></i>
                                             ${entry.start_date} - ${entry.end_date}
                                         </span>
                                     </div>
-                                    ${entry.description ? `<div class="small text-muted fst-italic text-truncate">${entry.description}</div>` : ''}
+                                    ${entry.description ? `<div class="small ${document.body.classList.contains('light-theme') ? 'text-dark-emphasis' : 'text-muted'} fst-italic text-truncate">${entry.description}</div>` : ''}
                                 </div>`;
                         });
-                        container.innerHTML = html || '<p class="text-muted">No upcoming time off</p>';
+                        container.innerHTML = html || `<p class="${document.body.classList.contains('light-theme') ? 'text-dark' : 'text-muted'}">No upcoming time off</p>`;
                         feather.replace();
                     })
                     .catch(error => {

@@ -9,6 +9,8 @@ from forms import (
 from datetime import datetime, timedelta
 import pytz
 import csv
+import random
+import string
 from io import StringIO
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
@@ -724,11 +726,49 @@ def admin_delete_user(user_id):
 
     user = User.query.get_or_404(user_id)
     try:
-        # Delete associated schedules first
+        # Get a special system user to reassign content to
+        # Create one if it doesn't exist
+        system_user = User.query.filter_by(username="System").first()
+        if not system_user:
+            system_user = User(
+                username="System",
+                email="system@example.com",
+                is_admin=False
+            )
+            system_user.set_password(''.join(random.choice(string.ascii_letters + string.digits) for _ in range(20)))
+            db.session.add(system_user)
+            db.session.flush()  # Get the ID without committing
+        
+        # Reassign ticket comments to system user
+        from models import TicketComment
+        ticket_comments = TicketComment.query.filter_by(user_id=user_id).all()
+        for comment in ticket_comments:
+            comment.user_id = system_user.id
+        
+        # Reassign ticket history entries to system user
+        from models import TicketHistory
+        ticket_history = TicketHistory.query.filter_by(user_id=user_id).all()
+        for history in ticket_history:
+            history.user_id = system_user.id
+        
+        # Reassign tickets created by this user
+        from models import Ticket
+        created_tickets = Ticket.query.filter_by(created_by=user_id).all()
+        for ticket in created_tickets:
+            ticket.created_by = system_user.id
+        
+        # Remove ticket assignments
+        assigned_tickets = Ticket.query.filter_by(assigned_to=user_id).all()
+        for ticket in assigned_tickets:
+            ticket.assigned_to = None
+            
+        # Delete associated schedules
         Schedule.query.filter_by(technician_id=user_id).delete()
+        
+        # Now delete the user
         db.session.delete(user)
         db.session.commit()
-        flash('User and associated schedules deleted successfully!')
+        flash('User and associated data deleted successfully!')
     except Exception as e:
         db.session.rollback()
         flash('Error deleting user.')

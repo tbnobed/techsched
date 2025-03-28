@@ -149,7 +149,7 @@ def standalone_dashboard():
 def tickets_dashboard():
     """Display all tickets with filtering options"""
     # Import the TicketStatus class from models (even though it's imported at the top)
-    from models import TicketStatus
+    from models import TicketStatus, Ticket
     
     app.logger.debug(f"Raw request URL: {request.url}")
     app.logger.debug(f"Raw query args: {request.args}")
@@ -349,7 +349,6 @@ def tickets_dashboard():
     }
     
     # Get active tickets for the sidebar
-    from models import Ticket, TicketStatus
     active_sidebar_tickets = Ticket.query.filter(
         Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.PENDING])
     ).order_by(

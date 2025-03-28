@@ -1,45 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-  <style>
-    @keyframes fadeIn {
-      0% { opacity: 0; }
-      100% { opacity: 1; }
-    }
-    
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.03); }
-      100% { transform: scale(1); }
-    }
-    
-    .logo-p-group {
-      animation: fadeIn 0.5s ease-in-out forwards, pulse 3s ease-in-out infinite;
-      animation-delay: 0s, 1s;
-      transform-origin: center;
-    }
-  </style>
-  
   <!-- P Logo with geometric design -->
-  <g class="logo-p-group" transform="translate(8, 8) scale(0.8)">
+  <g transform="translate(20, 15) scale(0.5)">
     <!-- Left blue face -->
-    <path d="M10,20 L10,80 L40,60 L40,40 Z" fill="#0078D7" />
+    <path d="M20,40 L20,160 L80,120 L80,80 Z" fill="#0078D7" />
     
     <!-- Dark navy face -->
-    <path d="M10,20 L40,40 L70,20 L40,0 Z" fill="#002744" />
+    <path d="M20,40 L80,80 L140,40 L80,0 Z" fill="#002744" />
     
     <!-- Orange top face -->
-    <path d="M40,0 L70,20 L100,0 L70,-20 Z" fill="#FF6C37" />
+    <path d="M80,0 L140,40 L200,0 L140,-40 Z" fill="#FF6C37" />
     
     <!-- Light orange right face -->
-    <path d="M70,20 L70,40 L100,20 L100,0 Z" fill="#FFA553" />
+    <path d="M140,40 L140,80 L200,40 L200,0 Z" fill="#FFA553" />
     
     <!-- Teal bottom face -->
-    <path d="M40,40 L70,40 L70,60 L40,60 Z" fill="#36B1A0" />
+    <path d="M80,80 L140,80 L140,120 L80,120 Z" fill="#36B1A0" />
     
     <!-- Dark navy inner face -->
-    <path d="M40,40 L40,60 L10,80 L10,60 Z" fill="#002744" />
+    <path d="M80,80 L80,120 L20,160 L20,120 Z" fill="#002744" />
     
     <!-- Center hexagon (empty space) -->
-    <path d="M40,20 L55,27.5 L55,42.5 L40,50 L25,42.5 L25,27.5 Z" fill="white" />
+    <path d="M80,40 L110,55 L110,85 L80,100 L50,85 L50,55 Z" fill="white" />
   </g>
 </svg>

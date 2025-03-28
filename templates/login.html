@@ -1,39 +1,39 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row justify-content-center mb-5">
-    <div class="col-md-5 text-center">
-        <div class="logo-container mb-4" style="max-width: 320px; margin: 0 auto;">
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <div class="logo-container mb-5" style="max-width: 220px; margin: 0 auto; padding-top: 2rem;">
             <img src="{{ url_for('static', filename='images/plex_studios_logo.svg') }}" alt="Plex Studios" class="img-fluid">
         </div>
     </div>
 </div>
 
 <div class="row justify-content-center">
-    <div class="col-md-5">
-        <div class="card shadow-lg border-0" style="border-radius: 10px; overflow: hidden;">
-            <div class="card-header text-center" style="background-color: #002744; color: white; border-bottom: none; padding: 1.5rem 1rem;">
-                <h2 style="font-weight: 700; letter-spacing: 0.5px; margin-bottom: 0;">SIGN IN</h2>
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow border-0" style="border-radius: 8px; overflow: hidden; background-color: #192231;">
+            <div class="card-header text-center" style="background-color: #192231; color: white; border-bottom: none; padding: 1.5rem 1rem;">
+                <h2 style="font-weight: 600; letter-spacing: 0.5px; margin-bottom: 0;">SIGN IN</h2>
             </div>
-            <div class="card-body p-4">
+            <div class="card-body p-4" style="background-color: #192231; color: white;">
                 <form method="POST" action="">
                     {{ form.hidden_tag() }}
-                    <div class="mb-4">
-                        {{ form.email.label(class="form-label", style="font-weight: 600;") }}
-                        {{ form.email(class="form-control form-control-lg", style="border-radius: 8px; padding: 12px 15px;") }}
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        {{ form.email(class="form-control", style="border-radius: 4px; padding: 10px; background-color: #1F2A3C; border: 1px solid #2c3e50; color: white;") }}
                     </div>
-                    <div class="mb-4">
-                        {{ form.password.label(class="form-label", style="font-weight: 600;") }}
-                        {{ form.password(class="form-control form-control-lg", style="border-radius: 8px; padding: 12px 15px;") }}
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        {{ form.password(class="form-control", style="border-radius: 4px; padding: 10px; background-color: #1F2A3C; border: 1px solid #2c3e50; color: white;") }}
                     </div>
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <div class="form-check">
-                            {{ form.remember_me(class="form-check-input") }}
+                            {{ form.remember_me(class="form-check-input", style="background-color: #1F2A3C; border: 1px solid #2c3e50;") }}
                             {{ form.remember_me.label(class="form-check-label") }}
                         </div>
                     </div>
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-lg" style="border-radius: 8px; padding: 12px; font-weight: 600; background-color: #0078D7; color: white; border: none;">
+                    <div class="d-grid gap-2 mb-2">
+                        <button type="submit" class="btn" style="border-radius: 4px; padding: 10px; font-weight: 500; background-color: #3B7CFF; color: white; border: none;">
                             Login
                         </button>
                     </div>

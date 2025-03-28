@@ -152,11 +152,11 @@
     </style>
 </head>
 <body {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}class="light-theme"{% endif %}>
-    <nav class="navbar navbar-expand-lg {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}navbar-light bg-light{% else %}navbar-dark bg-dark{% endif %}">
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #0F1624; border-bottom: 1px solid #182234;">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="{{ url_for('calendar') }}">
-                <img src="{{ url_for('static', filename='images/plex_studios_logo_small.svg') }}" alt="Plex Studios" class="me-2" width="32" height="32">
-                <span style="font-weight: 700; letter-spacing: 0.5px; color: #002744;">PLEX STUDIOS</span>
+                <img src="{{ url_for('static', filename='images/plex_studios_logo_small.svg') }}" alt="The Plex Studios" class="me-2" width="32" height="32">
+                <span style="font-weight: 700; letter-spacing: 0.5px; color: #0078D7;">THE PLEX STUDIOS</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>

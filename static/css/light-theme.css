@@ -491,7 +491,7 @@ body {
 
 .active-user-entry .username, .time-off-entry .username {
   font-weight: 600;
-  color: var(--light-text);
+  color: var(--light-text) !important;
   font-size: 1.05rem;
 }
 

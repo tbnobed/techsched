@@ -97,8 +97,14 @@ def tickets_dashboard():
     # Add a temporary filter to show exactly what's going to the template
     app.logger.debug(f"FINAL TICKETS TO TEMPLATE:")
     for ticket in tickets:
-        app.logger.debug(f"FINAL Ticket #{ticket.id}: {ticket.title} - Priority: {ticket.priority}")
-
+        app.logger.debug(f"FINAL Ticket #{ticket.id}: {ticket.title} - Status: {ticket.status} - Priority: {ticket.priority}")
+        
+    # Double-check all tickets have data in correct format (debug step)
+    app.logger.debug(f"Double-checking all tickets in the database:")
+    all_tickets = Ticket.query.all()
+    for ticket in all_tickets:
+        app.logger.debug(f"DB Ticket #{ticket.id}: {ticket.title} - Status: '{ticket.status}' - Priority: {ticket.priority}")
+    
     # Get categories and convert to dictionaries
     categories_objects = TicketCategory.query.all()
     categories = [

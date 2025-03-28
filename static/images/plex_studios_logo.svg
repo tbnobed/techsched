@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="480" height="120" viewBox="0 0 480 120" xmlns="http://www.w3.org/2000/svg">
-  <!-- P Logo with geometric design -->
-  <g transform="translate(190, 20) scale(0.45)">
-    <!-- Left blue face -->
-    <path d="M20,40 L20,160 L80,120 L80,80 Z" fill="#0078D7" />
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="160" viewBox="0 0 480 160">
+  <!-- P Logo -->
+  <g transform="translate(150, 10) scale(1.2)">
+    <!-- Left blue bar -->
+    <path d="M0,0 L30,15 L30,75 L0,60 Z" fill="#0078D7" />
     
-    <!-- Dark navy face -->
-    <path d="M20,40 L80,80 L140,40 L80,0 Z" fill="#002744" />
+    <!-- Dark blue edge -->
+    <path d="M0,0 L60,0 L90,15 L30,15 Z" fill="#002744" />
     
-    <!-- Orange top face -->
-    <path d="M80,0 L140,40 L200,0 L140,-40 Z" fill="#FF6C37" />
+    <!-- Top orange bar -->
+    <path d="M60,0 L120,0 L150,15 L90,15 Z" fill="#FF6C37" />
     
-    <!-- Light orange right face -->
-    <path d="M140,40 L140,80 L200,40 L200,0 Z" fill="#FFA553" />
+    <!-- Right orange edge -->
+    <path d="M150,15 L150,45 L120,30 L120,0 L150,15 Z" fill="#FFA553" />
     
-    <!-- Teal bottom face -->
-    <path d="M80,80 L140,80 L140,120 L80,120 Z" fill="#36B1A0" />
+    <!-- Bottom teal bar -->
+    <path d="M30,75 L90,75 L90,45 L30,45 Z" fill="#36B1A0" />
     
-    <!-- Dark navy inner face -->
-    <path d="M80,80 L80,120 L20,160 L20,120 Z" fill="#002744" />
+    <!-- Dark blue inner section -->
+    <path d="M30,15 L90,15 L90,45 L60,60 L30,45 Z" fill="#002744" />
     
-    <!-- Center hexagon (empty space) -->
-    <path d="M80,40 L110,55 L110,85 L80,100 L50,85 L50,55 Z" fill="white" />
+    <!-- Inner hexagon cutout -->
+    <path d="M60,15 L75,22.5 L75,37.5 L60,45 L45,37.5 L45,22.5 Z" fill="white" />
   </g>
   
-  <!-- PLEX text -->
-  <text x="260" y="60" font-family="Arial, sans-serif" font-weight="800" font-size="48" fill="#0078D7">PLEX</text>
-  
-  <!-- STUDIOS subtext -->
-  <text x="260" y="90" font-family="Arial, sans-serif" font-weight="600" font-size="24" fill="#36B1A0">STUDIOS</text>
+  <!-- Text -->
+  <g transform="translate(290, 60)">
+    <text font-family="Arial, sans-serif" font-weight="800" font-size="36" fill="#0078D7">PLEX</text>
+    <text y="30" font-family="Arial, sans-serif" font-weight="600" font-size="20" fill="#36B1A0">STUDIOS</text>
+  </g>
 </svg>

@@ -6,25 +6,48 @@
       100% { transform: rotate(360deg); }
     }
     
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+    
     .logo-bg {
-      fill: #1a1a2e;
+      fill: #111827;
     }
     
     .logo-p {
       fill: #ffffff;
+      stroke: #ffffff;
+      stroke-width: 1;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    
+    .logo-hover-effect {
+      transition: transform 0.3s ease-in-out;
+    }
+    
+    .logo-hover-effect:hover {
+      transform: scale(1.1);
     }
     
     .transition-rotate {
       animation: rotate 0.5s ease-in-out;
       transform-origin: center;
     }
+    
+    .nav-pulse {
+      animation: pulse 3s ease-in-out infinite;
+      transform-origin: center;
+    }
   </style>
   
-  <!-- Background Circle -->
-  <circle class="logo-bg" cx="40" cy="40" r="40" />
+  <!-- Background with rounded corners for modern look -->
+  <rect class="logo-bg" x="0" y="0" width="80" height="80" rx="8" />
   
-  <!-- P Mark -->
-  <g transform="translate(20, 20) scale(0.4)">
-    <path class="logo-p" d="M30,30 L90,30 L150,70 L90,110 L30,110 L30,170 L30,30 Z M90,70 L90,110" />
+  <!-- P Mark with cleaner lines -->
+  <g transform="translate(20, 20)" class="logo-hover-effect">
+    <path class="logo-p" d="M8,8 L28,8 L42,20 L28,32 L8,32 L8,48 L8,8 Z" />
   </g>
 </svg>

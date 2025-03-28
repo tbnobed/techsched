@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row justify-content-center mb-4">
-    <div class="col-md-6 text-center">
+<div class="row justify-content-center mb-5">
+    <div class="col-md-5 text-center">
         <div class="logo-container mb-4" style="max-width: 240px; margin: 0 auto;">
             <img src="{{ url_for('static', filename='images/plex_studios_logo.svg') }}" alt="The Plex Studios" class="img-fluid">
         </div>
@@ -10,28 +10,32 @@
 </div>
 
 <div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow-lg">
-            <div class="card-header">
-                <h2 class="text-center">Login</h2>
+    <div class="col-md-5">
+        <div class="card shadow-lg border-0" style="border-radius: 10px; overflow: hidden;">
+            <div class="card-header text-center" style="background-color: #111827; color: white; border-bottom: none; padding: 1.5rem 1rem;">
+                <h2 style="font-weight: 700; letter-spacing: 0.5px; margin-bottom: 0;">SIGN IN</h2>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <form method="POST" action="">
                     {{ form.hidden_tag() }}
-                    <div class="mb-3">
-                        {{ form.email.label(class="form-label") }}
-                        {{ form.email(class="form-control") }}
+                    <div class="mb-4">
+                        {{ form.email.label(class="form-label", style="font-weight: 600;") }}
+                        {{ form.email(class="form-control form-control-lg", style="border-radius: 8px; padding: 12px 15px;") }}
                     </div>
-                    <div class="mb-3">
-                        {{ form.password.label(class="form-label") }}
-                        {{ form.password(class="form-control") }}
+                    <div class="mb-4">
+                        {{ form.password.label(class="form-label", style="font-weight: 600;") }}
+                        {{ form.password(class="form-control form-control-lg", style="border-radius: 8px; padding: 12px 15px;") }}
                     </div>
-                    <div class="mb-3">
-                        {{ form.remember_me(class="form-check-input") }}
-                        {{ form.remember_me.label(class="form-check-label") }}
+                    <div class="mb-4">
+                        <div class="form-check">
+                            {{ form.remember_me(class="form-check-input") }}
+                            {{ form.remember_me.label(class="form-check-label") }}
+                        </div>
                     </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Login</button>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg" style="border-radius: 8px; padding: 12px; font-weight: 600;">
+                            Login
+                        </button>
                     </div>
                 </form>
             </div>

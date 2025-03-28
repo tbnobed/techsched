@@ -109,10 +109,20 @@ def tickets_dashboard():
         TicketStatus.CLOSED
     ]
 
+    # Final debug check before rendering
+    app.logger.debug(f"RENDERING TEMPLATE WITH {len(tickets)} TICKETS:")
+    for idx, ticket in enumerate(tickets):
+        app.logger.debug(f"RENDER TICKET #{idx+1}: ID={ticket.id}, Title={ticket.title}, Status={ticket.status}, Priority={ticket.priority}")
+    
+    # Pass ticket IDs as a separate variable to confirm what's being sent
+    ticket_ids = [t.id for t in tickets]
+    app.logger.debug(f"TICKET IDS PASSED TO TEMPLATE: {ticket_ids}")
+    
     return render_template('tickets/dashboard.html', 
                          tickets=tickets,
                          categories=categories,
-                         ticket_statuses=ticket_statuses)
+                         ticket_statuses=ticket_statuses,
+                         ticket_count=len(tickets))
 
 @tickets.route('/tickets/create', methods=['GET', 'POST'])
 @login_required

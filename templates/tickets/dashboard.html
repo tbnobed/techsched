@@ -3,7 +3,10 @@
 {% block content %}
 <div class="tickets-dashboard">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Tickets</h2>
+        <div>
+            <h2>Tickets</h2>
+            <p class="text-muted">Showing {{ ticket_count }} ticket{% if ticket_count != 1 %}s{% endif %}</p>
+        </div>
         <div class="d-flex gap-2">
             <a href="{{ url_for('tickets.create_ticket') }}" class="btn btn-primary">
                 <i data-feather="plus"></i> New Ticket
@@ -21,7 +24,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5>Filter Tickets</h5>
-                    <form method="GET" action="{{ url_for('tickets.tickets_dashboard') }}">
+                    <form method="GET" action="{{ url_for('tickets.tickets_dashboard') }}?nocache={{ range(1, 1000000) | random }}" autocomplete="off" novalidate>
                         <div class="mb-3">
                             <label class="form-label">Status</label>
                             <select name="status" class="form-select">
@@ -153,9 +156,22 @@
 </div>
 
 <script>
-    // Initialize Feather icons
+    // Initialize Feather icons and handle cache prevention
     document.addEventListener('DOMContentLoaded', function() {
         feather.replace({ 'class': 'feather-sm' });
+        
+        // Add timestamp to form submission to prevent caching
+        const filterForm = document.querySelector('form');
+        if (filterForm) {
+            filterForm.addEventListener('submit', function(e) {
+                // Add a timestamp hidden field to prevent caching
+                const timestamp = document.createElement('input');
+                timestamp.type = 'hidden';
+                timestamp.name = 'timestamp';
+                timestamp.value = new Date().getTime();
+                this.appendChild(timestamp);
+            });
+        }
     });
 </script>
 {% endblock %}

@@ -74,6 +74,9 @@ def tickets_dashboard():
     # Apply filters
     app.logger.debug(f"Before filtering, query: {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
     
+    # For explicit status checking, keep track of raw query string
+    raw_status_filter = status_filter
+    
     if status_filter != 'all':
         query = query.filter(Ticket.status == status_filter)
         app.logger.debug(f"After status filter ({status_filter}): {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
@@ -93,8 +96,11 @@ def tickets_dashboard():
         except (ValueError, TypeError):
             app.logger.error(f"Invalid priority filter value: {priority_filter}")
 
-    # Show all tickets for all users
+    # Show all tickets for all users, ordered by creation date (newest first)
     tickets = query.order_by(Ticket.created_at.desc()).all()
+    
+    # Add special debug logs for status filter
+    app.logger.debug(f"Status filter applied: '{raw_status_filter}'")
     app.logger.debug(f"Found {len(tickets)} tickets matching filters: status={status_filter}, category={category_filter}, priority={priority_filter}")
     
     # Add debug information about each ticket found

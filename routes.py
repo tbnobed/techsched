@@ -1032,11 +1032,15 @@ def get_open_tickets(limit=5):
     """Get open tickets for the current user (assigned to or created by)"""
     from models import Ticket, TicketStatus
     from flask_login import current_user
+    from app import app
     
     if not current_user.is_authenticated:
         return []
     
-    # Get all open tickets
+    app.logger.debug(f"Fetching up to {limit} active tickets for sidebar display")
+    
+    # Get all active tickets (open, in progress, pending)
+    # This is SEPARATE from the main ticket dashboard filtering
     query = Ticket.query.filter(
         Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.PENDING])
     ).order_by(
@@ -1045,7 +1049,10 @@ def get_open_tickets(limit=5):
         Ticket.created_at.desc()
     ).limit(limit)
     
-    return query.all()
+    tickets = query.all()
+    app.logger.debug(f"Found {len(tickets)} active tickets for sidebar display")
+    
+    return tickets
 
 @app.context_processor
 def inject_quick_links():

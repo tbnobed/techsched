@@ -182,6 +182,28 @@ def change_password():
     return redirect(url_for('profile'))
 
 
+@app.route('/toggle-theme', methods=['POST'])
+@login_required
+def toggle_theme():
+    try:
+        # Toggle between light and dark theme
+        current_theme = current_user.theme_preference or 'dark'  # Default to dark if None
+        new_theme = 'light' if current_theme == 'dark' else 'dark'
+        
+        # Update user preference
+        current_user.theme_preference = new_theme
+        db.session.commit()
+        
+        flash(f'Theme updated to {new_theme} mode')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error toggling theme: {str(e)}")
+        flash('Error updating theme preference. Please try again.')
+    
+    # Redirect back to the page they came from or default to profile
+    return redirect(request.referrer or url_for('profile'))
+
+
 @app.route('/admin/locations', methods=['GET', 'POST'])
 @login_required
 def admin_locations():

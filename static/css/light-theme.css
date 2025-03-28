@@ -1,0 +1,746 @@
+/* Light Theme CSS */
+:root {
+  --light-bg: #f8f9fa;
+  --light-panel: #ffffff;
+  --light-card: #ffffff;
+  --light-accent: #3498db;
+  --light-text: #333333;
+  --light-text-secondary: #5a6268;
+  --light-muted: #6c757d;
+  --light-border: #dee2e6;
+  --light-hover: #f1f3f5;
+  --light-active: #e9ecef;
+  --light-input-bg: #ffffff;
+  --light-success: #28a745;
+  --light-info: #17a2b8;
+  --light-warning: #ffc107;
+  --light-danger: #dc3545;
+  
+  /* Sidebar section specific colors */
+  --sidebar-time-bg: #eaf2fd;
+  --sidebar-active-bg: #e3f2fd;
+  --sidebar-timeoff-bg: #e8f4fd;
+  --sidebar-tickets-bg: #e6f6ff;
+  --sidebar-links-bg: #f2f6fc;
+
+  /* For Bootstrap compatibility */
+  --primary-color: #3498db;
+}
+
+body {
+  background-color: var(--light-bg);
+  color: var(--light-text);
+}
+
+.navbar {
+  background-color: var(--light-panel) !important;
+  border-bottom: 1px solid var(--light-border);
+}
+
+.card {
+  background-color: var(--light-card);
+  border: 1px solid var(--light-border);
+}
+
+.card-header {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid var(--light-border);
+}
+
+.table {
+  color: var(--light-text) !important;
+  border-color: var(--light-border) !important;
+  background-color: var(--light-card) !important;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+.table thead th {
+  border-bottom: 2px solid var(--light-border);
+  background-color: #f8f9fa !important;
+  color: var(--light-text) !important;
+  padding: 14px 15px !important;
+  font-weight: 600 !important;
+}
+
+.table td, .table th {
+  border-top: 1px solid var(--light-border);
+  padding: 12px 15px !important;
+  color: var(--light-text) !important;
+  border-bottom: 1px solid var(--light-border) !important;
+}
+
+/* Specific for admin dashboard */
+.admin-dashboard .table {
+  border: 1px solid var(--light-border) !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Ensure buttons in tables have proper contrast */
+.table .btn-primary {
+  background-color: var(--light-accent) !important;
+  border-color: var(--light-accent) !important;
+}
+
+.table .btn-danger {
+  background-color: var(--light-danger) !important;
+  border-color: var(--light-danger) !important;
+}
+
+.form-control, .form-select {
+  background-color: var(--light-input-bg);
+  border: 1px solid var(--light-border);
+  color: var(--light-text);
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: var(--light-input-bg);
+  color: var(--light-text);
+  border-color: var(--light-accent);
+  box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+}
+
+.form-text {
+  color: var(--light-text-secondary);
+}
+
+.btn-primary {
+  background-color: var(--light-accent);
+  border-color: var(--light-accent);
+}
+
+.btn-primary:hover {
+  background-color: #2980b9;
+  border-color: #2980b9;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-outline-primary {
+  color: var(--light-accent);
+  border-color: var(--light-accent);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--light-accent);
+  border-color: var(--light-accent);
+}
+
+.btn-outline-danger {
+  color: var(--light-danger);
+  border-color: var(--light-danger);
+}
+
+.badge.bg-success {
+  background-color: var(--light-success) !important;
+}
+
+.badge.bg-info {
+  background-color: var(--light-info) !important;
+}
+
+.badge.bg-warning {
+  background-color: var(--light-warning) !important;
+}
+
+.badge.bg-danger {
+  background-color: var(--light-danger) !important;
+}
+
+.list-group-item {
+  background-color: var(--light-card);
+  border-color: var(--light-border);
+  color: var(--light-text);
+}
+
+.list-group-item-action:hover {
+  background-color: var(--light-hover);
+}
+
+.nav-link {
+  color: var(--light-text-secondary);
+}
+
+.nav-link:hover, .nav-link:focus {
+  color: var(--light-text);
+}
+
+.nav-link.active {
+  color: var(--light-accent) !important;
+}
+
+.dropdown-menu {
+  background-color: var(--light-panel);
+  border-color: var(--light-border);
+}
+
+.dropdown-item {
+  color: var(--light-text);
+}
+
+.dropdown-item:hover, .dropdown-item:focus {
+  background-color: var(--light-hover);
+  color: var(--light-text);
+}
+
+.modal-content {
+  background-color: var(--light-card);
+  border-color: var(--light-border);
+  color: var(--light-text);
+}
+
+.modal-header, .modal-footer {
+  border-color: var(--light-border);
+}
+
+.modal-title {
+  color: var(--light-text);
+}
+
+.modal-body .form-label {
+  color: var(--light-text);
+  font-weight: 500;
+}
+
+.modal-body .form-control, 
+.modal-body .form-select {
+  background-color: var(--light-input-bg);
+  border-color: var(--light-border);
+  color: var(--light-text);
+}
+
+.modal-body .form-control:focus, 
+.modal-body .form-select:focus {
+  background-color: var(--light-input-bg);
+  border-color: var(--light-accent);
+  color: var(--light-text);
+  box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.modal-body .form-check-label {
+  color: var(--light-text);
+}
+
+.modal-footer .btn-primary {
+  background-color: var(--light-accent);
+  border-color: var(--light-accent);
+  color: white;
+}
+
+.modal-footer .btn-danger {
+  background-color: var(--light-danger);
+  border-color: var(--light-danger);
+  color: white;
+}
+
+.modal-footer .btn-info {
+  background-color: var(--light-info);
+  border-color: var(--light-info); 
+  color: white;
+}
+
+/* Mini-calendar styles override for light theme */
+.mini-calendar {
+  background-color: var(--light-card) !important;
+  border-color: var(--light-border) !important;
+  color: var(--light-text) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Schedule form inputs */
+.modal-content .form-control,
+.modal-content .custom-select {
+  background-color: #ffffff !important;
+  border-color: #ced4da !important;
+  color: var(--light-text) !important;
+}
+
+.modal-content .form-control:focus,
+.modal-content .custom-select:focus {
+  box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.4) !important;
+  border-color: var(--light-accent) !important;
+}
+
+.modal-content .form-control::placeholder {
+  color: #adb5bd !important;
+}
+
+.modal-content label {
+  color: var(--light-text) !important;
+  font-weight: 500 !important;
+}
+
+.modal-content .form-text {
+  color: var(--light-text-secondary) !important;
+}
+
+/* Time inputs */
+.modal-content .form-control[type="time"] {
+  background-color: #ffffff !important;
+  color: var(--light-text) !important;
+  border-color: #ced4da !important;
+}
+
+.month-navigator {
+  background-color: #f8f9fa !important;
+  padding: 10px !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  margin-bottom: 10px !important;
+}
+
+.calendar-month-heading {
+  background-color: #f8f9fa !important;
+  padding: 8px !important;
+  border-radius: 4px !important;
+  margin-bottom: 8px !important;
+}
+
+#calendar-month-year {
+  color: var(--light-text) !important;
+  font-weight: bold !important;
+  font-size: 1.1rem !important;
+}
+
+.day-names {
+  color: var(--light-text) !important;
+  background-color: #f8f9fa !important;
+  padding: 5px 0 !important;
+  border-radius: 4px !important;
+  font-weight: 600 !important;
+  margin-bottom: 8px !important;
+}
+
+.day-names div {
+  color: var(--light-text) !important;
+}
+
+.day-item {
+  color: var(--light-text) !important;
+  border-radius: 4px !important;
+}
+
+.day-item:hover:not(.disabled) {
+  background-color: var(--light-hover) !important;
+}
+
+.day-item.outside-month {
+  color: var(--light-muted) !important;
+}
+
+.day-item.disabled {
+  color: var(--light-muted) !important;
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+.day-item.today {
+  border: 1px solid var(--light-accent) !important;
+}
+
+.day-item.selected {
+  background-color: var(--light-accent) !important;
+  color: white !important;
+}
+
+.day-item.primary-date {
+  background-color: var(--light-info) !important;
+  color: white !important;
+}
+
+.date-tag {
+  background-color: var(--light-hover) !important;
+  color: var(--light-text) !important;
+  border-radius: 4px !important;
+  border: 1px solid var(--light-border) !important;
+}
+
+#selected-dates-container .text-muted {
+  color: var(--light-muted) !important;
+}
+
+.selected-dates strong {
+  color: var(--light-text) !important;
+}
+
+.month-navigator button,
+#clear-selection {
+  color: var(--light-text) !important;
+  background-color: #e9ecef !important;
+  border-color: #ced4da !important;
+  font-weight: bold !important;
+  padding: 5px 12px !important;
+  border-radius: 4px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.month-navigator button:hover,
+#clear-selection:hover {
+  background-color: #dee2e6 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Make selected date clearer */
+.selected-dates {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  padding: 10px !important;
+  border-radius: 4px !important;
+  margin-top: 8px !important;
+  border: 1px solid var(--light-border) !important;
+}
+
+#selected-dates-container {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+  padding: 10px !important;
+  border-radius: 4px !important;
+  margin-bottom: 12px !important;
+}
+
+.alert-info {
+  background-color: rgba(23, 162, 184, 0.1);
+  border-color: rgba(23, 162, 184, 0.2);
+  color: var(--light-text);
+}
+
+.close {
+  color: var(--light-text);
+}
+
+.page-link {
+  background-color: var(--light-panel);
+  border-color: var(--light-border);
+  color: var(--light-text);
+}
+
+.page-link:hover {
+  background-color: var(--light-hover);
+  border-color: var(--light-border);
+  color: var(--light-text);
+}
+
+.page-item.active .page-link {
+  background-color: var(--light-accent);
+  border-color: var(--light-accent);
+}
+
+/* Sidebar styling */
+.sidebar {
+  background-color: var(--light-panel);
+  border-right: 1px solid var(--light-border);
+}
+
+.sidebar .nav-link {
+  color: var(--light-text-secondary);
+}
+
+.sidebar .nav-link:hover {
+  color: var(--light-text);
+  background-color: var(--light-hover);
+}
+
+.sidebar .nav-link.active {
+  color: var(--light-text);
+  background-color: var(--light-active);
+}
+
+/* Sidebar section-specific styling */
+#current-time-display {
+  background-color: var(--sidebar-time-bg);
+  border: 1px solid var(--light-border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.col-md-3 .card:nth-of-type(1) {
+  background-color: var(--sidebar-active-bg);
+}
+
+.col-md-3 .card:nth-of-type(2) {
+  background-color: var(--sidebar-timeoff-bg);
+}
+
+.col-md-3 .card:nth-of-type(3) {
+  background-color: var(--sidebar-tickets-bg);
+}
+
+.col-md-3 .card:nth-of-type(4) {
+  background-color: var(--sidebar-links-bg);
+}
+
+/* Better contrast for active users and time off section */
+#active-users, #upcoming-time-off {
+  color: var(--light-text);
+  font-weight: 500;
+}
+
+.active-user-entry, .time-off-entry {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.active-user-entry .username, .time-off-entry .username {
+  font-weight: 600;
+  color: var(--light-text);
+  font-size: 1.05rem;
+}
+
+.active-user-entry .location, .time-off-entry .date-range {
+  margin-top: 5px;
+  color: var(--light-text-secondary);
+}
+
+.active-user-entry:hover, .time-off-entry:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+  transition: all 0.2s ease;
+}
+
+/* Calendar styling */
+.fc-theme-standard .fc-scrollgrid {
+  border-color: var(--light-border) !important;
+}
+
+.fc-theme-standard th, .fc-theme-standard td {
+  border-color: var(--light-border) !important;
+}
+
+.fc-theme-standard .fc-toolbar {
+  color: var(--light-text) !important;
+}
+
+/* Custom calendar styles - not FullCalendar */
+.calendar-container {
+  background-color: var(--light-panel) !important;
+  border: 1px solid var(--light-border) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.calendar-header {
+  background-color: #f8f9fa !important;
+  border-radius: 6px !important;
+  padding: 15px !important;
+  margin-bottom: 20px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+.calendar-header h2 {
+  color: var(--light-text) !important;
+  margin-bottom: 0 !important;
+}
+
+.calendar-controls .btn {
+  background-color: #e9ecef !important;
+  border-color: #dee2e6 !important;
+  color: var(--light-text) !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.calendar-controls .btn:hover {
+  background-color: #dee2e6 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.calendar-controls .btn-outline-primary {
+  background-color: transparent !important;
+  border-color: var(--light-accent) !important;
+  color: var(--light-accent) !important;
+}
+
+.calendar-controls .btn-outline-secondary {
+  background-color: transparent !important;
+  border-color: #6c757d !important;
+  color: #6c757d !important;
+}
+
+.calendar-controls .btn-success {
+  background-color: var(--light-success) !important;
+  border-color: var(--light-success) !important;
+  color: white !important;
+}
+
+/* Override calendar grid */
+.calendar-grid {
+  background-color: var(--light-border) !important;
+  border: 1px solid var(--light-border) !important;
+}
+
+.time-column, .day-column {
+  background-color: var(--light-panel) !important;
+}
+
+.day-header {
+  background-color: #f8f9fa !important;
+  color: var(--light-text) !important;
+  border-bottom: 2px solid var(--light-border) !important;
+}
+
+.day-header.today {
+  background-color: var(--light-accent) !important;
+  color: white !important;
+}
+
+.hour-slot {
+  border-bottom: 1px solid var(--light-border) !important;
+  color: var(--light-text-secondary) !important;
+}
+
+.time-slot {
+  background-color: rgba(0, 0, 0, 0.01) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Fix calendar text contrast issues */
+.fc .fc-col-header-cell-cushion {
+  color: var(--light-text);
+}
+
+.fc .fc-daygrid-day-number {
+  color: var(--light-text);
+}
+
+.fc-direction-ltr .fc-daygrid-event.fc-event-end {
+  color: white;
+  font-weight: 500;
+}
+
+.fc-direction-ltr .fc-daygrid-event.fc-event-start {
+  color: white;
+  font-weight: 500;
+}
+
+.fc-event-title {
+  color: white;
+  font-weight: 500;
+}
+
+.fc-event-time {
+  color: white;
+  font-weight: 500;
+}
+
+.fc-timegrid-event-harness .fc-timegrid-event {
+  background-color: rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--light-border);
+}
+
+.fc-timegrid-slot-label-cushion {
+  color: var(--light-text);
+}
+
+.fc-col-header-cell a {
+  color: var(--light-text);
+  font-weight: 600;
+}
+
+.fc-daygrid-day-frame {
+  background-color: rgba(0, 0, 0, 0.01);
+}
+
+.fc-daygrid-day.fc-day-today {
+  background-color: rgba(52, 152, 219, 0.1) !important;
+}
+
+.fc-day-today .fc-daygrid-day-number {
+  background-color: var(--light-accent);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  text-align: center;
+  line-height: 24px;
+  margin: 4px;
+  color: white;
+}
+
+/* Alert styling */
+.alert-success {
+  background-color: rgba(40, 167, 69, 0.1);
+  border-color: var(--light-success);
+  color: var(--light-text);
+}
+
+.alert-info {
+  background-color: rgba(23, 162, 184, 0.1);
+  border-color: var(--light-info);
+  color: var(--light-text);
+}
+
+.alert-warning {
+  background-color: rgba(255, 193, 7, 0.1);
+  border-color: var(--light-warning);
+  color: var(--light-text);
+}
+
+.alert-danger {
+  background-color: rgba(220, 53, 69, 0.1);
+  border-color: var(--light-danger);
+  color: var(--light-text);
+}
+
+/* Ticket badges and status coloring */
+.ticket-status-open {
+  background-color: var(--light-info);
+}
+
+.ticket-status-in-progress {
+  background-color: var(--light-warning);
+}
+
+.ticket-status-pending {
+  background-color: #6f42c1;
+}
+
+.ticket-status-resolved {
+  background-color: var(--light-success);
+}
+
+.ticket-status-closed {
+  background-color: #6c757d;
+}
+
+/* Theme toggle button */
+.theme-toggle-btn {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 20px;
+  margin-right: 10px;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle-btn i {
+  margin-right: 5px;
+}
+
+/* Light theme specific for UI consistency */
+.theme-toggle-btn.light-theme {
+  background-color: #f8f9fa;
+  color: #343a40;
+  border: 1px solid #dee2e6;
+}
+
+.theme-toggle-btn.light-theme:hover {
+  background-color: #e9ecef;
+}
+
+/* Light theme overrides for better contrast */
+.light-theme .table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.075) !important;
+}
+
+.light-theme .badge {
+  color: white !important;
+}

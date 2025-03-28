@@ -63,6 +63,7 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     color = db.Column(db.String(7), default="#3498db")  # Default color for calendar
     timezone = db.Column(db.String(50), default='UTC')  # New timezone field
+    theme_preference = db.Column(db.String(20), default='dark')  # Theme preference (dark/light)
     schedules = db.relationship('Schedule', backref='technician', lazy='dynamic')
     assigned_tickets = db.relationship('Ticket', 
                                      foreign_keys='Ticket.assigned_to',
@@ -96,6 +97,7 @@ class User(UserMixin, db.Model):
             'is_admin': self.is_admin,
             'color': self.color,
             'timezone': self.timezone,
+            'theme_preference': self.theme_preference,
             'created_schedules': [schedule.id for schedule in self.schedules]
         }
 

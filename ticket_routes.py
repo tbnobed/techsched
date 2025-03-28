@@ -55,13 +55,14 @@ def tickets_dashboard():
 
     # Add some diagnostic queries to check database status values
     # Count status distribution in database
+    from sqlalchemy import text
     status_counts = db.session.execute(
-        """
+        text("""
         SELECT status, COUNT(*) as count
         FROM ticket
         GROUP BY status
         ORDER BY status
-        """
+        """)
     ).fetchall()
     app.logger.debug("Status counts in database:")
     for status, count in status_counts:

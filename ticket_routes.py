@@ -148,6 +148,9 @@ def standalone_dashboard():
 @login_required
 def tickets_dashboard():
     """Display all tickets with filtering options"""
+    # Import the TicketStatus class from models (even though it's imported at the top)
+    from models import TicketStatus
+    
     app.logger.debug(f"Raw request URL: {request.url}")
     app.logger.debug(f"Raw query args: {request.args}")
     

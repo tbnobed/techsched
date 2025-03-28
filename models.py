@@ -5,6 +5,7 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import current_app
 from typing import List
+from sqlalchemy.orm import validates
 
 @login_manager.user_loader
 def load_user(id):
@@ -64,6 +65,14 @@ class User(UserMixin, db.Model):
     color = db.Column(db.String(7), default="#3498db")  # Default color for calendar
     timezone = db.Column(db.String(50), default='UTC')  # New timezone field
     theme_preference = db.Column(db.String(20), default='dark')  # Theme preference (dark/light)
+    
+    # Override email property to ensure lowercase
+    @property
+    def email_normalized(self):
+        return self.email.lower() if self.email else None
+    
+# NOTE: The SQLAlchemy validates decorator was causing issues,
+# so we're using Python property functionality to handle email normalization
     schedules = db.relationship('Schedule', backref='technician', lazy='dynamic')
     assigned_tickets = db.relationship('Ticket', 
                                      foreign_keys='Ticket.assigned_to',

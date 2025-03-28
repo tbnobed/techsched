@@ -617,8 +617,11 @@ def admin_create_user():
     form = AdminUserForm()
     if form.validate_on_submit():
         try:
-            # Check if user already exists
-            existing_user = User.query.filter_by(email=form.email.data).first()
+            # Convert email to lowercase for case-insensitive searching
+            email = form.email.data.lower() if form.email.data else ""
+            
+            # Check if user already exists (case-insensitive)
+            existing_user = User.query.filter_by(email=email).first()
             if existing_user:
                 flash('Email already registered.')
                 return redirect(url_for('admin_dashboard'))
@@ -626,7 +629,7 @@ def admin_create_user():
             # Create new user
             user = User(
                 username=form.username.data,
-                email=form.email.data,
+                email=email,  # Store email in lowercase
                 color=form.color.data or '#3498db',  # Default color if none provided
                 is_admin=form.is_admin.data,
                 timezone=form.timezone.data or 'America/Los_Angeles'  # Default timezone
@@ -691,7 +694,8 @@ def admin_edit_user(user_id):
         try:
             # Update user fields
             user.username = username
-            user.email = email
+            # Store email in lowercase for case-insensitive handling
+            user.email = email.lower() if email else ""
             user.color = color
             user.is_admin = is_admin
 

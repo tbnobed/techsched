@@ -13,7 +13,12 @@ def login():
     
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        # Make email lowercase for case-insensitive login
+        email = form.email.data.lower() if form.email.data else ""
+        
+        # First try with exact case
+        user = User.query.filter_by(email=email).first()
+        
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             next_page = request.args.get('next')

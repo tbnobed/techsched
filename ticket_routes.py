@@ -273,7 +273,7 @@ def create_ticket():
 @login_required
 def view_ticket(ticket_id):
     """View a specific ticket"""
-    ticket = Ticket.query.get_or_404(ticket_id)
+    ticket_obj = Ticket.query.get_or_404(ticket_id)
 
     # All users can view all tickets
 
@@ -285,19 +285,73 @@ def view_ticket(ticket_id):
     categories = TicketCategory.query.all()
     technicians = User.query.all()
 
+    # Convert ticket to dictionary to avoid SQLAlchemy caching issues
+    ticket = {
+        'id': ticket_obj.id,
+        'title': ticket_obj.title,
+        'description': ticket_obj.description,
+        'category_id': ticket_obj.category_id,
+        'status': ticket_obj.status,
+        'priority': ticket_obj.priority,
+        'assigned_to': ticket_obj.assigned_to,
+        'created_by': ticket_obj.created_by,
+        'created_at': ticket_obj.created_at,
+        'updated_at': ticket_obj.updated_at,
+        'due_date': ticket_obj.due_date,
+        'category': {
+            'id': ticket_obj.category.id,
+            'name': ticket_obj.category.name,
+            'icon': ticket_obj.category.icon
+        },
+        'comments': [{
+            'id': comment.id,
+            'content': comment.content,
+            'created_at': comment.created_at,
+            'user': {
+                'id': comment.user.id,
+                'username': comment.user.username,
+                'color': comment.user.color
+            }
+        } for comment in ticket_obj.comments],
+        'history': [{
+            'id': history.id,
+            'action': history.action,
+            'details': history.details,
+            'created_at': history.created_at,
+            'user': {
+                'id': history.user.id,
+                'username': history.user.username
+            }
+        } for history in ticket_obj.history]
+    }
+    
+    # Add creator and assigned technician info
+    ticket['creator'] = {
+        'id': ticket_obj.creator.id,
+        'username': ticket_obj.creator.username
+    }
+    
+    if ticket_obj.assigned_technician:
+        ticket['assigned_technician'] = {
+            'id': ticket_obj.assigned_technician.id,
+            'username': ticket_obj.assigned_technician.username
+        }
+    else:
+        ticket['assigned_technician'] = None
+
     # Populate form with current ticket data
     if request.method == 'GET':
-        form.title.data = ticket.title
-        form.description.data = ticket.description
-        form.category_id.data = ticket.category_id
-        form.priority.data = ticket.priority
-        form.due_date.data = ticket.due_date
+        form.title.data = ticket_obj.title
+        form.description.data = ticket_obj.description
+        form.category_id.data = ticket_obj.category_id
+        form.priority.data = ticket_obj.priority
+        form.due_date.data = ticket_obj.due_date
 
         # Populate category choices
         form.category_id.choices = [(c.id, c.name) for c in categories]
 
         # Populate technician choices for admin users and ticket creators
-        if current_user.is_admin or current_user.id == ticket.created_by:
+        if current_user.is_admin or current_user.id == ticket_obj.created_by:
             form.assigned_to.choices = [(u.id, u.username) for u in technicians]
 
     return render_template('tickets/view.html', 

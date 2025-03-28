@@ -216,11 +216,19 @@ def tickets_dashboard():
     for status, count in status_counts:
         app.logger.debug(f"  {status}: {count} tickets")
 
+    # Get archived filter from the request
+    show_archived = request.args.get('archived', 'false').lower() == 'true'
+    
     # Base query
     query = Ticket.query
-
+    
     # Apply filters
     app.logger.debug(f"Before filtering, query: {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
+    
+    # By default, don't show archived tickets unless explicitly requested
+    if not show_archived:
+        query = query.filter(Ticket.archived == False)
+        app.logger.debug(f"Filtered to non-archived tickets only")
     
     # For explicit status checking, keep track of raw query string
     raw_status_filter = status_filter
@@ -1048,3 +1056,191 @@ def delete_category(category_id):
         flash('Error deleting category', 'error')
         
     return redirect(url_for('tickets.manage_categories'))
+    
+    
+@tickets.route('/tickets/<int:ticket_id>/archive')
+@login_required
+def archive_ticket(ticket_id):
+    """Archive a ticket (mark it as archived)"""
+    ticket = Ticket.query.get_or_404(ticket_id)
+    
+    # Check if the user is allowed to archive the ticket
+    if not current_user.is_admin and current_user.id != ticket.created_by and current_user.id != ticket.assigned_to:
+        flash('You do not have permission to archive this ticket', 'error')
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
+    
+    try:
+        # Mark the ticket as archived
+        ticket.archived = True
+        
+        # Add a history entry
+        history = TicketHistory(
+            ticket_id=ticket.id,
+            user_id=current_user.id,
+            action="archived",
+            details="Ticket was archived",
+            created_at=datetime.now(pytz.UTC)
+        )
+        db.session.add(history)
+        
+        db.session.commit()
+        flash('Ticket archived successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error archiving ticket: {str(e)}")
+        flash('Error archiving ticket', 'error')
+    
+    # Redirect back to the tickets dashboard
+    return redirect(url_for('tickets.tickets_dashboard'))
+
+
+@tickets.route('/tickets/<int:ticket_id>/unarchive')
+@login_required
+def unarchive_ticket(ticket_id):
+    """Unarchive a ticket (mark it as not archived)"""
+    ticket = Ticket.query.get_or_404(ticket_id)
+    
+    # Check if the user is allowed to unarchive the ticket
+    if not current_user.is_admin and current_user.id != ticket.created_by and current_user.id != ticket.assigned_to:
+        flash('You do not have permission to unarchive this ticket', 'error')
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
+    
+    try:
+        # Mark the ticket as not archived
+        ticket.archived = False
+        
+        # Add a history entry
+        history = TicketHistory(
+            ticket_id=ticket.id,
+            user_id=current_user.id,
+            action="unarchived",
+            details="Ticket was unarchived",
+            created_at=datetime.now(pytz.UTC)
+        )
+        db.session.add(history)
+        
+        db.session.commit()
+        flash('Ticket unarchived successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error unarchiving ticket: {str(e)}")
+        flash('Error unarchiving ticket', 'error')
+    
+    # Redirect back to the tickets dashboard
+    return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
+
+
+@tickets.route('/tickets/archived')
+@login_required
+def archived_tickets():
+    """View archived tickets"""
+    # Get all archived tickets, ordered by creation date (newest first)
+    tickets = Ticket.query.filter(Ticket.archived == True).order_by(Ticket.created_at.desc()).all()
+    
+    # Convert SQLAlchemy objects to simple dictionaries
+    archived_tickets = []
+    for ticket in tickets:
+        ticket_dict = {
+            'id': ticket.id,
+            'title': ticket.title,
+            'status': ticket.status,
+            'priority': ticket.priority,
+            'assigned_to': ticket.assigned_to,
+            'created_by': ticket.created_by,
+            'created_at': ticket.created_at,
+            'updated_at': ticket.updated_at,
+            'due_date': ticket.due_date,
+            'category': {
+                'id': ticket.category.id,
+                'name': ticket.category.name
+            }
+        }
+        
+        # Add assigned technician info if available
+        if ticket.assigned_technician:
+            ticket_dict['assigned_technician'] = {
+                'username': ticket.assigned_technician.username
+            }
+        else:
+            ticket_dict['assigned_technician'] = None
+            
+        archived_tickets.append(ticket_dict)
+    
+    # Get active tickets for the sidebar
+    active_sidebar_tickets = Ticket.query.filter(
+        Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.PENDING])
+    ).order_by(
+        Ticket.priority.desc(),
+        Ticket.created_at.desc()
+    ).limit(5).all()
+    
+    return render_template('tickets/archived.html', 
+                         tickets=archived_tickets,
+                         ticket_count=len(archived_tickets),
+                         active_sidebar_tickets=active_sidebar_tickets)
+                         
+                         
+@tickets.route('/tickets/batch-archive', methods=['POST'])
+@login_required
+def batch_archive_tickets():
+    """Batch archive tickets based on criteria"""
+    if not current_user.is_admin:
+        flash('Only administrators can perform batch archive operations', 'error')
+        return redirect(url_for('tickets.tickets_dashboard'))
+    
+    # Get filter criteria from form
+    status = request.form.get('status', 'all')
+    date_before_str = request.form.get('date_before')
+    
+    # Build the query
+    query = Ticket.query.filter(Ticket.archived == False)  # Only consider non-archived tickets
+    
+    # Apply status filter
+    if status != 'all':
+        query = query.filter(Ticket.status == status)
+    
+    # Apply date filter if provided
+    if date_before_str:
+        try:
+            # Parse the date string into a datetime object
+            date_before = datetime.strptime(date_before_str, '%Y-%m-%d')
+            # Set to the end of the day
+            date_before = date_before.replace(hour=23, minute=59, second=59, tzinfo=pytz.UTC)
+            # Filter tickets updated before this date
+            query = query.filter(Ticket.updated_at < date_before)
+        except ValueError:
+            flash('Invalid date format', 'error')
+            return redirect(url_for('tickets.tickets_dashboard'))
+    
+    # Execute the query to get the tickets to archive
+    tickets_to_archive = query.all()
+    count = len(tickets_to_archive)
+    
+    if count == 0:
+        flash('No tickets matched the criteria for archiving', 'info')
+        return redirect(url_for('tickets.tickets_dashboard'))
+    
+    try:
+        # Archive each ticket and create history entries
+        for ticket in tickets_to_archive:
+            ticket.archived = True
+            
+            # Add a history entry
+            history = TicketHistory(
+                ticket_id=ticket.id,
+                user_id=current_user.id,
+                action="archived",
+                details="Ticket was archived in batch operation",
+                created_at=datetime.now(pytz.UTC)
+            )
+            db.session.add(history)
+        
+        # Commit all changes at once
+        db.session.commit()
+        flash(f'Successfully archived {count} tickets', 'success')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error in batch archiving tickets: {str(e)}")
+        flash(f'Error archiving tickets: {str(e)}', 'error')
+    
+    return redirect(url_for('tickets.tickets_dashboard'))

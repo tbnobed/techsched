@@ -1,7 +1,7 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, make_response
 from flask_login import login_user, logout_user, login_required, current_user
 from app import app, db
-from models import User, Schedule, QuickLink, Location, EmailSettings
+from models import User, Schedule, QuickLink, Location, EmailSettings, TicketCategory, Ticket, TicketComment, TicketHistory, TicketStatus
 from forms import (
     LoginForm, RegistrationForm, ScheduleForm, AdminUserForm, EditUserForm, 
     ChangePasswordForm, QuickLinkForm, LocationForm, EmailSettingsForm
@@ -1212,7 +1212,10 @@ def download_backup():
             'users': [user.to_dict() for user in User.query.all()],
             'locations': [location.to_dict() for location in Location.query.all()],
             'schedules': [schedule.to_dict() for schedule in Schedule.query.all()],
-            'quick_links': [link.to_dict() for link in QuickLink.query.all()]
+            'quick_links': [link.to_dict() for link in QuickLink.query.all()],
+            'ticket_categories': [category.to_dict() for category in TicketCategory.query.all()],
+            'tickets': [ticket.to_dict() for ticket in Ticket.query.filter_by(archived=False).all()],
+            'email_settings': [settings.to_dict() for settings in EmailSettings.query.all()]
         }
 
         # Create the backup file
@@ -1427,8 +1430,175 @@ def restore_backup():
 
                 db.session.commit()
                 app.logger.info("Quick links committed successfully")
+                
+            # Process ticket categories if present
+            if 'ticket_categories' in backup_data:
+                app.logger.info("Starting ticket categories restoration...")
+                existing_categories = {cat.name.lower(): cat for cat in TicketCategory.query.all()}
+                
+                for category_data in backup_data['ticket_categories']:
+                    try:
+                        name = category_data.get('name')
+                        if not name:
+                            continue
+                            
+                        # Check if category already exists
+                        if name.lower() in existing_categories:
+                            app.logger.info(f"Ticket category {name} already exists")
+                            continue
+                            
+                        # Create new category
+                        category = TicketCategory(
+                            name=name,
+                            description=category_data.get('description', ''),
+                            icon=category_data.get('icon', 'help-circle'),
+                            priority_level=category_data.get('priority_level', 0)
+                        )
+                        db.session.add(category)
+                        app.logger.info(f"Created new ticket category: {name}")
+                        
+                    except Exception as e:
+                        app.logger.error(f"Error processing ticket category: {str(e)}")
+                        continue
+                        
+                db.session.commit()
+                app.logger.info("Ticket categories committed successfully")
+                
+            # Process tickets if present
+            tickets_restored = 0
+            tickets_skipped = 0
+            
+            if 'tickets' in backup_data:
+                app.logger.info("Starting tickets restoration...")
+                
+                # Refresh reference data
+                users_by_username = {user.username: user for user in User.query.all()}
+                categories_by_name = {cat.name: cat for cat in TicketCategory.query.all()}
+                
+                for ticket_data in backup_data['tickets']:
+                    try:
+                        title = ticket_data.get('title')
+                        description = ticket_data.get('description')
+                        
+                        if not title or not description:
+                            app.logger.warning("Ticket missing title or description")
+                            tickets_skipped += 1
+                            continue
+                            
+                        # Find category by name
+                        category_name = ticket_data.get('category_name')
+                        if not category_name or category_name not in categories_by_name:
+                            app.logger.warning(f"Could not find category: {category_name}")
+                            tickets_skipped += 1
+                            continue
+                            
+                        # Find creator by username
+                        creator_username = ticket_data.get('creator_username')
+                        if not creator_username or creator_username not in users_by_username:
+                            app.logger.warning(f"Could not find creator: {creator_username}")
+                            tickets_skipped += 1
+                            continue
+                            
+                        # Find assigned user by username if present
+                        assigned_to = None
+                        assigned_username = ticket_data.get('assigned_username')
+                        if assigned_username and assigned_username in users_by_username:
+                            assigned_to = users_by_username[assigned_username].id
+                            
+                        # Parse dates
+                        created_at = None
+                        if ticket_data.get('created_at'):
+                            created_at = datetime.fromisoformat(ticket_data['created_at'])
+                            
+                        updated_at = None
+                        if ticket_data.get('updated_at'):
+                            updated_at = datetime.fromisoformat(ticket_data['updated_at'])
+                            
+                        due_date = None
+                        if ticket_data.get('due_date'):
+                            due_date = datetime.fromisoformat(ticket_data['due_date'])
+                            
+                        # Create the ticket
+                        ticket = Ticket(
+                            title=title,
+                            description=description,
+                            category_id=categories_by_name[category_name].id,
+                            status=ticket_data.get('status', TicketStatus.OPEN),
+                            priority=ticket_data.get('priority', 0),
+                            assigned_to=assigned_to,
+                            created_by=users_by_username[creator_username].id,
+                            created_at=created_at,
+                            updated_at=updated_at,
+                            due_date=due_date,
+                            archived=ticket_data.get('archived', False)
+                        )
+                        db.session.add(ticket)
+                        db.session.flush()  # Get the ticket ID before adding comments
+                        
+                        # Process comments if present
+                        if 'comments' in ticket_data:
+                            for comment_data in ticket_data['comments']:
+                                user_username = comment_data.get('username')
+                                if not user_username or user_username not in users_by_username:
+                                    continue
+                                    
+                                comment = TicketComment(
+                                    ticket_id=ticket.id,
+                                    user_id=users_by_username[user_username].id,
+                                    content=comment_data.get('content', ''),
+                                    created_at=datetime.fromisoformat(comment_data['created_at']) if comment_data.get('created_at') else None,
+                                    updated_at=datetime.fromisoformat(comment_data['updated_at']) if comment_data.get('updated_at') else None
+                                )
+                                db.session.add(comment)
+                                
+                        # Process history entries if present
+                        if 'history' in ticket_data:
+                            for history_data in ticket_data['history']:
+                                user_username = history_data.get('username')
+                                if not user_username or user_username not in users_by_username:
+                                    continue
+                                    
+                                history = TicketHistory(
+                                    ticket_id=ticket.id,
+                                    user_id=users_by_username[user_username].id,
+                                    action=history_data.get('action', ''),
+                                    details=history_data.get('details', ''),
+                                    created_at=datetime.fromisoformat(history_data['created_at']) if history_data.get('created_at') else None
+                                )
+                                db.session.add(history)
+                                
+                        tickets_restored += 1
+                        
+                    except Exception as e:
+                        app.logger.error(f"Error processing ticket: {str(e)}")
+                        tickets_skipped += 1
+                        continue
+                        
+                db.session.commit()
+                app.logger.info(f"Tickets committed successfully. Restored: {tickets_restored}, Skipped: {tickets_skipped}")
+                
+            # Process email settings if present
+            if 'email_settings' in backup_data and backup_data['email_settings']:
+                app.logger.info("Restoring email settings...")
+                try:
+                    settings_data = backup_data['email_settings'][0]
+                    settings = EmailSettings.query.first()
+                    
+                    if not settings:
+                        settings = EmailSettings()
+                        db.session.add(settings)
+                        
+                    settings.admin_email_group = settings_data.get('admin_email_group', 'alerts@obedtv.com')
+                    settings.notify_on_create = settings_data.get('notify_on_create', True)
+                    settings.notify_on_update = settings_data.get('notify_on_update', True)
+                    settings.notify_on_delete = settings_data.get('notify_on_delete', True)
+                    
+                    db.session.commit()
+                    app.logger.info("Email settings restored successfully")
+                except Exception as e:
+                    app.logger.error(f"Error restoring email settings: {str(e)}")
 
-            flash(f'Backup restored successfully! {restored_count} schedules restored, {skipped_count} skipped.')
+            flash(f'Backup restored successfully! {restored_count} schedules restored, {skipped_count} skipped. {tickets_restored} tickets restored, {tickets_skipped} skipped.')
             app.logger.info("Backup restore completed successfully")
 
         except Exception as e:

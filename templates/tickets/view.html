@@ -36,6 +36,12 @@
                         <hr class="dropdown-divider">
                     </li>
                     <li>
+                        <a class="dropdown-item" href="{{ url_for('tickets.archive_ticket', ticket_id=ticket['id']) }}" 
+                           onclick="return confirm('Are you sure you want to archive this ticket? It will be hidden from regular views.');">
+                            <i data-feather="archive"></i> Archive Ticket
+                        </a>
+                    </li>
+                    <li>
                         <a class="dropdown-item text-danger" href="#" onclick="deleteTicket({{ ticket['id'] }})">
                             <i data-feather="trash-2"></i> Delete Ticket
                         </a>

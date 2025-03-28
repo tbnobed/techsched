@@ -138,6 +138,17 @@ class TicketCategory(db.Model):
 
     def __repr__(self):
         return f'<TicketCategory {self.name}>'
+        
+    def to_dict(self):
+        """Serialize ticket category data for backup"""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'icon': self.icon,
+            'priority_level': self.priority_level,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
 
 class TicketStatus:
     OPEN = 'open'
@@ -158,6 +169,7 @@ class Ticket(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(pytz.UTC))
     updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
     due_date = db.Column(db.DateTime(timezone=True))
+    archived = db.Column(db.Boolean, default=False)  # Flag for archived tickets
 
     comments = db.relationship('TicketComment', backref='ticket', lazy='dynamic', cascade='all, delete-orphan')
     history = db.relationship('TicketHistory', backref='ticket', lazy='dynamic', cascade='all, delete-orphan')
@@ -184,6 +196,30 @@ class Ticket(db.Model):
         )
         db.session.add(history)
         return history
+        
+    def to_dict(self):
+        """Serialize ticket data for backup with reference data"""
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'category_id': self.category_id,
+            'status': self.status,
+            'priority': self.priority,
+            'assigned_to': self.assigned_to,
+            'created_by': self.created_by,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'archived': self.archived,
+            # Add references
+            'category_name': self.category.name if self.category else None,
+            'creator_username': self.creator.username if self.creator else None,
+            'assigned_username': self.assigned_technician.username if self.assigned_technician else None,
+            # Include associated data
+            'comments': [comment.to_dict() for comment in self.comments],
+            'history': [history.to_dict() for history in self.history]
+        }
 
 class TicketComment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -194,6 +230,18 @@ class TicketComment(db.Model):
     updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(pytz.UTC), onupdate=lambda: datetime.now(pytz.UTC))
 
     user = db.relationship('User', backref='ticket_comments')
+    
+    def to_dict(self):
+        """Serialize comment data for backup"""
+        return {
+            'id': self.id,
+            'ticket_id': self.ticket_id,
+            'user_id': self.user_id,
+            'content': self.content,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'username': self.user.username if self.user else None
+        }
 
 class TicketHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -204,6 +252,18 @@ class TicketHistory(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(pytz.UTC))
 
     user = db.relationship('User', backref='ticket_history_entries')
+    
+    def to_dict(self):
+        """Serialize history entry data for backup"""
+        return {
+            'id': self.id,
+            'ticket_id': self.ticket_id,
+            'user_id': self.user_id,
+            'action': self.action,
+            'details': self.details,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'username': self.user.username if self.user else None
+        }
 
 class EmailSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -754,14 +754,21 @@ body {
 }
 
 /* Dropdown menu styling */
-.dropdown-menu {
+.dropdown-menu,
+.navbar .dropdown-menu,
+ul.dropdown-menu,
+.dropdown-menu.dropdown-menu-end {
   background-color: #111f36 !important;
   border-color: #2c3e50 !important;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4) !important;
   border-radius: 4px !important;
+  z-index: 1100 !important;
 }
 
-.dropdown-item {
+.dropdown-item,
+.navbar .dropdown-menu .dropdown-item,
+ul.dropdown-menu li a,
+.dropdown-menu.dropdown-menu-end .dropdown-item {
   color: white !important;
   padding: 8px 16px !important;
   border-radius: 3px !important;
@@ -769,13 +776,19 @@ body {
   transition: all 0.2s ease !important;
 }
 
-.dropdown-item:hover {
+.dropdown-item:hover,
+.navbar .dropdown-menu .dropdown-item:hover,
+ul.dropdown-menu li a:hover,
+.dropdown-menu.dropdown-menu-end .dropdown-item:hover {
   background-color: #2c3e50 !important;
   color: white !important;
   transform: translateX(3px) !important;
 }
 
-.dropdown-divider {
+.dropdown-divider,
+.navbar .dropdown-menu .dropdown-divider,
+ul.dropdown-menu hr,
+.dropdown-menu.dropdown-menu-end .dropdown-divider {
   border-top-color: #2c3e50 !important;
   margin: 6px 0 !important;
 }
@@ -784,19 +797,45 @@ body {
   color: white !important;
 }
 
-.dropdown-header {
+.dropdown-header,
+.navbar .dropdown-menu .dropdown-header {
   color: rgba(255, 255, 255, 0.7) !important;
   font-weight: 600 !important;
   padding: 8px 16px !important;
 }
 
-.form-select {
+.form-select,
+select.form-select,
+.dropdown-menu .form-select,
+.navbar .dropdown-menu select,
+select.form-select-sm {
   background-color: #162439 !important;
   color: white !important;
   border-color: #2c3e50 !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !important;
 }
 
-.form-select option {
+.form-select option,
+select.form-select option,
+.dropdown-menu select option,
+select.form-select-sm option {
   background-color: #162439 !important;
+  color: white !important;
+}
+
+/* Direct targeting of user dropdown */
+#navbarDropdown + .dropdown-menu,
+.navbar-nav .dropdown-menu {
+  background-color: #111f36 !important;
+  border: 1px solid #2c3e50 !important;
+}
+
+#navbarDropdown + .dropdown-menu .dropdown-item,
+.navbar-nav .dropdown-menu .dropdown-item {
+  color: white !important;
+  font-weight: 500 !important;
+}
+
+.form-label {
   color: white !important;
 }

@@ -752,3 +752,51 @@ body {
 .modal-dialog {
   box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22) !important;
 }
+
+/* Dropdown menu styling */
+.dropdown-menu {
+  background-color: #111f36 !important;
+  border-color: #2c3e50 !important;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 4px !important;
+}
+
+.dropdown-item {
+  color: white !important;
+  padding: 8px 16px !important;
+  border-radius: 3px !important;
+  margin: 2px 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+.dropdown-item:hover {
+  background-color: #2c3e50 !important;
+  color: white !important;
+  transform: translateX(3px) !important;
+}
+
+.dropdown-divider {
+  border-top-color: #2c3e50 !important;
+  margin: 6px 0 !important;
+}
+
+.dropdown-toggle::after {
+  color: white !important;
+}
+
+.dropdown-header {
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-weight: 600 !important;
+  padding: 8px 16px !important;
+}
+
+.form-select {
+  background-color: #162439 !important;
+  color: white !important;
+  border-color: #2c3e50 !important;
+}
+
+.form-select option {
+  background-color: #162439 !important;
+  color: white !important;
+}

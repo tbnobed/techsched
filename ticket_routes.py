@@ -4,11 +4,122 @@ from forms import TicketForm, TicketCommentForm, TicketCategoryForm
 from models import db, Ticket, TicketCategory, TicketComment, TicketHistory, User, TicketStatus
 from datetime import datetime
 import pytz
+from sqlalchemy import text, or_
 from app import app  # Import app for logging
 from email_utils import send_ticket_assigned_notification, send_ticket_comment_notification, send_ticket_status_notification
 
 # Update Blueprint to use the correct template directory
 tickets = Blueprint('tickets', __name__)
+
+@tickets.route('/tickets/standalone_dashboard')
+@login_required
+def standalone_dashboard():
+    """A clean standalone version of the dashboard for testing filtering"""
+    app.logger.debug(f"STANDALONE DASHBOARD - Raw request URL: {request.url}")
+    app.logger.debug(f"STANDALONE DASHBOARD - Raw query args: {request.args}")
+    
+    # Get filter params from the request
+    status_filter = request.args.get('status', 'all')
+    priority_filter = request.args.get('priority', 'all')
+    category_filter = request.args.get('category', 'all')
+    
+    app.logger.debug(f"STANDALONE DASHBOARD - Filters: status={status_filter}, priority={priority_filter}, category={category_filter}")
+    
+    # Start with all tickets
+    query = Ticket.query
+    
+    # Apply filters based on request parameters
+    if status_filter != 'all':
+        query = query.filter(Ticket.status == status_filter)
+    
+    if priority_filter != 'all':
+        try:
+            priority_value = int(priority_filter)
+            query = query.filter(Ticket.priority == priority_value)
+        except (ValueError, TypeError):
+            app.logger.error(f"Invalid priority value: {priority_filter}")
+    
+    if category_filter != 'all':
+        try:
+            category_id = int(category_filter)
+            query = query.filter(Ticket.category_id == category_id)
+        except (ValueError, TypeError):
+            app.logger.error(f"Invalid category value: {category_filter}")
+            
+    # Get tickets based on filters
+    tickets = query.order_by(Ticket.created_at.desc()).all()
+    app.logger.debug(f"STANDALONE DASHBOARD - Found {len(tickets)} tickets")
+    
+    # Convert to dictionaries for the template
+    ticket_dicts = []
+    for ticket in tickets:
+        t = {
+            'id': ticket.id,
+            'title': ticket.title,
+            'status': ticket.status,
+            'priority': ticket.priority,
+            'assigned_to': ticket.assigned_to,
+            'created_by': ticket.created_by,
+            'created_at': ticket.created_at,
+            'updated_at': ticket.updated_at,
+            'category': {
+                'id': ticket.category.id,
+                'name': ticket.category.name,
+                'icon': ticket.category.icon
+            }
+        }
+        
+        # Add assigned technician info if available
+        if ticket.assigned_technician:
+            t['assigned_technician'] = {
+                'username': ticket.assigned_technician.username
+            }
+        else:
+            t['assigned_technician'] = None
+            
+        ticket_dicts.append(t)
+    
+    # Get data for dropdowns
+    categories = [
+        {
+            'id': category.id,
+            'name': category.name,
+            'icon': category.icon
+        }
+        for category in TicketCategory.query.all()
+    ]
+    
+    ticket_statuses = [
+        TicketStatus.OPEN,
+        TicketStatus.IN_PROGRESS,
+        TicketStatus.PENDING,
+        TicketStatus.RESOLVED,
+        TicketStatus.CLOSED
+    ]
+    
+    # Create filter_info for the template
+    filter_info = {
+        'status': status_filter,
+        'priority': priority_filter,
+        'category': category_filter,
+        'timestamp': int(datetime.now().timestamp() * 1000)
+    }
+    
+    # Disable caching for this request
+    @after_this_request
+    def add_no_cache(response):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+    
+    return render_template('tickets/dashboard.html',
+                           tickets=ticket_dicts,
+                           categories=categories,
+                           ticket_statuses=ticket_statuses,
+                           ticket_count=len(ticket_dicts),
+                           filter_info=filter_info,
+                           timestamp=filter_info['timestamp'])
 
 @tickets.route('/tickets/dashboard')
 @login_required
@@ -65,7 +176,6 @@ def tickets_dashboard():
 
     # Add some diagnostic queries to check database status values
     # Count status distribution in database
-    from sqlalchemy import text
     status_counts = db.session.execute(
         text("""
         SELECT status, COUNT(*) as count

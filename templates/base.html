@@ -323,7 +323,7 @@
                                 html += `
                                     <div class="active-user-entry">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <h6 class="mb-0" style="color: ${user.color || '#ffffff'}">${user.username}</h6>
+                                            <h6 class="mb-0 username" style="color: ${user.color || '#ffffff'}">${user.username}</h6>
                                         </div>`;
                                 
                                 // Add schedule information if available
@@ -342,7 +342,7 @@
                                 // Add location information if available
                                 if (user.location && user.location.name && user.location.name !== 'No Location') {
                                     html += `
-                                        <div class="mt-1 small">
+                                        <div class="mt-1 small location">
                                             <i data-feather="map-pin" class="me-1" style="width: 14px; height: 14px;"></i>
                                             ${user.location.name}
                                         </div>`;
@@ -382,9 +382,9 @@
                             html += `
                                 <div class="time-off-entry">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="mb-0" style="color: ${entry.color || '#ffffff'}">${entry.username}</h6>
+                                        <h6 class="mb-0 username" style="color: ${entry.color || '#ffffff'}">${entry.username}</h6>
                                     </div>
-                                    <div class="mt-1 small">
+                                    <div class="mt-1 small date-range">
                                         <i data-feather="calendar" class="me-1" style="width: 14px; height: 14px;"></i>
                                         ${entry.start_date} - ${entry.end_date}
                                     </div>

@@ -238,54 +238,125 @@ body {
 }
 
 .active-user-entry, .time-off-entry {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
-  padding: 8px;
-  margin-bottom: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.active-user-entry .username, .time-off-entry .username {
+  font-weight: 600;
+  color: var(--dark-text);
+  font-size: 1.05rem;
+}
+
+.active-user-entry .location, .time-off-entry .date-range {
+  margin-top: 5px;
+  color: var(--dark-text-secondary);
+}
+
+.active-user-entry:hover, .time-off-entry:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+  transition: all 0.2s ease;
 }
 
 /* Calendar styling */
 .fc-theme-standard .fc-scrollgrid {
-  border-color: var(--dark-border);
+  border-color: var(--dark-border) !important;
 }
 
 .fc-theme-standard th, .fc-theme-standard td {
-  border-color: var(--dark-border);
+  border-color: var(--dark-border) !important;
 }
 
 .fc-theme-standard .fc-toolbar {
-  color: var(--dark-text);
+  color: var(--dark-text) !important;
 }
 
-/* Darker calendar header */
-.fc .fc-toolbar {
+/* Custom calendar styles - not FullCalendar */
+.calendar-container {
+  background-color: var(--dark-panel) !important;
+  border: 1px solid var(--dark-border) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+.calendar-header {
   background-color: #152238 !important;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 15px !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-radius: 6px !important;
+  padding: 15px !important;
+  margin-bottom: 20px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
 }
 
-.fc .fc-button {
+.calendar-header h2 {
+  color: var(--dark-text) !important;
+  margin-bottom: 0 !important;
+}
+
+.calendar-controls .btn {
   background-color: #293b5f !important;
   border-color: #354a70 !important;
   color: var(--dark-text) !important;
   font-weight: 500 !important;
-  padding: 6px 12px !important;
   transition: all 0.2s ease !important;
 }
 
-.fc .fc-button:hover {
+.calendar-controls .btn:hover {
   background-color: #354a70 !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2) !important;
 }
 
-.fc .fc-button-active {
+.calendar-controls .btn-outline-primary {
+  background-color: #293b5f !important;
+  border-color: #354a70 !important;
+  color: var(--dark-text) !important;
+}
+
+.calendar-controls .btn-outline-secondary {
+  background-color: #293b5f !important;
+  border-color: #354a70 !important;
+  color: var(--dark-text) !important;
+}
+
+.calendar-controls .btn-success {
   background-color: var(--dark-accent) !important;
   border-color: var(--dark-accent) !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  color: var(--dark-text) !important;
+}
+
+/* Override calendar grid */
+.calendar-grid {
+  background-color: var(--dark-border) !important;
+  border: 1px solid var(--dark-border) !important;
+}
+
+.time-column, .day-column {
+  background-color: var(--dark-panel) !important;
+}
+
+.day-header {
+  background-color: #152238 !important;
+  color: var(--dark-text) !important;
+  border-bottom: 2px solid var(--dark-border) !important;
+}
+
+.day-header.today {
+  background-color: var(--dark-accent) !important;
+  color: var(--dark-text) !important;
+}
+
+.hour-slot {
+  border-bottom: 1px solid var(--dark-border) !important;
+  color: var(--dark-text-secondary) !important;
+}
+
+.time-slot {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
 /* Fix calendar text contrast issues */

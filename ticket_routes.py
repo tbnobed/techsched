@@ -25,17 +25,25 @@ def tickets_dashboard():
     query = Ticket.query
 
     # Apply filters
+    app.logger.debug(f"Before filtering, query: {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
+    
     if status_filter != 'all':
         query = query.filter(Ticket.status == status_filter)
+        app.logger.debug(f"After status filter ({status_filter}): {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
     if category_filter != 'all':
         query = query.filter(Ticket.category_id == category_filter)
+        app.logger.debug(f"After category filter ({category_filter}): {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
     if priority_filter != 'all':
         query = query.filter(Ticket.priority == int(priority_filter))
+        app.logger.debug(f"After priority filter ({priority_filter}): {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
 
     # Show all tickets for all users
-    app.logger.debug(f"SQL Query for ticket dashboard: {str(query)}")
     tickets = query.order_by(Ticket.created_at.desc()).all()
-    app.logger.debug(f"Found {len(tickets)} tickets matching filters")
+    app.logger.debug(f"Found {len(tickets)} tickets matching filters: status={status_filter}, category={category_filter}, priority={priority_filter}")
+    
+    # Add debug information about each ticket found
+    for ticket in tickets:
+        app.logger.debug(f"Ticket #{ticket.id}: {ticket.title} - Status: {ticket.status}, Category: {ticket.category_id}, Priority: {ticket.priority}")
 
     categories = TicketCategory.query.all()
     # Get all valid ticket statuses

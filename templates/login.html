@@ -1,9 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="row justify-content-center mb-4">
+    <div class="col-md-6 text-center">
+        <div class="logo-container mb-4" style="max-width: 240px; margin: 0 auto;">
+            <img src="{{ url_for('static', filename='images/plex_studios_logo.svg') }}" alt="The Plex Studios" class="img-fluid">
+        </div>
+    </div>
+</div>
+
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <div class="card">
+        <div class="card shadow-lg">
             <div class="card-header">
                 <h2 class="text-center">Login</h2>
             </div>

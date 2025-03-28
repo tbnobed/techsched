@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    .logo-bg {
+      fill: #1a1a2e;
+    }
+    
+    .logo-circle {
+      fill: none;
+      stroke: #4a80f5;
+      stroke-width: 2;
+    }
+    
+    .logo-inner-circle {
+      fill: #4a80f5;
+    }
+    
+    .logo-triangle {
+      fill: #e94560;
+      transform-origin: center;
+    }
+    
+    .logo-square {
+      fill: #16c79a;
+    }
+    
+    .logo-elements {
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .transition-rotate {
+      animation: rotate 0.5s ease-in-out;
+      transform-origin: center;
+    }
+  </style>
+  
+  <!-- Background Circle -->
+  <circle class="logo-bg" cx="40" cy="40" r="40" />
+  
+  <!-- Outer Ring -->
+  <circle class="logo-circle" cx="40" cy="40" r="35" />
+  
+  <!-- Inner Circle -->
+  <circle class="logo-inner-circle" cx="40" cy="40" r="28" />
+  
+  <!-- Geometric Elements -->
+  <g class="logo-elements">
+    <!-- Triangle -->
+    <polygon class="logo-triangle" points="40,24 50,40 30,40" />
+    
+    <!-- Square -->
+    <rect class="logo-square" x="30" y="46" width="20" height="14" />
+  </g>
+</svg>

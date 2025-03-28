@@ -147,21 +147,21 @@
                                 </div>
                             </div>
                             <div id="repeat_days_container" class="mt-2" style="display: none;">
-                                <div class="alert alert-info mb-3">
+                                <div class="alert mb-3" style="background-color: #2c5282; color: #e9ecef; border-color: #3182ce;">
                                     <small>Select the days to create this schedule. The same time and details will be used for all selected days.</small>
                                 </div>
-                                <div class="mini-calendar">
+                                <div class="mini-calendar" style="background-color: #1a202c; border-color: #4a5568; color: #e9ecef;">
                                     <div class="month-navigator d-flex justify-content-between align-items-center mb-2">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="prev-month">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="prev-month" style="color: #e9ecef; border-color: #4a5568; background-color: #2d3748;">
                                             <i data-feather="chevron-left"></i>
                                         </button>
-                                        <h6 class="m-0" id="calendar-month-year">March 2025</h6>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="next-month">
+                                        <h6 class="m-0" id="calendar-month-year" style="color: #e9ecef;">March 2025</h6>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="next-month" style="color: #e9ecef; border-color: #4a5568; background-color: #2d3748;">
                                             <i data-feather="chevron-right"></i>
                                         </button>
                                     </div>
                                     <div class="calendar-days">
-                                        <div class="day-names d-flex">
+                                        <div class="day-names d-flex" style="color: #a0aec0;">
                                             <div>Sun</div>
                                             <div>Mon</div>
                                             <div>Tue</div>
@@ -176,14 +176,14 @@
                                     </div>
                                 </div>
                                 
-                                <div class="selected-dates mt-3">
+                                <div class="selected-dates mt-3" style="color: #e9ecef;">
                                     <div class="d-flex mb-2">
                                         <strong>Selected Dates:</strong>
-                                        <button type="button" class="btn btn-sm btn-link ms-auto" id="clear-selection">Clear All</button>
+                                        <button type="button" class="btn btn-sm btn-link ms-auto" id="clear-selection" style="color: #63b3ed;">Clear All</button>
                                     </div>
                                     <div id="selected-dates-container" class="d-flex flex-wrap">
                                         <!-- Selected dates will appear here -->
-                                        <span class="text-muted" id="no-dates-selected">No additional dates selected</span>
+                                        <span class="text-muted" id="no-dates-selected" style="color: #a0aec0;">No additional dates selected</span>
                                     </div>
                                 </div>
                             </div>
@@ -264,10 +264,11 @@
 
 /* Mini-calendar styles */
 .mini-calendar {
-    border: 1px solid #dee2e6;
+    border: 1px solid #4a5568;
     border-radius: 0.25rem;
     padding: 1rem;
-    background-color: #f8f9fa;
+    background-color: #1a202c;
+    color: #e9ecef;
 }
 
 .day-names {
@@ -276,7 +277,7 @@
     text-align: center;
     font-weight: 500;
     font-size: 0.8rem;
-    color: #6c757d;
+    color: #a0aec0;
     margin-bottom: 0.5rem;
 }
 
@@ -295,35 +296,36 @@
     cursor: pointer;
     user-select: none;
     font-size: 0.9rem;
+    color: #e9ecef;
 }
 
 .day-item:hover:not(.disabled) {
-    background-color: #e2e6ea;
+    background-color: #4a5568;
 }
 
 .day-item.outside-month {
-    color: #adb5bd;
+    color: #718096;
 }
 
 .day-item.today {
-    border: 1px solid #007bff;
+    border: 1px solid #3182ce;
     font-weight: bold;
 }
 
 .day-item.selected {
-    background-color: #007bff;
+    background-color: #3182ce;
     color: white;
 }
 
 .day-item.primary-date {
-    background-color: #28a745;
+    background-color: #2f855a;
     color: white;
 }
 
 .day-item.disabled {
-    color: #adb5bd;
+    color: #718096;
     cursor: not-allowed;
-    background-color: #e9ecef;
+    background-color: #2d3748;
 }
 
 .day-item.has-schedule {
@@ -339,17 +341,19 @@
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background-color: #dc3545;
+    background-color: #f56565;
 }
 
 .date-tag {
-    background-color: #e2e6ea;
+    background-color: #2d3748;
     border-radius: 0.25rem;
     padding: 0.2rem 0.5rem;
     margin: 0.25rem;
     font-size: 0.8rem;
     display: flex;
     align-items: center;
+    color: #e9ecef;
+    border: 1px solid #4a5568;
 }
 
 .date-tag .close {

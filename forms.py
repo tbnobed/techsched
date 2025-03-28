@@ -97,7 +97,6 @@ class TicketCommentForm(FlaskForm):
 class TicketCategoryForm(FlaskForm):
     name = StringField('Category Name', validators=[DataRequired(), Length(max=100)])
     description = TextAreaField('Description', validators=[Length(max=200)])
-    icon = StringField('Icon', validators=[DataRequired(), Length(max=50)], default='help-circle')
     priority_level = SelectField('Default Priority', choices=[
         (0, 'Low'),
         (1, 'Medium'),

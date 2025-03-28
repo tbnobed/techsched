@@ -1,0 +1,276 @@
+/* Dark Theme CSS */
+:root {
+  --dark-bg: #1a1a2e;
+  --dark-panel: #16213e;
+  --dark-card: #0f3460;
+  --dark-accent: #e94560;
+  --dark-text: #f0f0f0;
+  --dark-text-secondary: #c8c8c8;
+  --dark-border: #293a56;
+  --dark-hover: #253352;
+  --dark-active: #2c3b5a;
+  --dark-input-bg: #1f2b46;
+  --dark-success: #2ecc71;
+  --dark-info: #3498db;
+  --dark-warning: #f39c12;
+  --dark-danger: #e74c3c;
+}
+
+body {
+  background-color: var(--dark-bg);
+  color: var(--dark-text);
+}
+
+.navbar {
+  background-color: var(--dark-panel) !important;
+  border-bottom: 1px solid var(--dark-border);
+}
+
+.card {
+  background-color: var(--dark-card);
+  border: 1px solid var(--dark-border);
+}
+
+.card-header {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--dark-border);
+}
+
+.table {
+  color: var(--dark-text);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.table thead th {
+  border-bottom: 2px solid var(--dark-border);
+}
+
+.table td, .table th {
+  border-top: 1px solid var(--dark-border);
+}
+
+.form-control, .form-select {
+  background-color: var(--dark-input-bg);
+  border: 1px solid var(--dark-border);
+  color: var(--dark-text);
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: var(--dark-input-bg);
+  color: var(--dark-text);
+  border-color: var(--dark-accent);
+  box-shadow: 0 0 0 0.25rem rgba(233, 69, 96, 0.25);
+}
+
+.form-text {
+  color: var(--dark-text-secondary);
+}
+
+.btn-primary {
+  background-color: var(--dark-accent);
+  border-color: var(--dark-accent);
+}
+
+.btn-primary:hover {
+  background-color: #d03e54;
+  border-color: #d03e54;
+}
+
+.btn-secondary {
+  background-color: var(--dark-panel);
+  border-color: var(--dark-border);
+}
+
+.btn-outline-primary {
+  color: var(--dark-accent);
+  border-color: var(--dark-accent);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--dark-accent);
+  border-color: var(--dark-accent);
+}
+
+.btn-outline-danger {
+  color: var(--dark-danger);
+  border-color: var(--dark-danger);
+}
+
+.badge.bg-success {
+  background-color: var(--dark-success) !important;
+}
+
+.badge.bg-info {
+  background-color: var(--dark-info) !important;
+}
+
+.badge.bg-warning {
+  background-color: var(--dark-warning) !important;
+}
+
+.badge.bg-danger {
+  background-color: var(--dark-danger) !important;
+}
+
+.list-group-item {
+  background-color: var(--dark-card);
+  border-color: var(--dark-border);
+  color: var(--dark-text);
+}
+
+.list-group-item-action:hover {
+  background-color: var(--dark-hover);
+}
+
+.nav-link {
+  color: var(--dark-text-secondary);
+}
+
+.nav-link:hover, .nav-link:focus {
+  color: var(--dark-text);
+}
+
+.nav-link.active {
+  color: var(--dark-accent) !important;
+}
+
+.dropdown-menu {
+  background-color: var(--dark-panel);
+  border-color: var(--dark-border);
+}
+
+.dropdown-item {
+  color: var(--dark-text);
+}
+
+.dropdown-item:hover, .dropdown-item:focus {
+  background-color: var(--dark-hover);
+  color: var(--dark-text);
+}
+
+.modal-content {
+  background-color: var(--dark-card);
+  border-color: var(--dark-border);
+}
+
+.modal-header, .modal-footer {
+  border-color: var(--dark-border);
+}
+
+.close {
+  color: var(--dark-text);
+}
+
+.page-link {
+  background-color: var(--dark-panel);
+  border-color: var(--dark-border);
+  color: var(--dark-text);
+}
+
+.page-link:hover {
+  background-color: var(--dark-hover);
+  border-color: var(--dark-border);
+  color: var(--dark-text);
+}
+
+.page-item.active .page-link {
+  background-color: var(--dark-accent);
+  border-color: var(--dark-accent);
+}
+
+/* Sidebar styling */
+.sidebar {
+  background-color: var(--dark-panel);
+  border-right: 1px solid var(--dark-border);
+}
+
+.sidebar .nav-link {
+  color: var(--dark-text-secondary);
+}
+
+.sidebar .nav-link:hover {
+  color: var(--dark-text);
+  background-color: var(--dark-hover);
+}
+
+.sidebar .nav-link.active {
+  color: var(--dark-text);
+  background-color: var(--dark-active);
+}
+
+/* Calendar styling */
+.fc-theme-standard .fc-scrollgrid {
+  border-color: var(--dark-border);
+}
+
+.fc-theme-standard th, .fc-theme-standard td {
+  border-color: var(--dark-border);
+}
+
+.fc-theme-standard .fc-toolbar {
+  color: var(--dark-text);
+}
+
+.fc-theme-standard .fc-button {
+  background-color: var(--dark-panel);
+  border-color: var(--dark-border);
+  color: var(--dark-text);
+}
+
+.fc-theme-standard .fc-button:hover {
+  background-color: var(--dark-hover);
+}
+
+.fc-theme-standard .fc-button-active {
+  background-color: var(--dark-accent);
+  border-color: var(--dark-accent);
+}
+
+/* Alert styling */
+.alert-success {
+  background-color: rgba(46, 204, 113, 0.2);
+  border-color: var(--dark-success);
+  color: var(--dark-text);
+}
+
+.alert-info {
+  background-color: rgba(52, 152, 219, 0.2);
+  border-color: var(--dark-info);
+  color: var(--dark-text);
+}
+
+.alert-warning {
+  background-color: rgba(243, 156, 18, 0.2);
+  border-color: var(--dark-warning);
+  color: var(--dark-text);
+}
+
+.alert-danger {
+  background-color: rgba(231, 76, 60, 0.2);
+  border-color: var(--dark-danger);
+  color: var(--dark-text);
+}
+
+/* Ticket badges and status coloring */
+.ticket-status-open {
+  background-color: var(--dark-info);
+}
+
+.ticket-status-in-progress {
+  background-color: var(--dark-warning);
+}
+
+.ticket-status-pending {
+  background-color: #9b59b6;
+}
+
+.ticket-status-resolved {
+  background-color: var(--dark-success);
+}
+
+.ticket-status-closed {
+  background-color: #7f8c8d;
+}

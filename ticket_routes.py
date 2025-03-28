@@ -925,7 +925,6 @@ def manage_categories():
         category = TicketCategory(
             name=form.name.data,
             description=form.description.data,
-            icon=form.icon.data,
             priority_level=form.priority_level.data
         )
         db.session.add(category)
@@ -962,7 +961,6 @@ def edit_category(category_id):
     if form.validate_on_submit():
         category.name = form.name.data
         category.description = form.description.data
-        category.icon = form.icon.data
         category.priority_level = form.priority_level.data
         
         db.session.commit()

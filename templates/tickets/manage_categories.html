@@ -19,11 +19,7 @@
                             {{ form.description.label(class="form-label") }}
                             {{ form.description(class="form-control") }}
                         </div>
-                        <div class="mb-3">
-                            {{ form.icon.label(class="form-label") }}
-                            {{ form.icon(class="form-control") }}
-                            <div class="form-text">Enter a Feather icon name (e.g., 'help-circle', 'alert-triangle')</div>
-                        </div>
+
                         <div class="mb-3">
                             {{ form.priority_level.label(class="form-label") }}
                             {{ form.priority_level(class="form-select") }}
@@ -43,7 +39,6 @@
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Icon</th>
                                     <th>Name</th>
                                     <th>Description</th>
                                     <th>Default Priority</th>
@@ -53,7 +48,6 @@
                             <tbody>
                                 {% for category in categories %}
                                 <tr>
-                                    <td><i data-feather="{{ category.icon }}"></i></td>
                                     <td>{{ category.name }}</td>
                                     <td>{{ category.description }}</td>
                                     <td>

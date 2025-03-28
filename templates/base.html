@@ -427,7 +427,7 @@
                                     <div class="active-user-entry mb-2" style="border-left: 3px solid ${user.color || '#3498db'}; padding-left: 8px; margin-bottom: 10px;">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <h6 class="mb-0 username" style="color: ${document.body.classList.contains('light-theme') ? '#000000' : user.color || '#ffffff'} !important">${user.username}</h6>
-                                            <span class="badge ${document.body.classList.contains('light-theme') ? 'bg-light text-dark' : 'text-muted'}">
+                                            <span class="badge ${document.body.classList.contains('light-theme') ? 'bg-dark text-white' : 'text-muted'}">
                                                 <i data-feather="clock" class="me-1" style="width: 12px; height: 12px;"></i>
                                                 ${user.schedule ? user.schedule.start_time : ''} - ${user.schedule ? user.schedule.end_time : ''}
                                             </span>
@@ -482,7 +482,7 @@
                                 <div class="time-off-entry mb-2" style="border-left: 3px solid ${entry.color || '#3498db'}; padding-left: 8px; margin-bottom: 10px;">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h6 class="mb-0 username" style="color: ${document.body.classList.contains('light-theme') ? '#000000' : entry.color || '#ffffff'} !important">${entry.username}</h6>
-                                        <span class="badge ${document.body.classList.contains('light-theme') ? 'bg-light text-dark' : 'text-muted'}">
+                                        <span class="badge ${document.body.classList.contains('light-theme') ? 'bg-dark text-white' : 'text-muted'}">
                                             <i data-feather="calendar" class="me-1" style="width: 12px; height: 12px;"></i>
                                             ${entry.start_date} - ${entry.end_date}
                                         </span>

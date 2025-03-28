@@ -2,11 +2,11 @@
 
 {% block content %}
 <div class="calendar-container">
-    <div class="calendar-header d-flex justify-content-between align-items-center mb-4">
+    <div class="calendar-header d-flex justify-content-between align-items-center mb-4" style="background-color: #1a202c; padding: 15px; border-radius: 6px; border: 1px solid #2d3748;">
         <div class="d-flex align-items-center">
-            <h2>{{ week_start.strftime('%B %Y') }}</h2>
+            <h2 style="color: #e9ecef; margin: 0; font-weight: 600;">{{ week_start.strftime('%B %Y') }}</h2>
             <div class="ms-4">
-                <select class="form-select" onchange="applyLocationFilter(this.value)">
+                <select class="form-select" onchange="applyLocationFilter(this.value)" style="background-color: #2d3748; color: #e9ecef; border-color: #4a5568;">
                     <option value="">All Locations</option>
                     {% for location in locations %}
                     <option value="{{ location.id }}" {% if selected_location == location.id %}selected{% endif %}>
@@ -18,30 +18,30 @@
         </div>
         <div class="calendar-controls">
             <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=28)).strftime('%Y-%m-%d'), location_id=selected_location) }}" 
-               class="btn btn-outline-secondary me-2">
+               class="btn btn-outline-secondary me-2" style="color: #e9ecef; border-color: #4a5568; background-color: #2d3748;">
                 <i data-feather="chevrons-left"></i> Previous Month
             </a>
             <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d'), location_id=selected_location) }}" 
-               class="btn btn-outline-primary me-2">
+               class="btn btn-outline-primary me-2" style="color: #e9ecef; border-color: #3182ce; background-color: #2c5282;">
                 <i data-feather="chevron-left"></i> Previous Week
             </a>
             <a href="{{ url_for('calendar', location_id=selected_location) }}" 
-               class="btn btn-outline-primary me-2">
+               class="btn btn-outline-primary me-2" style="color: #e9ecef; border-color: #3182ce; background-color: #2c5282;">
                 Current Week
             </a>
             <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d'), location_id=selected_location) }}"
-               class="btn btn-outline-primary me-2">
+               class="btn btn-outline-primary me-2" style="color: #e9ecef; border-color: #3182ce; background-color: #2c5282;">
                 Next Week <i data-feather="chevron-right"></i>
             </a>
             <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=28)).strftime('%Y-%m-%d'), location_id=selected_location) }}"
-               class="btn btn-outline-secondary me-2">
+               class="btn btn-outline-secondary me-2" style="color: #e9ecef; border-color: #4a5568; background-color: #2d3748;">
                 Next Month <i data-feather="chevrons-right"></i>
             </a>
             {% if current_user.is_admin %}
             <form method="POST" action="{{ url_for('copy_previous_week_schedules') }}" class="d-inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="target_week_start" value="{{ week_start.strftime('%Y-%m-%d') }}">
-                <button type="submit" class="btn btn-success">
+                <button type="submit" class="btn btn-success" style="background-color: #2f855a; border-color: #276749;">
                     <i data-feather="copy"></i> Copy Previous Week
                 </button>
             </form>

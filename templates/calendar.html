@@ -64,7 +64,7 @@
     <div class="calendar-grid" style="background-color: #1a202c; color: #e9ecef; border: 2px solid #4a5568; border-radius: 6px; overflow: hidden; display: grid; grid-template-columns: 80px repeat(7, 1fr);">
         <div class="time-column" style="border-right: 2px solid #4a5568; grid-column: 1;">
             {% for hour in range(24) %}
-                <div class="hour-slot" style="background-color: #2c3e50; color: white; padding: 8px 12px; text-align: center; font-weight: bold; border-bottom: 2px solid #4a6583; height: 50px;">{{ "%02d:00"|format(hour) }}</div>
+                <div class="hour-slot" style="background-color: #2c3e50; color: #e9ecef; padding: 8px 12px; text-align: center; font-weight: bold; border-bottom: 2px solid #4a6583; height: 50px; box-sizing: border-box; width: 80px;">{{ "%02d:00"|format(hour) }}</div>
             {% endfor %}
         </div>
 

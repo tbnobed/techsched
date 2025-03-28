@@ -22,12 +22,16 @@ def tickets_dashboard():
     if not request.args:
         app.logger.debug("No filters specified, defaulting to open tickets")
         status_filter = 'open'
+        category_filter = 'all'
+        priority_filter = 'all'
     else:
-        status_filter = request.args.get('status')
-        app.logger.debug(f"Status filter from request: {status_filter}")
+        status_filter = request.args.get('status', 'open')
+        category_filter = request.args.get('category', 'all')
+        priority_filter = request.args.get('priority', 'all')
         
-    category_filter = request.args.get('category', 'all')
-    priority_filter = request.args.get('priority', 'all')
+        app.logger.debug(f"Status filter from request: {status_filter}")
+        app.logger.debug(f"Category filter from request: {category_filter}")
+        app.logger.debug(f"Priority filter from request: {priority_filter}")
     
     # If status is explicitly set to 'all', make sure it's respected
     if status_filter == 'all':

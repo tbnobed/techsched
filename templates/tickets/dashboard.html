@@ -57,6 +57,17 @@
                                 <option value="3" {% if filter_info and (filter_info.priority == '3' or filter_info.priority == 3) %}selected{% endif %}>Urgent</option>
                             </select>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Technician</label>
+                            <select name="technician" id="technician-filter" class="form-select">
+                                <option value="all" {% if filter_info and filter_info.technician == 'all' %}selected{% endif %}>All</option>
+                                {% for technician in technicians %}
+                                <option value="{{ technician.id }}" {% if filter_info and filter_info.technician|string == technician.id|string %}selected{% endif %}>
+                                    {{ technician.username }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
                         <button type="button" id="apply-filters-btn" class="btn btn-primary w-100">Apply Filters</button>
                     </form>
                 </div>
@@ -145,7 +156,7 @@
                                         <p class="mb-0">No tickets found matching your criteria.</p>
                                         {% if filter_info %}
                                         <small class="d-block mt-2 text-muted">
-                                            Filters: Status={{ filter_info['status'] }}, Priority={{ filter_info['priority'] }}, Category={{ filter_info['category'] }}
+                                            Filters: Status={{ filter_info['status'] }}, Priority={{ filter_info['priority'] }}, Category={{ filter_info['category'] }}, Technician={{ filter_info['technician'] }}
                                         </small>
                                         {% endif %}
                                     </td>
@@ -203,6 +214,7 @@
             status: '{{ filter_info.status }}',
             category: '{{ filter_info.category }}',
             priority: '{{ filter_info.priority }}',
+            technician: '{{ filter_info.technician }}',
             timestamp: '{{ timestamp }}'
         });
     });

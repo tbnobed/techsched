@@ -163,8 +163,9 @@ def tickets_dashboard():
     raw_status_filter = request.args.get('status')
     raw_category_filter = request.args.get('category')
     raw_priority_filter = request.args.get('priority')
+    raw_technician_filter = request.args.get('technician')
     
-    app.logger.debug(f"Raw filter values from request - status: {raw_status_filter}, category: {raw_category_filter}, priority: {raw_priority_filter}")
+    app.logger.debug(f"Raw filter values from request - status: {raw_status_filter}, category: {raw_category_filter}, priority: {raw_priority_filter}, technician: {raw_technician_filter}")
     
     # Determine final filter values
     if not request.args or has_only_cache_params:
@@ -172,20 +173,23 @@ def tickets_dashboard():
         status_filter = 'open'
         category_filter = 'all'
         priority_filter = 'all'
+        technician_filter = 'all'
     else:
         # Use 'all' as default if not provided
         status_filter = raw_status_filter if raw_status_filter not in (None, '') else 'all'
         category_filter = raw_category_filter if raw_category_filter not in (None, '') else 'all'
         priority_filter = raw_priority_filter if raw_priority_filter not in (None, '') else 'all'
+        technician_filter = raw_technician_filter if raw_technician_filter not in (None, '') else 'all'
         
         # Log explicit parameter requests for debugging
-        app.logger.debug(f"Explicit filter request - status:{status_filter}, category:{category_filter}, priority:{priority_filter}")
+        app.logger.debug(f"Explicit filter request - status:{status_filter}, category:{category_filter}, priority:{priority_filter}, technician:{technician_filter}")
         
         # Force-convert these to appropriate types for comparison
         status_filter = status_filter.strip().lower()
         app.logger.debug(f"Status filter from request (normalized): {status_filter}")
         app.logger.debug(f"Category filter from request: {category_filter}")
         app.logger.debug(f"Priority filter from request: {priority_filter}")
+        app.logger.debug(f"Technician filter from request: {technician_filter}")
     
     # Verify that status filter is valid
     valid_statuses = vars(TicketStatus).values()
@@ -198,7 +202,7 @@ def tickets_dashboard():
         app.logger.debug("Status filter is 'all', showing all tickets")
     
     # Add debug logging to see what filters are being applied
-    app.logger.debug(f"Ticket dashboard filters - status: {status_filter}, category: {category_filter}, priority: {priority_filter}")
+    app.logger.debug(f"Ticket dashboard filters - status: {status_filter}, category: {category_filter}, priority: {priority_filter}, technician: {technician_filter}")
 
     # Add some diagnostic queries to check database status values
     # Count status distribution in database
@@ -241,13 +245,21 @@ def tickets_dashboard():
             app.logger.debug(f"After priority filter ({priority_filter}): {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
         except (ValueError, TypeError):
             app.logger.error(f"Invalid priority filter value: {priority_filter}")
+            
+    if technician_filter != 'all':
+        try:
+            technician_id = int(technician_filter)
+            query = query.filter(Ticket.assigned_to == technician_id)
+            app.logger.debug(f"After technician filter ({technician_filter}): {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
+        except (ValueError, TypeError):
+            app.logger.error(f"Invalid technician filter value: {technician_filter}")
 
     # Show all tickets for all users, ordered by creation date (newest first)
     tickets = query.order_by(Ticket.created_at.desc()).all()
     
     # Add special debug logs for status filter
     app.logger.debug(f"Status filter applied: '{raw_status_filter}'")
-    app.logger.debug(f"Found {len(tickets)} tickets matching filters: status={status_filter}, category={category_filter}, priority={priority_filter}")
+    app.logger.debug(f"Found {len(tickets)} tickets matching filters: status={status_filter}, category={category_filter}, priority={priority_filter}, technician={technician_filter}")
     
     # Add debug information about each ticket found
     for ticket in tickets:
@@ -345,6 +357,7 @@ def tickets_dashboard():
         'status': status_filter,
         'category': category_filter,
         'priority': priority_filter,
+        'technician': technician_filter,
         'timestamp': timestamp
     }
     
@@ -356,10 +369,14 @@ def tickets_dashboard():
         Ticket.created_at.desc()
     ).limit(5).all()
     
+    # Get all technicians for the technician filter dropdown
+    technicians = User.query.all()
+    
     return render_template('tickets/dashboard.html', 
                          tickets=filtered_tickets,
                          categories=categories,
                          ticket_statuses=ticket_statuses,
+                         technicians=technicians,
                          ticket_count=len(filtered_tickets),
                          filter_info=filter_info,
                          timestamp=timestamp,

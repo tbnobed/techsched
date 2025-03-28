@@ -685,6 +685,11 @@ def admin_edit_user(user_id):
         # Get form data directly from request.form
         username = request.form.get('username')
         email = request.form.get('email')
+        
+        # Convert email to lowercase for case-insensitivity
+        if email:
+            email = email.lower()
+            
         color = request.form.get('color')
         password = request.form.get('password')
         is_admin = request.form.get('is_admin') == 'on'

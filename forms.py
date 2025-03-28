@@ -20,7 +20,7 @@ class ScheduleForm(FlaskForm):
     repeat_days = StringField('Repeat Days', validators=[Optional()])
 
 class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email()])
+    email = StringField('Username or Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     remember_me = BooleanField('Remember Me')
 

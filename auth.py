@@ -16,14 +16,19 @@ def login():
         # Make email lowercase for case-insensitive login
         email = form.email.data.lower() if form.email.data else ""
         
-        # First try with exact case
-        user = User.query.filter_by(email=email).first()
+        # Check if this is a username or email login
+        if '@' in email:
+            # Login with email
+            user = User.query.filter_by(email=email).first()
+        else:
+            # Case-insensitive username search using SQL LOWER function
+            user = User.query.filter(db.func.lower(User.username) == db.func.lower(form.email.data)).first()
         
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             next_page = request.args.get('next')
             return redirect(next_page if next_page else url_for('tickets.tickets_dashboard'))
-        flash('Invalid email or password')
+        flash('Invalid username/email or password')
     return render_template('login.html', form=form)
 
 # Registration is disabled - only admins can create users

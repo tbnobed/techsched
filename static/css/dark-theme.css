@@ -6,6 +6,7 @@
   --dark-accent: #e94560;
   --dark-text: #f0f0f0;
   --dark-text-secondary: #c8c8c8;
+  --dark-muted: #a0a0a0;
   --dark-border: #293a56;
   --dark-hover: #253352;
   --dark-active: #2c3b5a;
@@ -21,6 +22,9 @@
   --sidebar-timeoff-bg: #2a304f;
   --sidebar-tickets-bg: #263455;
   --sidebar-links-bg: #23293f;
+
+  /* For Bootstrap compatibility */
+  --primary-color: #3498db;
 }
 
 body {
@@ -161,10 +165,100 @@ body {
 .modal-content {
   background-color: var(--dark-card);
   border-color: var(--dark-border);
+  color: var(--dark-text);
 }
 
 .modal-header, .modal-footer {
   border-color: var(--dark-border);
+}
+
+.modal-title {
+  color: var(--dark-text);
+}
+
+.modal-body .form-label {
+  color: var(--dark-text);
+  font-weight: 500;
+}
+
+.modal-body .form-control, 
+.modal-body .form-select {
+  background-color: var(--dark-input-bg);
+  border-color: var(--dark-border);
+  color: var(--dark-text);
+}
+
+.modal-body .form-control:focus, 
+.modal-body .form-select:focus {
+  background-color: var(--dark-input-bg);
+  border-color: var(--dark-accent);
+  color: var(--dark-text);
+  box-shadow: 0 0 0 0.2rem rgba(233, 69, 96, 0.25);
+}
+
+.modal-body .form-check-label {
+  color: var(--dark-text);
+}
+
+.modal-footer .btn-primary {
+  background-color: var(--dark-accent);
+  border-color: var(--dark-accent);
+  color: var(--dark-text);
+}
+
+.modal-footer .btn-danger {
+  background-color: var(--dark-danger);
+  border-color: var(--dark-danger);
+  color: var(--dark-text);
+}
+
+.modal-footer .btn-info {
+  background-color: var(--dark-info);
+  border-color: var(--dark-info); 
+  color: var(--dark-text);
+}
+
+/* Mini-calendar styles override for dark theme */
+.mini-calendar {
+  background-color: var(--dark-card);
+  border-color: var(--dark-border);
+  color: var(--dark-text);
+}
+
+.day-names {
+  color: var(--dark-muted);
+}
+
+.day-item {
+  color: var(--dark-text);
+}
+
+.day-item:hover:not(.disabled) {
+  background-color: var(--dark-hover);
+}
+
+.day-item.outside-month {
+  color: var(--dark-muted);
+}
+
+.day-item.disabled {
+  color: var(--dark-muted);
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.day-item.today {
+  border: 1px solid var(--primary-color);
+}
+
+.date-tag {
+  background-color: var(--dark-hover);
+  color: var(--dark-text);
+}
+
+.alert-info {
+  background-color: rgba(23, 162, 184, 0.2);
+  border-color: rgba(23, 162, 184, 0.3);
+  color: var(--dark-text);
 }
 
 .close {

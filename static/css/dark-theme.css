@@ -48,19 +48,51 @@ body {
 }
 
 .table {
-  color: var(--dark-text);
+  color: white !important;
+  border-color: #2c3e50 !important;
+  background-color: rgba(16, 30, 55, 0.6) !important;
 }
 
-.table-striped tbody tr:nth-of-type(odd) {
-  background-color: rgba(0, 0, 0, 0.1);
+.table-striped > tbody > tr:nth-of-type(odd) {
+  background-color: rgba(18, 35, 65, 0.7) !important;
+}
+
+.table-striped > tbody > tr:nth-of-type(even) {
+  background-color: rgba(23, 43, 77, 0.8) !important;
 }
 
 .table thead th {
   border-bottom: 2px solid var(--dark-border);
+  background-color: #0a1526 !important;
+  color: #ffffff !important;
+  padding: 14px 15px !important;
+  font-weight: 600 !important;
 }
 
 .table td, .table th {
   border-top: 1px solid var(--dark-border);
+  padding: 12px 15px !important;
+  color: #ffffff !important;
+  border-bottom: 1px solid #2c3e50 !important;
+}
+
+/* Specific for admin dashboard */
+.admin-dashboard .table {
+  border: 1px solid #2c3e50 !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Ensure buttons in tables have proper contrast */
+.table .btn-primary {
+  background-color: #3498db !important;
+  border-color: #3498db !important;
+}
+
+.table .btn-danger {
+  background-color: #e74c3c !important;
+  border-color: #e74c3c !important;
 }
 
 .form-control, .form-select {
@@ -838,4 +870,43 @@ select.form-select-sm option {
 
 .form-label {
   color: white !important;
+}/* Technicians table specific styling */
+.technicians-table {
+  background-color: #111f36 !important;
+  border: 1px solid #2c3e50 !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+.technicians-table thead th {
+  background-color: #0a1526 !important;
+  color: #ffffff !important;
+  padding: 14px 15px !important;
+  font-weight: 600 !important;
+  border-bottom: 2px solid #2c3e50 !important;
+}
+
+.technicians-table tbody tr:nth-of-type(odd) {
+  background-color: rgba(18, 35, 65, 0.85) !important;
+}
+
+.technicians-table tbody tr:nth-of-type(even) {
+  background-color: rgba(23, 43, 77, 0.95) !important;
+}
+
+.technicians-table td {
+  color: #ffffff !important;
+  border-color: #2c3e50 !important;
+  padding: 12px 15px !important;
+}
+
+.technicians-table .btn-primary {
+  background-color: #3498db !important;
+  border-color: #2980b9 !important;
+}
+
+.technicians-table .btn-danger {
+  background-color: #e74c3c !important;
+  border-color: #c0392b !important;
 }

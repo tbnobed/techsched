@@ -1,16 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60">
-  <g transform="translate(5, 5)">
-    <!-- Left side of the logo (blue L shape) -->
-    <path d="M0,5 L0,45 L20,45 L20,30 L10,30 L10,15 Z" fill="#0078D7"/>
+  <g transform="translate(5, 5) scale(0.4)">
+    <!-- Left blue bar -->
+    <path d="M0,0 L0,120 L40,120 L40,80 L20,80 L20,40 Z" fill="#0078D7"/>
     
-    <!-- Middle hexagon (white) -->
-    <path d="M25,15 L37.5,10 L50,15 L50,30 L37.5,35 L25,30 Z" fill="white"/>
+    <!-- Dark blue edge -->
+    <path d="M0,0 L60,0 L80,40 L20,40 Z" fill="#002744"/>
     
-    <!-- Orange top piece -->
-    <path d="M37.5,10 L55,10 L70,15 L50,15 Z" fill="#FF6C37"/>
+    <!-- Orange top bar -->
+    <path d="M60,0 L120,0 L140,40 L80,40 Z" fill="#FF6C37"/>
     
-    <!-- Teal bottom piece -->
-    <path d="M20,30 L20,45 L55,45 L50,30 Z" fill="#36B1A0"/>
+    <!-- Orange right edge -->
+    <path d="M120,0 L140,40 L140,80 L120,40 Z" fill="#FFA553"/>
+    
+    <!-- Teal bottom bar -->
+    <path d="M40,80 L100,80 L100,120 L40,120 Z" fill="#36B1A0"/>
+    
+    <!-- Dark blue inner section -->
+    <path d="M20,40 L80,40 L80,80 L40,80 L20,40 Z" fill="#002744"/>
+    
+    <!-- Inner hexagon cutout -->
+    <path d="M50,40 L70,40 L70,80 L50,80 Z" fill="white"/>
   </g>
 </svg>

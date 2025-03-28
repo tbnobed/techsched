@@ -21,20 +21,12 @@ def login():
         flash('Invalid email or password')
     return render_template('login.html', form=form)
 
+# Registration is disabled - only admins can create users
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('tickets.tickets_dashboard'))
-    
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data)
-        user.set_password(form.password.data)
-        db.session.add(user)
-        db.session.commit()
-        flash('Registration successful! Please log in.')
-        return redirect(url_for('auth.login'))
-    return render_template('register.html', form=form)
+    # Redirect to login page
+    flash('Self-registration is disabled. Please contact your administrator for access.', 'warning')
+    return redirect(url_for('auth.login'))
 
 @auth.route('/logout')
 @login_required

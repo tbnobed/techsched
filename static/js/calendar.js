@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Bootstrap modal
     const scheduleModal = new bootstrap.Modal(document.getElementById('scheduleModal'));
 
-    // Calculate schedule positions and handle overlaps
+    /* Disabled original positioning function that was causing issues
+    // Calculate schedule positions and handle overlaps 
     function positionSchedules() {
         const daySlots = document.querySelectorAll('.day-slots');
         daySlots.forEach(daySlot => {
@@ -595,7 +596,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Initialize positions
-    positionSchedules();
+    // positionSchedules(); // Disabled - using the positioning function in calendar.html instead
 
     // Update upcoming time off panel
     function updateUpcomingTimeOff() {

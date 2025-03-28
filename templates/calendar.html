@@ -81,11 +81,26 @@
                     <div class="time-slot" data-hour="{{ '%02d'|format(hour) }}" style="background-color: #1e2530; color: #e9ecef; border-bottom: 1px solid #5a6d82; height: 50px; box-sizing: border-box; {% if hour == 0 %}border-top: 1px solid #5a6d82;{% endif %}"></div>
                 {% endfor %}
                 {% for schedule in schedules if schedule.start_time.date() == current_date.date() %}
+                    {% set start_hour = schedule.start_time.hour %}
+                    {% set start_minute = schedule.start_time.minute %}
+                    {% set end_hour = schedule.end_time.hour %}
+                    {% set end_minute = schedule.end_time.minute %}
+                    
+                    {% set start_position = start_hour * 50 + (start_minute / 60) * 50 %}
+                    {% set duration_hours = (end_hour - start_hour) + (end_minute - start_minute) / 60 %}
+                    {% if end_hour == 0 and end_minute == 0 %}
+                        {% set duration_hours = (24 - start_hour) - (start_minute / 60) %}
+                    {% endif %}
+                    {% set height = duration_hours * 50 %}
+                    
                     <div class="schedule-event"
                          style="background-color: {{ '#6a6d6c' if schedule.time_off else schedule.technician.color }}; 
                                 position: absolute; 
                                 z-index: 10;
-                                margin: 1px 2px;
+                                top: {{ start_position }}px;
+                                height: {{ height }}px;
+                                left: 2px;
+                                width: calc(100% - 6px);
                                 padding: 4px 8px;
                                 color: white;
                                 font-size: 12px;
@@ -237,6 +252,28 @@
 </div>
 
 <style>
+/* Set fixed height for time slots */
+.time-slot {
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+.hour-slot {
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    box-sizing: border-box !important;
+}
+
+/* Make sure all slots are displayed */
+.day-slots {
+    height: 1200px !important;
+    min-height: 1200px !important;
+}
+
 /* Add custom tooltip styling */
 .tooltip {
     position: absolute;
@@ -392,33 +429,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Position schedule events in the calendar
-    positionScheduleEvents();
+    // Position handled by Jinja2 template calculations now
 });
-
-// Function to position schedule events in the calendar
-function positionScheduleEvents() {
-    const scheduleEvents = document.querySelectorAll('.schedule-event');
-    const hourHeight = 50; // Height of each hour slot in pixels
-    
-    scheduleEvents.forEach(event => {
-        const startTime = new Date(event.dataset.startTime);
-        const endTime = new Date(event.dataset.endTime);
-        
-        // Calculate position from top based on start time
-        const startHour = startTime.getHours();
-        const startMinute = startTime.getMinutes();
-        const startTop = (startHour * hourHeight) + ((startMinute / 60) * hourHeight);
-        
-        // Calculate height based on duration
-        const durationMs = endTime - startTime;
-        const durationHours = durationMs / (1000 * 60 * 60);
-        const height = durationHours * hourHeight;
-        
-        // Set the position and height
-        event.style.top = `${startTop}px`;
-        event.style.height = `${height}px`;
-        event.style.width = 'calc(100% - 8px)'; // Set width to fill column minus margin
-    });
-}
 </script>
 {% endblock %}

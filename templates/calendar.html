@@ -64,7 +64,7 @@
     <div class="calendar-grid" style="background-color: #1a202c; color: #e9ecef; border: 2px solid #4a5568; border-radius: 6px; overflow: hidden; display: flex;">
         <div class="time-column" style="border-right: 2px solid #4a5568; width: 80px; min-width: 80px; flex-shrink: 0;">
             {% for hour in range(24) %}
-                <div class="hour-slot" style="background-color: #2c3e50; color: #cbd5e0; padding: 8px 0; text-align: center; font-weight: bold; border-bottom: 2px solid #4a6583; height: 50px; box-sizing: border-box; font-size: 13px; overflow: visible; line-height: 1; display: flex; justify-content: center; align-items: center;">{{ "%02d:00"|format(hour) }}</div>
+                <div class="hour-slot" style="background-color: {% if hour == 0 %}#1e3050{% else %}#2c3e50{% endif %}; color: #ffffff; padding: 8px 0; text-align: center; font-weight: bold; border-bottom: 2px solid #4a6583; height: 50px; box-sizing: border-box; font-size: 13px; line-height: 1; display: flex; justify-content: center; align-items: center;">{{ "%02d:00"|format(hour) }}</div>
             {% endfor %}
         </div>
 
@@ -84,10 +84,6 @@
                     <div class="schedule-event"
                          style="background-color: {{ '#6a6d6c' if schedule.time_off else schedule.technician.color }}; 
                                 position: absolute; 
-                                top: {{ (schedule.start_time.hour * 50) + (schedule.start_time.minute / 60 * 50) }}px;
-                                left: 0;
-                                right: 0;
-                                height: {{ ((schedule.end_time - schedule.start_time).total_seconds() / 3600) * 50 }}px;
                                 z-index: 10;
                                 margin: 1px 2px;
                                 padding: 4px 8px;

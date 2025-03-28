@@ -2,7 +2,7 @@
 :root {
   --dark-bg: #1a1a2e;
   --dark-panel: #16213e;
-  --dark-card: #1b2531;
+  --dark-card: #0f3460;
   --dark-accent: #e94560;
   --dark-text: #f0f0f0;
   --dark-text-secondary: #c8c8c8;
@@ -15,12 +15,12 @@
   --dark-warning: #f39c12;
   --dark-danger: #e74c3c;
   
-  /* Sidebar section specific colors - increased contrast */
-  --sidebar-time-bg: #1a1e3a;      /* Dark blue */
-  --sidebar-active-bg: #2d3250;    /* Indigo */
-  --sidebar-timeoff-bg: #3b2e58;   /* Dark purple */
-  --sidebar-tickets-bg: #2a4858;   /* Dark teal */
-  --sidebar-links-bg: #3c2c36;     /* Dark maroon */
+  /* Sidebar section specific colors */
+  --sidebar-time-bg: #1f2d55;
+  --sidebar-active-bg: #2c3c63;
+  --sidebar-timeoff-bg: #2a304f;
+  --sidebar-tickets-bg: #263455;
+  --sidebar-links-bg: #23293f;
 }
 
 body {
@@ -159,27 +159,12 @@ body {
 }
 
 .modal-content {
-  background-color: var(--dark-card) !important;
-  border-color: var(--dark-border) !important;
-  color: var(--dark-text) !important;
+  background-color: var(--dark-card);
+  border-color: var(--dark-border);
 }
 
 .modal-header, .modal-footer {
-  border-color: var(--dark-border) !important;
-  background-color: var(--dark-panel) !important;
-}
-
-.modal-header .modal-title {
-  color: var(--dark-text) !important;
-}
-
-.modal-body {
-  background-color: var(--dark-card) !important;
-  color: var(--dark-text) !important;
-}
-
-.btn-close {
-  filter: invert(1) grayscale(100%) brightness(200%) !important;
+  border-color: var(--dark-border);
 }
 
 .close {
@@ -226,25 +211,8 @@ body {
 /* Sidebar section-specific styling */
 #current-time-display {
   background-color: var(--sidebar-time-bg);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 3px 6px rgba(0,0,0,0.4);
-  border-radius: 6px;
-  padding: 10px;
-  margin-bottom: 15px;
-}
-
-#current-time-display h4 {
-  color: #ffffff;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-}
-
-/* Specific card styling for sidebar sections */
-.col-md-3 .card {
-  margin-bottom: 16px;
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  border: 1px solid var(--dark-border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .col-md-3 .card:nth-of-type(1) {
@@ -263,83 +231,21 @@ body {
   background-color: var(--sidebar-links-bg);
 }
 
-/* Customized card headers for each sidebar section */
-.col-md-3 .card:nth-of-type(1) .card-header {
-  background-color: rgba(0, 0, 0, 0.3);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.col-md-3 .card:nth-of-type(2) .card-header {
-  background-color: rgba(0, 0, 0, 0.3);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.col-md-3 .card:nth-of-type(3) .card-header {
-  background-color: rgba(0, 0, 0, 0.3);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.col-md-3 .card:nth-of-type(4) .card-header {
-  background-color: rgba(0, 0, 0, 0.3);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Make card titles stand out */
-.col-md-3 .card-title {
-  color: #ffffff;
-  font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-  margin-bottom: 0;
-}
-
 /* Better contrast for active users and time off section */
 #active-users, #upcoming-time-off {
   color: var(--dark-text);
   font-weight: 500;
-  padding: 8px 4px;
 }
 
 .active-user-entry, .time-off-entry {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  padding: 8px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Calendar styling */
-/* Apply dark theme to entire calendar */
-.fc {
-  background-color: var(--dark-panel) !important;
-  color: var(--dark-text) !important;
-}
-
-/* Force dark background on all calendar cells */
-.fc-scrollgrid-sync-inner,
-.fc-col-header-cell,
-.fc-daygrid-day,
-.fc-daygrid-day-frame,
-.fc-timegrid-slot,
-.fc-timegrid-slots td,
-.fc-timegrid-slot-lane,
-.fc-scrollgrid,
-.fc-scrollgrid-section,
-.fc-scrollgrid-section-body,
-.fc-scrollgrid-section-liquid {
-  background-color: var(--dark-panel) !important;
-  color: var(--dark-text) !important;
-}
-
-/* Force white text on all calendar text elements */
-.fc-scrollgrid-sync-inner *,
-.fc-col-header-cell *,
-.fc-daygrid-day *,
-.fc-timegrid-slot *,
-.fc-timegrid-slots td * {
-  color: var(--dark-text) !important;
-}
-
 .fc-theme-standard .fc-scrollgrid {
   border-color: var(--dark-border);
 }
@@ -370,110 +276,65 @@ body {
 /* Fix calendar text contrast issues */
 .fc .fc-col-header-cell-cushion {
   color: var(--dark-text);
-  font-weight: bold;
 }
 
 .fc .fc-daygrid-day-number {
   color: var(--dark-text);
-  font-weight: bold;
 }
 
-/* Style the day cells with a dark background */
-.fc-daygrid-day {
-  background-color: var(--dark-panel) !important;
+.fc-direction-ltr .fc-daygrid-event.fc-event-end {
+  color: var(--dark-text);
+  text-shadow: 0 0 2px rgba(0,0,0,0.7);
+  font-weight: 500;
 }
 
-/* Improve contrast for events */
-.fc-direction-ltr .fc-daygrid-event.fc-event-end,
-.fc-direction-ltr .fc-daygrid-event.fc-event-start,
-.fc-event-title,
+.fc-direction-ltr .fc-daygrid-event.fc-event-start {
+  color: var(--dark-text);
+  text-shadow: 0 0 2px rgba(0,0,0,0.7);
+  font-weight: 500;
+}
+
+.fc-event-title {
+  color: var(--dark-text);
+  text-shadow: 0 0 2px rgba(0,0,0,0.7);
+  font-weight: 500;
+}
+
 .fc-event-time {
-  color: #ffffff;
-  text-shadow: 0 0 3px rgba(0,0,0,0.8);
-  font-weight: 600;
+  color: var(--dark-text);
+  text-shadow: 0 0 2px rgba(0,0,0,0.7);
+  font-weight: 500;
 }
 
-/* Make event backgrounds darker for better contrast */
-.fc-timegrid-event-harness .fc-timegrid-event,
-.fc-daygrid-event-harness .fc-daygrid-event {
-  background-color: rgba(20, 30, 70, 0.9) !important;
+.fc-timegrid-event-harness .fc-timegrid-event {
+  background-color: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--dark-border);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .fc-timegrid-slot-label-cushion {
-  color: var(--dark-text) !important;
-  font-weight: bold;
+  color: var(--dark-text);
 }
 
 .fc-col-header-cell a {
-  color: var(--dark-text) !important;
+  color: var(--dark-text);
   font-weight: 600;
 }
 
-/* Override any remaining white backgrounds in calendar */
-.fc-day-header,
-.fc-day,
-.fc-day-top,
-.fc-day-number,
-.fc-week,
-.fc-bg,
-.fc-content,
-.fc-widget-content,
-.fc-widget-header,
-.fc-timegrid-axis,
-.fc-timegrid-body,
-.fc-timegrid-col,
-.fc-timegrid-axis-frame,
-.fc-bg table,
-.fc-row table,
-.fc table {
-  background-color: var(--dark-panel) !important;
-  color: var(--dark-text) !important;
-}
-
-/* Style the time display on the left */
-.fc-timegrid-axis {
-  color: var(--dark-text) !important;
-  font-weight: bold;
-  background-color: var(--dark-hover) !important;
-  border-right: 2px solid var(--dark-border) !important;
-}
-
-/* Style the date headers */
-.fc-col-header-cell {
-  background-color: var(--dark-hover) !important;
-  border-bottom: 2px solid var(--dark-border) !important;
-  padding: 6px 0 !important;
-}
-
-/* Today column highlight */
-.fc-day-today .fc-timegrid-col-frame {
-  background-color: rgba(233, 69, 96, 0.1) !important;
-}
-
-/* Make day cells more distinct */
 .fc-daygrid-day-frame {
-  background-color: var(--dark-panel);
-  transition: background-color 0.2s ease;
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
-.fc-daygrid-day-frame:hover {
-  background-color: var(--dark-hover);
-}
-
-/* Style current day differently */
 .fc-daygrid-day.fc-day-today {
-  background-color: rgba(233, 69, 96, 0.2) !important;
+  background-color: rgba(233, 69, 96, 0.1) !important;
 }
 
 .fc-day-today .fc-daygrid-day-number {
   background-color: var(--dark-accent);
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   text-align: center;
-  line-height: 28px;
+  line-height: 24px;
   margin: 4px;
 }
 

@@ -5,24 +5,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Bootstrap modal
     const scheduleModal = new bootstrap.Modal(document.getElementById('scheduleModal'));
 
-    /* Disabled original positioning function that was causing issues
-    // Calculate schedule positions and handle overlaps 
+    // Calculate schedule positions and handle overlaps
     function positionSchedules() {
         const daySlots = document.querySelectorAll('.day-slots');
         daySlots.forEach(daySlot => {
             const events = daySlot.querySelectorAll('.schedule-event');
             const eventArray = Array.from(events);
 
-            // Sort events by start time, then by duration (shorter events first for better overlap handling)
+            // Sort events by start time
             eventArray.sort((a, b) => {
                 const aStart = new Date(a.dataset.startTime);
                 const bStart = new Date(b.dataset.startTime);
-                if (aStart.getTime() === bStart.getTime()) {
-                    // If start times are the same, sort by duration
-                    const aEnd = new Date(a.dataset.endTime);
-                    const bEnd = new Date(b.dataset.endTime);
-                    return (aEnd - aStart) - (bEnd - bStart);
-                }
                 return aStart - bStart;
             });
 
@@ -35,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const eventEnd = new Date(event.dataset.endTime);
 
                 // Normalize end time - treat 00:00 as 24:00
-                // This handles schedules that end at midnight correctly
                 const normalizedEndHour = eventEnd.getHours() === 0 && eventEnd.getMinutes() === 0 
                     ? 24 
                     : eventEnd.getHours() + eventEnd.getMinutes() / 60;
@@ -48,8 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const existingEndHour = existingEnd.getHours() === 0 && existingEnd.getMinutes() === 0 
                             ? 24 
                             : existingEnd.getHours() + existingEnd.getMinutes() / 60;
-                        
-                        // Improved overlap detection
+
                         return (
                             eventStart < (existingEndHour === 24 ? new Date(existingEnd).setHours(24, 0, 0) : existingEnd) && 
                             (normalizedEndHour === 24 ? new Date(eventEnd).setHours(24, 0, 0) : eventEnd) > existingStart
@@ -109,16 +100,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     endHour = 24;
                 }
 
-                // Use a 50px height per hour instead of 60px
-                const top = startHour * 50;
-                const height = (endHour - startHour) * 50;
+                const top = startHour * 60;
+                const height = (endHour - startHour) * 60;
 
                 event.style.top = `${top}px`;
                 event.style.height = `${height}px`;
-                
-                // Make sure the event is full width by default unless overlapping
-                event.style.width = 'calc(100% - 4px)';
-                event.style.left = '2px';
             });
 
             // Position overlapping events horizontally
@@ -596,7 +582,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Initialize positions
-    // positionSchedules(); // Disabled - using the positioning function in calendar.html instead
+    positionSchedules();
 
     // Update upcoming time off panel
     function updateUpcomingTimeOff() {

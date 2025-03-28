@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="calendar-container" style="background-color: #1a202c; color: #e9ecef; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);">
-    <div class="calendar-header d-flex justify-content-between align-items-center mb-4" style="background-color: #1a202c; padding: 15px; border-radius: 6px; border: 1px solid #2d3748;">
+<div class="calendar-container">
+    <div class="calendar-header d-flex justify-content-between align-items-center mb-4">
         <div class="d-flex align-items-center">
-            <h2 style="color: #e9ecef; margin: 0; font-weight: 600;">{{ week_start.strftime('%B %Y') }}</h2>
+            <h2>{{ week_start.strftime('%B %Y') }}</h2>
             <div class="ms-4">
-                <select class="form-select" onchange="applyLocationFilter(this.value)" style="background-color: #2d3748; color: #e9ecef; border-color: #4a5568;">
+                <select class="form-select" onchange="applyLocationFilter(this.value)">
                     <option value="">All Locations</option>
                     {% for location in locations %}
                     <option value="{{ location.id }}" {% if selected_location == location.id %}selected{% endif %}>
@@ -18,30 +18,30 @@
         </div>
         <div class="calendar-controls">
             <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=28)).strftime('%Y-%m-%d'), location_id=selected_location) }}" 
-               class="btn btn-outline-secondary me-2" style="color: #e9ecef; border-color: #4a5568; background-color: #2d3748;">
+               class="btn btn-outline-secondary me-2">
                 <i data-feather="chevrons-left"></i> Previous Month
             </a>
             <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d'), location_id=selected_location) }}" 
-               class="btn btn-outline-primary me-2" style="color: #e9ecef; border-color: #3182ce; background-color: #2c5282;">
+               class="btn btn-outline-primary me-2">
                 <i data-feather="chevron-left"></i> Previous Week
             </a>
             <a href="{{ url_for('calendar', location_id=selected_location) }}" 
-               class="btn btn-outline-primary me-2" style="color: #e9ecef; border-color: #3182ce; background-color: #2c5282;">
+               class="btn btn-outline-primary me-2">
                 Current Week
             </a>
             <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d'), location_id=selected_location) }}"
-               class="btn btn-outline-primary me-2" style="color: #e9ecef; border-color: #3182ce; background-color: #2c5282;">
+               class="btn btn-outline-primary me-2">
                 Next Week <i data-feather="chevron-right"></i>
             </a>
             <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=28)).strftime('%Y-%m-%d'), location_id=selected_location) }}"
-               class="btn btn-outline-secondary me-2" style="color: #e9ecef; border-color: #4a5568; background-color: #2d3748;">
+               class="btn btn-outline-secondary me-2">
                 Next Month <i data-feather="chevrons-right"></i>
             </a>
             {% if current_user.is_admin %}
             <form method="POST" action="{{ url_for('copy_previous_week_schedules') }}" class="d-inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="target_week_start" value="{{ week_start.strftime('%Y-%m-%d') }}">
-                <button type="submit" class="btn btn-success" style="background-color: #2f855a; border-color: #276749;">
+                <button type="submit" class="btn btn-success">
                     <i data-feather="copy"></i> Copy Previous Week
                 </button>
             </form>
@@ -61,57 +61,27 @@
         }
     </script>
 
-    <div class="calendar-grid" style="background-color: #1a202c; color: #e9ecef; border: 2px solid #4a5568; border-radius: 6px; overflow-y: auto; overflow-x: hidden; display: flex; height: 1250px;">
-        <div class="time-column" style="border-right: 2px solid #4a5568; width: 80px; min-width: 80px; flex-shrink: 0; height: 1250px;">
+    <div class="calendar-grid">
+        <div class="time-column">
             {% for hour in range(24) %}
-                <div class="hour-slot" style="background-color: {% if hour == 0 %}#1e3050{% else %}#2c3e50{% endif %}; color: #ffffff; padding: 8px 0; text-align: center; font-weight: bold; border-bottom: 2px solid #4a6583; height: 50px; box-sizing: border-box; font-size: 13px; line-height: 1; display: flex; justify-content: center; align-items: center;">{{ "%02d:00"|format(hour) }}</div>
+                <div class="hour-slot">{{ "%02d:00"|format(hour) }}</div>
             {% endfor %}
         </div>
 
-        <div class="day-columns" style="display: flex; flex-grow: 1; height: 1250px;">
         {% for day in range(7) %}
         {% set current_date = week_start + timedelta(days=day) %}
         {% set is_today = current_date.date() == today.date() %}
-        <div class="day-column {{ 'today' if is_today else '' }}" style="background-color: #1e2530; color: #e9ecef; border-right: 1px solid #4a5568; flex: 1; display: flex; flex-direction: column; height: 100%;">
-            <div class="day-header {{ 'today' if is_today else '' }}" style="background-color: #2c3e50; color: white; padding: 8px; font-weight: bold; border-bottom: 2px solid #4a6583; text-align: center; height: 50px; box-sizing: border-box;">
+        <div class="day-column {{ 'today' if is_today else '' }}">
+            <div class="day-header {{ 'today' if is_today else '' }}">
                 {{ current_date.strftime('%A %m/%d') }}
             </div>
-            <div class="day-slots" data-date="{{ current_date.strftime('%Y-%m-%d') }}" style="position: relative; flex: 1; height: calc(100% - 50px)">
+            <div class="day-slots" data-date="{{ current_date.strftime('%Y-%m-%d') }}">
                 {% for hour in range(24) %}
-                    <div class="time-slot" data-hour="{{ '%02d'|format(hour) }}" style="background-color: #1e2530; color: #e9ecef; border-bottom: 1px solid #5a6d82; height: 50px; box-sizing: border-box; {% if hour == 0 %}border-top: 1px solid #5a6d82;{% endif %}"></div>
+                    <div class="time-slot" data-hour="{{ '%02d'|format(hour) }}"></div>
                 {% endfor %}
                 {% for schedule in schedules if schedule.start_time.date() == current_date.date() %}
-                    {% set start_hour = schedule.start_time.hour %}
-                    {% set start_minute = schedule.start_time.minute %}
-                    {% set end_hour = schedule.end_time.hour %}
-                    {% set end_minute = schedule.end_time.minute %}
-                    
-                    {% set start_position = start_hour * 50 + (start_minute / 60) * 50 %}
-                    
-                    {% if end_hour < start_hour or (end_hour == start_hour and end_minute < start_minute) %}
-                        {% set duration_hours = (24 + end_hour - start_hour) + (end_minute - start_minute) / 60 %}
-                    {% elif end_hour == 0 and end_minute == 0 %}
-                        {% set duration_hours = (24 - start_hour) - (start_minute / 60) %}
-                    {% else %}
-                        {% set duration_hours = (end_hour - start_hour) + (end_minute - start_minute) / 60 %}
-                    {% endif %}
-                    
-                    {% set height = duration_hours * 50 %}
-                    
                     <div class="schedule-event"
-                         style="background-color: {{ '#6a6d6c' if schedule.time_off else schedule.technician.color }}; 
-                                position: absolute; 
-                                z-index: 10;
-                                top: {{ start_position }}px;
-                                height: {{ height }}px;
-                                left: 2px;
-                                width: calc(100% - 6px);
-                                padding: 4px 8px;
-                                color: white;
-                                font-size: 12px;
-                                border-radius: 4px;
-                                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                                overflow: hidden;"
+                         style="background-color: {{ '#6a6d6c' if schedule.time_off else schedule.technician.color }}"
                          data-schedule-id="{{ schedule.id }}"
                          data-technician-id="{{ schedule.technician_id }}"
                          data-start-time="{{ schedule.start_time.strftime('%Y-%m-%d %H:%M:%S') }}"
@@ -120,15 +90,15 @@
                          data-toggle="tooltip"
                          data-html="true"
                          title="<div class='hover-content'><strong>{{ schedule.technician.username }}</strong> <span class='text-muted'>{{ schedule.start_time.strftime('%m/%d/%y') }}</span><br>{{ schedule.start_time.strftime('%H:%M') }}-{{ schedule.end_time.strftime('%H:%M') }} ({{ ((schedule.end_time - schedule.start_time).total_seconds() / 3600)|int }}h){% if schedule.location %}<br><i data-feather='map-pin'></i> {{ schedule.location.name }}{% endif %}{{ ('<br>' + schedule.description) if schedule.description else '' }}</div>">
-                        <div class="schedule-time" style="font-weight: bold;">
+                        <div class="schedule-time">
                             {{ schedule.start_time.strftime('%H:%M') }} - 
                             {{ schedule.end_time.strftime('%H:%M') }}
                         </div>
-                        <div class="schedule-tech" style="font-weight: 500;">{{ schedule.technician.username }}</div>
+                        <div class="schedule-tech">{{ schedule.technician.username }}</div>
                         {% if schedule.location %}
-                        <div class="schedule-location" style="font-size: 11px;"><i data-feather="map-pin"></i> {{ schedule.location.name }}</div>
+                        <div class="schedule-location"><i data-feather="map-pin"></i> {{ schedule.location.name }}</div>
                         {% endif %}
-                        <div class="schedule-desc" style="font-size: 11px; opacity: 0.9;">{{ schedule.description }}</div>
+                        <div class="schedule-desc">{{ schedule.description }}</div>
                     </div>
                 {% endfor %}
             </div>
@@ -138,12 +108,12 @@
 
     <div class="modal fade" id="scheduleModal" tabindex="-1">
         <div class="modal-dialog">
-            <div class="modal-content" style="background-color: #2d3748; color: #e9ecef; border: 1px solid #4a5568;">
-                <div class="modal-header" style="border-bottom: 1px solid #4a5568; background-color: #2d3748;">
-                    <h5 class="modal-title" style="color: #e9ecef; font-weight: 600;">Add New Schedule</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Schedule</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" style="background-color: #2d3748; color: #e9ecef;">
+                <div class="modal-body">
                     <form id="schedule_form" method="POST" action="{{ url_for('new_schedule') }}">
                         {{ form.hidden_tag() }}
                         <input type="hidden" id="schedule_id" name="schedule_id">
@@ -153,20 +123,20 @@
                         {% if current_user.is_admin %}
                         <div class="mb-3">
                             {{ form.technician.label(class="form-label") }}
-                            {{ form.technician(class="form-control", style="background-color: #1a202c; color: #e9ecef; border-color: #4a5568;") }}
+                            {{ form.technician(class="form-control") }}
                         </div>
                         {% endif %}
                         <div class="mb-3">
                             {{ form.description.label(class="form-label") }}
-                            {{ form.description(class="form-control", id="description", style="background-color: #1a202c; color: #e9ecef; border-color: #4a5568;") }}
+                            {{ form.description(class="form-control", id="description") }}
                         </div>
                         <div class="mb-3">
                             {{ form.location_id.label(class="form-label") }}
-                            {{ form.location_id(class="form-control", style="background-color: #1a202c; color: #e9ecef; border-color: #4a5568;") }}
+                            {{ form.location_id(class="form-control") }}
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Date</label>
-                            <input type="date" id="schedule_date" class="form-control" style="background-color: #1a202c; color: #e9ecef; border-color: #4a5568;">
+                            <input type="date" id="schedule_date" class="form-control">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Repeat Schedule</label>
@@ -177,21 +147,21 @@
                                 </div>
                             </div>
                             <div id="repeat_days_container" class="mt-2" style="display: none;">
-                                <div class="alert mb-3" style="background-color: #2c5282; color: #e9ecef; border-color: #3182ce;">
+                                <div class="alert alert-info mb-3">
                                     <small>Select the days to create this schedule. The same time and details will be used for all selected days.</small>
                                 </div>
-                                <div class="mini-calendar" style="background-color: #1a202c; border-color: #4a5568; color: #e9ecef;">
+                                <div class="mini-calendar">
                                     <div class="month-navigator d-flex justify-content-between align-items-center mb-2">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="prev-month" style="color: #e9ecef; border-color: #4a5568; background-color: #2d3748;">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="prev-month">
                                             <i data-feather="chevron-left"></i>
                                         </button>
-                                        <h6 class="m-0" id="calendar-month-year" style="color: #e9ecef;">March 2025</h6>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="next-month" style="color: #e9ecef; border-color: #4a5568; background-color: #2d3748;">
+                                        <h6 class="m-0" id="calendar-month-year">March 2025</h6>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="next-month">
                                             <i data-feather="chevron-right"></i>
                                         </button>
                                     </div>
                                     <div class="calendar-days">
-                                        <div class="day-names d-flex" style="color: #a0aec0;">
+                                        <div class="day-names d-flex">
                                             <div>Sun</div>
                                             <div>Mon</div>
                                             <div>Tue</div>
@@ -206,14 +176,14 @@
                                     </div>
                                 </div>
                                 
-                                <div class="selected-dates mt-3" style="color: #e9ecef;">
+                                <div class="selected-dates mt-3">
                                     <div class="d-flex mb-2">
                                         <strong>Selected Dates:</strong>
-                                        <button type="button" class="btn btn-sm btn-link ms-auto" id="clear-selection" style="color: #63b3ed;">Clear All</button>
+                                        <button type="button" class="btn btn-sm btn-link ms-auto" id="clear-selection">Clear All</button>
                                     </div>
                                     <div id="selected-dates-container" class="d-flex flex-wrap">
                                         <!-- Selected dates will appear here -->
-                                        <span class="text-muted" id="no-dates-selected" style="color: #a0aec0;">No additional dates selected</span>
+                                        <span class="text-muted" id="no-dates-selected">No additional dates selected</span>
                                     </div>
                                 </div>
                             </div>
@@ -221,7 +191,7 @@
                         <div class="row mb-3">
                             <div class="col">
                                 <label class="form-label">Start Time</label>
-                                <select id="start_hour" class="form-control" onchange="updateEndTimeOptions()" style="background-color: #1a202c; color: #e9ecef; border-color: #4a5568;">
+                                <select id="start_hour" class="form-control" onchange="updateEndTimeOptions()">
                                     {% for hour in range(24) %}
                                         <option value="{{ '%02d'|format(hour) }}">{{ '%02d:00'|format(hour) }}</option>
                                     {% endfor %}
@@ -229,7 +199,7 @@
                             </div>
                             <div class="col">
                                 <label class="form-label">End Time</label>
-                                <select id="end_hour" class="form-control" style="background-color: #1a202c; color: #e9ecef; border-color: #4a5568;">
+                                <select id="end_hour" class="form-control">
                                     {% for hour in range(1, 24) %}
                                         <option value="{{ '%02d'|format(hour) }}">{{ '%02d:00'|format(hour) }}</option>
                                     {% endfor %}
@@ -244,10 +214,10 @@
                         {{ form.start_time(type="hidden", id="start_time_input") }}
                         {{ form.end_time(type="hidden", id="end_time_input") }}
                         {{ form.repeat_days(type="hidden", id="repeat_days_input") }}
-                        <div class="modal-footer" style="border-top: 1px solid #4a5568; background-color: #2d3748;">
+                        <div class="modal-footer">
                             <button type="button" id="delete_button" class="btn btn-danger" style="display: none;">Delete</button>
-                            <button type="button" id="copy_button" class="btn btn-info" style="display: none; background-color: #2b6cb0; border-color: #2c5282;">Copy Schedule</button>
-                            <button type="submit" class="btn btn-primary" style="background-color: #3182ce; border-color: #2c5282;">Add Schedule</button>
+                            <button type="button" id="copy_button" class="btn btn-info" style="display: none;">Copy Schedule</button>
+                            <button type="submit" class="btn btn-primary">Add Schedule</button>
                         </div>
                     </form>
                 </div>
@@ -257,28 +227,6 @@
 </div>
 
 <style>
-/* Set fixed height for time slots */
-.time-slot {
-    height: 50px !important;
-    min-height: 50px !important;
-    max-height: 50px !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-}
-
-.hour-slot {
-    height: 50px !important;
-    min-height: 50px !important;
-    max-height: 50px !important;
-    box-sizing: border-box !important;
-}
-
-/* Make sure all slots are displayed */
-.day-slots {
-    height: 1200px !important;
-    min-height: 1200px !important;
-}
-
 /* Add custom tooltip styling */
 .tooltip {
     position: absolute;
@@ -316,11 +264,10 @@
 
 /* Mini-calendar styles */
 .mini-calendar {
-    border: 1px solid #4a5568;
+    border: 1px solid #dee2e6;
     border-radius: 0.25rem;
     padding: 1rem;
-    background-color: #1a202c;
-    color: #e9ecef;
+    background-color: #f8f9fa;
 }
 
 .day-names {
@@ -329,7 +276,7 @@
     text-align: center;
     font-weight: 500;
     font-size: 0.8rem;
-    color: #a0aec0;
+    color: #6c757d;
     margin-bottom: 0.5rem;
 }
 
@@ -348,36 +295,35 @@
     cursor: pointer;
     user-select: none;
     font-size: 0.9rem;
-    color: #e9ecef;
 }
 
 .day-item:hover:not(.disabled) {
-    background-color: #4a5568;
+    background-color: #e2e6ea;
 }
 
 .day-item.outside-month {
-    color: #718096;
+    color: #adb5bd;
 }
 
 .day-item.today {
-    border: 1px solid #3182ce;
+    border: 1px solid #007bff;
     font-weight: bold;
 }
 
 .day-item.selected {
-    background-color: #3182ce;
+    background-color: #007bff;
     color: white;
 }
 
 .day-item.primary-date {
-    background-color: #2f855a;
+    background-color: #28a745;
     color: white;
 }
 
 .day-item.disabled {
-    color: #718096;
+    color: #adb5bd;
     cursor: not-allowed;
-    background-color: #2d3748;
+    background-color: #e9ecef;
 }
 
 .day-item.has-schedule {
@@ -393,19 +339,17 @@
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background-color: #f56565;
+    background-color: #dc3545;
 }
 
 .date-tag {
-    background-color: #2d3748;
+    background-color: #e2e6ea;
     border-radius: 0.25rem;
     padding: 0.2rem 0.5rem;
     margin: 0.25rem;
     font-size: 0.8rem;
     display: flex;
     align-items: center;
-    color: #e9ecef;
-    border: 1px solid #4a5568;
 }
 
 .date-tag .close {
@@ -424,21 +368,14 @@
 <script>
 // Initialize tooltips after the document is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    try {
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
-        tooltipTriggerList.forEach(function(tooltipTriggerEl) {
-            new bootstrap.Tooltip(tooltipTriggerEl, {
-                html: true,
-                container: 'body',
-                boundary: 'window'
-            });
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function(tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl, {
+            html: true,
+            container: 'body',
+            boundary: 'window'
         });
-    } catch (e) {
-        console.log('Tooltip initialization error:', e);
-    }
-    
-    // Position schedule events in the calendar
-    // Position handled by Jinja2 template calculations now
+    });
 });
 </script>
 {% endblock %}

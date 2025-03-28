@@ -61,24 +61,24 @@
         }
     </script>
 
-    <div class="calendar-grid" style="background-color: #1a202c; color: #e9ecef; border: 2px solid #4a5568; border-radius: 6px; overflow: hidden; display: flex;">
-        <div class="time-column" style="border-right: 2px solid #4a5568; width: 80px; min-width: 80px; flex-shrink: 0;">
+    <div class="calendar-grid" style="background-color: #1a202c; color: #e9ecef; border: 2px solid #4a5568; border-radius: 6px; overflow: hidden; display: flex; height: 1200px;">
+        <div class="time-column" style="border-right: 2px solid #4a5568; width: 80px; min-width: 80px; flex-shrink: 0; height: 1200px;">
             {% for hour in range(24) %}
                 <div class="hour-slot" style="background-color: {% if hour == 0 %}#1e3050{% else %}#2c3e50{% endif %}; color: #ffffff; padding: 8px 0; text-align: center; font-weight: bold; border-bottom: 2px solid #4a6583; height: 50px; box-sizing: border-box; font-size: 13px; line-height: 1; display: flex; justify-content: center; align-items: center;">{{ "%02d:00"|format(hour) }}</div>
             {% endfor %}
         </div>
 
-        <div class="day-columns" style="display: flex; flex-grow: 1;">
+        <div class="day-columns" style="display: flex; flex-grow: 1; height: 1200px;">
         {% for day in range(7) %}
         {% set current_date = week_start + timedelta(days=day) %}
         {% set is_today = current_date.date() == today.date() %}
-        <div class="day-column {{ 'today' if is_today else '' }}" style="background-color: #1e2530; color: #e9ecef; border-right: 1px solid #4a5568; flex: 1;">
+        <div class="day-column {{ 'today' if is_today else '' }}" style="background-color: #1e2530; color: #e9ecef; border-right: 1px solid #4a5568; flex: 1; display: flex; flex-direction: column; height: 100%;">
             <div class="day-header {{ 'today' if is_today else '' }}" style="background-color: #2c3e50; color: white; padding: 8px; font-weight: bold; border-bottom: 2px solid #4a6583; text-align: center; height: 50px; box-sizing: border-box;">
                 {{ current_date.strftime('%A %m/%d') }}
             </div>
-            <div class="day-slots" data-date="{{ current_date.strftime('%Y-%m-%d') }}" style="position: relative;">
+            <div class="day-slots" data-date="{{ current_date.strftime('%Y-%m-%d') }}" style="position: relative; flex: 1; height: calc(100% - 50px)">
                 {% for hour in range(24) %}
-                    <div class="time-slot" data-hour="{{ '%02d'|format(hour) }}" style="background-color: #1e2530; color: #e9ecef; border-bottom: 1px solid #5a6d82; height: 50px; box-sizing: border-box;"></div>
+                    <div class="time-slot" data-hour="{{ '%02d'|format(hour) }}" style="background-color: #1e2530; color: #e9ecef; border-bottom: 1px solid #5a6d82; height: 50px; box-sizing: border-box; {% if hour == 0 %}border-top: 1px solid #5a6d82;{% endif %}"></div>
                 {% endfor %}
                 {% for schedule in schedules if schedule.start_time.date() == current_date.date() %}
                     <div class="schedule-event"

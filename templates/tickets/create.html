@@ -53,7 +53,7 @@
 
                         <div class="mb-3">
                             <label for="due_date" class="form-label">Due Date (optional)</label>
-                            {{ form.due_date(class="form-control" + (" is-invalid" if form.due_date.errors else ""), type="datetime-local") }}
+                            {{ form.due_date(class="form-control" + (" is-invalid" if form.due_date.errors else ""), type="date") }}
                             {% for error in form.due_date.errors %}
                             <div class="invalid-feedback">{{ error }}</div>
                             {% endfor %}

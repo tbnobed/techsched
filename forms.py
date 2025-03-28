@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, DateTimeField, TextAreaField, ColorField, SelectField, IntegerField
+from wtforms import StringField, PasswordField, BooleanField, DateTimeField, DateField, TextAreaField, ColorField, SelectField, IntegerField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, URL, Optional
 import pytz
 
@@ -89,7 +89,7 @@ class TicketForm(FlaskForm):
         (3, 'Urgent')
     ], coerce=int)
     assigned_to = SelectField('Assign To', coerce=int, validators=[Optional()])
-    due_date = DateTimeField('Due Date', format='%Y-%m-%d %H:%M', validators=[Optional()])
+    due_date = DateField('Due Date', format='%Y-%m-%d', validators=[Optional()])
 
 class TicketCommentForm(FlaskForm):
     content = TextAreaField('Comment', validators=[DataRequired()])

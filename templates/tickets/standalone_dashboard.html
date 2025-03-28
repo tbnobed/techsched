@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="tickets-dashboard">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Tickets Dashboard</h2>
+            <p class="text-muted">Showing {{ ticket_count }} ticket{% if ticket_count != 1 %}s{% endif %}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('tickets.create_ticket') }}" class="btn btn-primary">
+                <i data-feather="plus"></i> New Ticket
+            </a>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                <i data-feather="home"></i> Return to Home
+            </a>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('tickets.manage_categories') }}" class="btn btn-outline-secondary">
+                <i data-feather="tag"></i> Manage Categories
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Filter Tickets</h5>
+                    <form id="filter-form" method="GET" autocomplete="off" novalidate>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" id="status-filter" class="form-select">
+                                <option value="all" {% if filter_info and filter_info.status == 'all' %}selected{% endif %}>All</option>
+                                {% for status in ticket_statuses %}
+                                <option value="{{ status }}" {% if filter_info and filter_info.status == status %}selected{% endif %}>
+                                    {{ status|replace('_', ' ')|title }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select name="category" id="category-filter" class="form-select">
+                                <option value="all" {% if filter_info and filter_info.category == 'all' %}selected{% endif %}>All</option>
+                                {% for category in categories %}
+                                <option value="{{ category['id'] }}" {% if filter_info and filter_info.category|string == category['id']|string %}selected{% endif %}>
+                                    {{ category['name'] }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Priority</label>
+                            <select name="priority" id="priority-filter" class="form-select">
+                                <option value="all" {% if filter_info and filter_info.priority == 'all' %}selected{% endif %}>All</option>
+                                <option value="0" {% if filter_info and (filter_info.priority == '0' or filter_info.priority == 0) %}selected{% endif %}>Low</option>
+                                <option value="1" {% if filter_info and (filter_info.priority == '1' or filter_info.priority == 1) %}selected{% endif %}>Medium</option>
+                                <option value="2" {% if filter_info and (filter_info.priority == '2' or filter_info.priority == 2) %}selected{% endif %}>High</option>
+                                <option value="3" {% if filter_info and (filter_info.priority == '3' or filter_info.priority == 3) %}selected{% endif %}>Urgent</option>
+                            </select>
+                        </div>
+                        <button type="button" id="apply-filters-btn" class="btn btn-primary w-100">Apply Filters</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th>Assigned To</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ticket in tickets %}
+                                <tr>
+                                    <td>#{{ ticket['id'] }}</td>
+                                    <td>
+                                        <a href="{{ url_for('tickets.view_ticket', ticket_id=ticket['id']) }}" class="text-decoration-none">
+                                            {{ ticket['title'] }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            <i data-feather="{{ ticket['category']['icon'] }}" class="feather-sm me-1"></i>
+                                            {{ ticket['category']['name'] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% set status_colors = {
+                                            'open': 'primary',
+                                            'in_progress': 'info',
+                                            'pending': 'warning',
+                                            'resolved': 'success',
+                                            'closed': 'secondary'
+                                        } %}
+                                        <span class="badge bg-{{ status_colors[ticket['status']] }}">
+                                            {{ ticket['status']|replace('_', ' ')|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% set priority_colors = {
+                                            0: 'secondary',
+                                            1: 'info',
+                                            2: 'warning',
+                                            3: 'danger'
+                                        } %}
+                                        {% set priority_labels = {
+                                            0: 'Low',
+                                            1: 'Medium',
+                                            2: 'High',
+                                            3: 'Urgent'
+                                        } %}
+                                        <span class="badge bg-{{ priority_colors[ticket['priority']] }}">
+                                            {{ priority_labels[ticket['priority']] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if ticket['assigned_technician'] %}
+                                            {{ ticket['assigned_technician']['username'] }}
+                                        {% else %}
+                                            <span class="text-muted">Unassigned</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ ticket['created_at'].strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('tickets.view_ticket', ticket_id=ticket['id']) }}" class="btn btn-sm btn-primary">
+                                            View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-4">
+                                        <i data-feather="inbox" class="mb-2" style="width: 48px; height: 48px;"></i>
+                                        <p class="mb-0">No tickets found matching your criteria.</p>
+                                        {% if filter_info %}
+                                        <small class="d-block mt-2 text-muted">
+                                            Filters: Status={{ filter_info['status'] }}, Priority={{ filter_info['priority'] }}, Category={{ filter_info['category'] }}
+                                        </small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Feather icons and handle custom filter submission
+    document.addEventListener('DOMContentLoaded', function() {
+        feather.replace({ 'class': 'feather-sm' });
+        
+        // Handle the apply filters button click
+        const applyFilterBtn = document.getElementById('apply-filters-btn');
+        if (applyFilterBtn) {
+            applyFilterBtn.addEventListener('click', function() {
+                // Get filter values
+                const statusValue = document.getElementById('status-filter').value;
+                const categoryValue = document.getElementById('category-filter').value;
+                const priorityValue = document.getElementById('priority-filter').value;
+                
+                // Build URL with cache busting parameters
+                let url = `/tickets/standalone_dashboard?timestamp=${Date.now()}&rand=${Math.random()}`;
+                
+                // Add filter parameters - only if they have values
+                if (statusValue) {
+                    url += `&status=${statusValue}`;
+                }
+                
+                if (categoryValue && categoryValue !== 'all') {
+                    url += `&category=${categoryValue}`;
+                } 
+                
+                if (priorityValue && priorityValue !== 'all') {
+                    url += `&priority=${priorityValue}`;
+                }
+                
+                console.log('Navigating to URL:', url);
+                
+                // Force reload the page with the new URL
+                window.location.href = url;
+            });
+        }
+        
+        // For debugging - add info about current filters
+        console.log('Current filters:', {
+            status: '{{ filter_info.status }}',
+            category: '{{ filter_info.category }}',
+            priority: '{{ filter_info.priority }}',
+            timestamp: '{{ filter_info.timestamp }}'
+        });
+    });
+</script>
+{% endblock %}

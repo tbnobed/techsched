@@ -10,10 +10,156 @@ from email_utils import send_ticket_assigned_notification, send_ticket_comment_n
 # Update Blueprint to use the correct template directory
 tickets = Blueprint('tickets', __name__)
 
+@tickets.route('/tickets/standalone_dashboard')
+@login_required
+def standalone_tickets_dashboard():
+    """Display all tickets with filtering options (without sidebar)"""
+    app.logger.debug(f"Raw request URL for standalone dashboard: {request.url}")
+    app.logger.debug(f"Raw query args for standalone dashboard: {request.args}")
+    
+    # Get filters from request args with appropriate defaults
+    # Check if no URL parameters or only cache-busting parameters
+    cache_params = ['timestamp', 'rand']
+    has_only_cache_params = all(k in cache_params for k in request.args.keys()) if request.args else True
+    
+    # Extract raw filter values from the request
+    raw_status_filter = request.args.get('status')
+    raw_category_filter = request.args.get('category')
+    raw_priority_filter = request.args.get('priority')
+    
+    app.logger.debug(f"Standalone dashboard - Raw filters: status={raw_status_filter}, category={raw_category_filter}, priority={raw_priority_filter}")
+    
+    # Determine final filter values
+    if not request.args or has_only_cache_params:
+        app.logger.debug("Standalone dashboard - No filters or only cache params, defaulting to all tickets")
+        status_filter = 'all'  # Default to all tickets for the standalone dashboard
+        category_filter = 'all'
+        priority_filter = 'all'
+    else:
+        # Use 'all' as default if not provided
+        status_filter = raw_status_filter if raw_status_filter not in (None, '') else 'all'
+        category_filter = raw_category_filter if raw_category_filter not in (None, '') else 'all'
+        priority_filter = raw_priority_filter if raw_priority_filter not in (None, '') else 'all'
+        
+        # Log explicit parameter requests for debugging
+        app.logger.debug(f"Standalone dashboard - Explicit filters: status={status_filter}, category={category_filter}, priority={priority_filter}")
+        
+        # Force-convert these to appropriate types for comparison
+        if status_filter != 'all':
+            status_filter = status_filter.strip().lower()
+    
+    # Verify that status filter is valid
+    valid_statuses = vars(TicketStatus).values()
+    if status_filter != 'all' and status_filter not in valid_statuses:
+        app.logger.warning(f"Standalone dashboard - Invalid status filter '{status_filter}', defaulting to 'all'")
+        status_filter = 'all'
+        
+    # Base query for tickets
+    query = Ticket.query
+    
+    # Apply filters
+    if status_filter != 'all':
+        query = query.filter(Ticket.status == status_filter)
+        app.logger.debug(f"Standalone dashboard - After status filter ({status_filter})")
+    
+    if category_filter != 'all':
+        try:
+            category_id = int(category_filter)
+            query = query.filter(Ticket.category_id == category_id)
+            app.logger.debug(f"Standalone dashboard - After category filter ({category_filter})")
+        except (ValueError, TypeError):
+            app.logger.error(f"Standalone dashboard - Invalid category filter: {category_filter}")
+
+    if priority_filter != 'all':
+        try:
+            priority_value = int(priority_filter)
+            query = query.filter(Ticket.priority == priority_value)
+            app.logger.debug(f"Standalone dashboard - After priority filter ({priority_filter})")
+        except (ValueError, TypeError):
+            app.logger.error(f"Standalone dashboard - Invalid priority filter: {priority_filter}")
+    
+    # Get all tickets matching the filters, ordered by creation date (newest first)
+    tickets = query.order_by(Ticket.created_at.desc()).all()
+    app.logger.debug(f"Standalone dashboard - Found {len(tickets)} tickets matching filters")
+    
+    # Get categories and statuses
+    categories = [{
+        'id': category.id,
+        'name': category.name,
+        'icon': category.icon,
+        'description': category.description
+    } for category in TicketCategory.query.all()]
+    
+    ticket_statuses = [
+        TicketStatus.OPEN,
+        TicketStatus.IN_PROGRESS,
+        TicketStatus.PENDING,
+        TicketStatus.RESOLVED,
+        TicketStatus.CLOSED
+    ]
+    
+    # Convert SQLAlchemy objects to dictionaries for template rendering
+    filtered_tickets = []
+    for ticket in tickets:
+        ticket_dict = {
+            'id': ticket.id,
+            'title': ticket.title,
+            'status': ticket.status,
+            'priority': ticket.priority,
+            'assigned_to': ticket.assigned_to,
+            'created_by': ticket.created_by,
+            'created_at': ticket.created_at,
+            'updated_at': ticket.updated_at,
+            'due_date': ticket.due_date,
+            'category': {
+                'id': ticket.category.id,
+                'name': ticket.category.name,
+                'icon': ticket.category.icon
+            }
+        }
+        
+        # Add assigned technician info if available
+        if ticket.assigned_technician:
+            ticket_dict['assigned_technician'] = {
+                'username': ticket.assigned_technician.username
+            }
+        else:
+            ticket_dict['assigned_technician'] = None
+            
+        filtered_tickets.append(ticket_dict)
+    
+    # Add timestamp to prevent caching
+    timestamp = int(datetime.now().timestamp() * 1000)
+    
+    # Create filter info for the template
+    filter_info = {
+        'status': status_filter,
+        'category': category_filter,
+        'priority': priority_filter,
+        'timestamp': timestamp
+    }
+    
+    # Disable caching for this request
+    @after_this_request
+    def add_no_cache(response):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+    
+    # Render the standalone template
+    return render_template('tickets/standalone_dashboard.html',
+                         tickets=filtered_tickets,
+                         categories=categories,
+                         ticket_statuses=ticket_statuses,
+                         ticket_count=len(filtered_tickets),
+                         filter_info=filter_info,
+                         timestamp=timestamp)
+
 @tickets.route('/tickets/dashboard')
 @login_required
 def tickets_dashboard():
-    """Display all tickets with filtering options"""
+    """Display all tickets with filtering options (includes sidebar)"""
     app.logger.debug(f"Raw request URL: {request.url}")
     app.logger.debug(f"Raw query args: {request.args}")
     

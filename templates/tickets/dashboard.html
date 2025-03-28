@@ -28,9 +28,9 @@
                         <div class="mb-3">
                             <label class="form-label">Status</label>
                             <select name="status" id="status-filter" class="form-select">
-                                <option value="all" {% if request.args.get('status') == 'all' %}selected{% endif %}>All</option>
+                                <option value="all" {% if filter_info.status == 'all' %}selected{% endif %}>All</option>
                                 {% for status in ticket_statuses %}
-                                <option value="{{ status }}" {% if request.args.get('status', 'open') == status %}selected{% endif %}>
+                                <option value="{{ status }}" {% if filter_info.status == status %}selected{% endif %}>
                                     {{ status|replace('_', ' ')|title }}
                                 </option>
                                 {% endfor %}
@@ -39,9 +39,9 @@
                         <div class="mb-3">
                             <label class="form-label">Category</label>
                             <select name="category" id="category-filter" class="form-select">
-                                <option value="all" {% if request.args.get('category', 'all') == 'all' %}selected{% endif %}>All</option>
+                                <option value="all" {% if filter_info.category == 'all' %}selected{% endif %}>All</option>
                                 {% for category in categories %}
-                                <option value="{{ category['id'] }}" {% if request.args.get('category')|int == category['id'] %}selected{% endif %}>
+                                <option value="{{ category['id'] }}" {% if filter_info.category|int == category['id'] %}selected{% endif %}>
                                     {{ category['name'] }}
                                 </option>
                                 {% endfor %}
@@ -50,11 +50,11 @@
                         <div class="mb-3">
                             <label class="form-label">Priority</label>
                             <select name="priority" id="priority-filter" class="form-select">
-                                <option value="all" {% if request.args.get('priority', 'all') == 'all' %}selected{% endif %}>All</option>
-                                <option value="0" {% if request.args.get('priority') == '0' %}selected{% endif %}>Low</option>
-                                <option value="1" {% if request.args.get('priority') == '1' %}selected{% endif %}>Medium</option>
-                                <option value="2" {% if request.args.get('priority') == '2' %}selected{% endif %}>High</option>
-                                <option value="3" {% if request.args.get('priority') == '3' %}selected{% endif %}>Urgent</option>
+                                <option value="all" {% if filter_info.priority == 'all' %}selected{% endif %}>All</option>
+                                <option value="0" {% if filter_info.priority == '0' or filter_info.priority == 0 %}selected{% endif %}>Low</option>
+                                <option value="1" {% if filter_info.priority == '1' or filter_info.priority == 1 %}selected{% endif %}>Medium</option>
+                                <option value="2" {% if filter_info.priority == '2' or filter_info.priority == 2 %}selected{% endif %}>High</option>
+                                <option value="3" {% if filter_info.priority == '3' or filter_info.priority == 3 %}selected{% endif %}>Urgent</option>
                             </select>
                         </div>
                         <button type="button" id="apply-filters-btn" class="btn btn-primary w-100">Apply Filters</button>
@@ -196,9 +196,9 @@
         
         // For debugging - add info about current filters
         console.log('Current filters:', {
-            status: '{{ request.args.get("status", "open") }}',
-            category: '{{ request.args.get("category", "all") }}',
-            priority: '{{ request.args.get("priority", "all") }}',
+            status: '{{ filter_info.status }}',
+            category: '{{ filter_info.category }}',
+            priority: '{{ filter_info.priority }}',
             timestamp: '{{ timestamp }}'
         });
     });

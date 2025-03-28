@@ -34,9 +34,17 @@ def tickets_dashboard():
         # Log explicit parameter requests for debugging
         app.logger.debug(f"Explicit filter request - status:{status_filter}, category:{category_filter}, priority:{priority_filter}")
         
-        app.logger.debug(f"Status filter from request: {status_filter}")
+        # Force-convert these to appropriate types for comparison
+        status_filter = status_filter.strip().lower()
+        app.logger.debug(f"Status filter from request (normalized): {status_filter}")
         app.logger.debug(f"Category filter from request: {category_filter}")
         app.logger.debug(f"Priority filter from request: {priority_filter}")
+    
+    # Verify that status filter is valid
+    valid_statuses = vars(TicketStatus).values()
+    if status_filter != 'all' and status_filter not in valid_statuses:
+        app.logger.warning(f"Invalid status filter '{status_filter}', defaulting to 'open'")
+        status_filter = 'open'
     
     # If status is explicitly set to 'all', make sure it's respected
     if status_filter == 'all':
@@ -44,6 +52,20 @@ def tickets_dashboard():
     
     # Add debug logging to see what filters are being applied
     app.logger.debug(f"Ticket dashboard filters - status: {status_filter}, category: {category_filter}, priority: {priority_filter}")
+
+    # Add some diagnostic queries to check database status values
+    # Count status distribution in database
+    status_counts = db.session.execute(
+        """
+        SELECT status, COUNT(*) as count
+        FROM ticket
+        GROUP BY status
+        ORDER BY status
+        """
+    ).fetchall()
+    app.logger.debug("Status counts in database:")
+    for status, count in status_counts:
+        app.logger.debug(f"  {status}: {count} tickets")
 
     # Base query
     query = Ticket.query
@@ -423,6 +445,8 @@ def update_status(ticket_id):
     new_status = request.form.get('status')
     comment = request.form.get('comment', '')
     
+    app.logger.debug(f"Updating ticket #{ticket_id} status from '{ticket.status}' to '{new_status}'")
+    
     if new_status not in vars(TicketStatus).values():
         flash('Invalid ticket status', 'error')
         return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
@@ -440,8 +464,20 @@ def update_status(ticket_id):
     # If a comment was provided, also add it as a separate comment
     if comment:
         ticket.add_comment(current_user, comment)
-        
-    db.session.commit()
+    
+    # Force the status change by marking it as modified
+    db.session.add(ticket)
+    
+    try:
+        db.session.commit()
+        app.logger.debug(f"Successfully updated ticket #{ticket_id} status to '{new_status}'")
+        # Verify the update took effect
+        db.session.refresh(ticket)
+        app.logger.debug(f"After commit, ticket status is now '{ticket.status}'")
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error updating ticket status: {str(e)}")
+        flash('Error updating ticket status', 'error')
     
     # Send notification email if the ticket is assigned to someone
     if ticket.assigned_to and ticket.assigned_to != current_user.id:

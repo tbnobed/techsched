@@ -13,11 +13,11 @@
                         {{ form.csrf_token }}
                         <div class="mb-3">
                             <label class="form-label">Username</label>
-                            <input type="text" class="form-control" value="{{ current_user.username }}" readonly>
+                            <input type="text" class="form-control profile-readonly-field" value="{{ current_user.username }}" readonly style="color: #ffffff; background-color: #162439;">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Email</label>
-                            <input type="email" class="form-control" value="{{ current_user.email }}" readonly>
+                            <input type="email" class="form-control profile-readonly-field" value="{{ current_user.email }}" readonly style="color: #ffffff; background-color: #162439;">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Color</label>

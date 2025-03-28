@@ -13,11 +13,11 @@
                         {{ form.csrf_token }}
                         <div class="mb-3">
                             {{ form.username.label(class="form-label") }}
-                            {{ form.username(class="form-control") }}
+                            {{ form.username(class="form-control admin-form-field") }}
                         </div>
                         <div class="mb-3">
                             {{ form.email.label(class="form-label") }}
-                            {{ form.email(class="form-control") }}
+                            {{ form.email(class="form-control admin-form-field") }}
                         </div>
                         <div class="mb-3">
                             {{ form.color.label(class="form-label") }}
@@ -26,7 +26,7 @@
                         </div>
                         <div class="mb-3">
                             {{ form.password.label(class="form-label") }}
-                            {{ form.password(class="form-control", placeholder="Leave blank to keep current password") }}
+                            {{ form.password(class="form-control admin-form-field", placeholder="Leave blank to keep current password") }}
                         </div>
                         <div class="mb-3 form-check">
                             {{ form.is_admin(class="form-check-input") }}

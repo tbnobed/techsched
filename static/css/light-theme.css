@@ -108,6 +108,22 @@ body {
   color: var(--light-text-secondary);
 }
 
+/* Fix for readonly and disabled form controls to improve text visibility */
+.form-control[readonly], 
+.form-control[disabled] {
+  background-color: #f8f9fa;
+  color: #333333;
+  opacity: 0.9;
+}
+
+/* For admin form fields and profile fields to ensure better contrast */
+.profile-readonly-field,
+.admin-form-field {
+  background-color: #f8f9fa !important;
+  color: #333333 !important;
+  border-color: #ced4da !important;
+}
+
 .btn-primary {
   background-color: var(--light-accent);
   border-color: var(--light-accent);

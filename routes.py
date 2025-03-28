@@ -621,15 +621,15 @@ def admin_create_user():
             email = form.email.data.lower() if form.email.data else ""
             username = form.username.data
             
-            # Check if user already exists (case-insensitive)
-            existing_email_user = User.query.filter(db.func.lower(User.email) == email).first()
+            # Check if user already exists (case-insensitive using PostgreSQL LOWER)
+            existing_email_user = User.query.filter(db.func.lower(User.email) == db.func.lower(email)).first()
             if existing_email_user:
                 flash('Email already registered.')
                 return redirect(url_for('admin_dashboard'))
                 
-            # Check if username already exists (case-insensitive)
+            # Check if username already exists (case-insensitive using PostgreSQL LOWER)
             if username:
-                existing_user = User.query.filter(db.func.lower(User.username) == username.lower()).first()
+                existing_user = User.query.filter(db.func.lower(User.username) == db.func.lower(username)).first()
                 if existing_user:
                     flash('Username already registered. Please choose another username.')
                     return redirect(url_for('admin_dashboard'))
@@ -705,21 +705,21 @@ def admin_edit_user(user_id):
         app.logger.debug(f"Processed form data: username={username}, email={email}, color={color}, is_admin={is_admin}")
 
         try:
-            # Check if username is already taken by another user (case-insensitive)
+            # Check if username is already taken by another user (case-insensitive using PostgreSQL LOWER)
             if username:
                 username_conflict = User.query.filter(
                     User.id != user_id,
-                    db.func.lower(User.username) == username.lower()
+                    db.func.lower(User.username) == db.func.lower(username)
                 ).first()
                 if username_conflict:
                     flash(f'Username "{username}" is already taken. Please use a different username.')
                     return redirect(url_for('admin_dashboard'))
             
-            # Check if email is already taken by another user (case-insensitive)
+            # Check if email is already taken by another user (case-insensitive using PostgreSQL LOWER)
             if email:
                 email_conflict = User.query.filter(
                     User.id != user_id,
-                    db.func.lower(User.email) == email.lower()
+                    db.func.lower(User.email) == db.func.lower(email)
                 ).first()
                 if email_conflict:
                     flash(f'Email "{email}" is already registered to another user.')

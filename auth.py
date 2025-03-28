@@ -32,8 +32,8 @@ def login():
             email_search = login_input.lower()
             app.logger.debug(f"Looking up by email (lowercase): {email_search}")
             
-            # Get SQL query for debugging
-            query = User.query.filter(db.func.lower(User.email) == email_search)
+            # PostgreSQL LOWER function for proper case-insensitive compare
+            query = User.query.filter(db.func.lower(User.email) == db.func.lower(email_search))
             app.logger.debug(f"SQL query: {query}")
             
             # Execute the query
@@ -52,8 +52,8 @@ def login():
             app.logger.debug(f"Looking up by username (case-insensitive): {login_input}")
             username_search = login_input.lower()
             
-            # Get SQL query for debugging
-            query = User.query.filter(db.func.lower(User.username) == username_search)
+            # PostgreSQL LOWER function for proper case-insensitive compare
+            query = User.query.filter(db.func.lower(User.username) == db.func.lower(username_search))
             app.logger.debug(f"SQL query: {query}")
             
             # Execute the query
@@ -101,3 +101,25 @@ def register():
 def logout():
     logout_user()
     return redirect(url_for('auth.login'))
+    
+@auth.route('/debug_users')
+def debug_users():
+    from app import app
+    
+    # Only allow this in development
+    if not app.debug:
+        return "Debug mode is disabled", 403
+        
+    # Get all users and format their info
+    users = User.query.all()
+    user_info = []
+    for user in users:
+        user_info.append({
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "is_admin": user.is_admin
+        })
+        
+    import json
+    return json.dumps(user_info, indent=2), 200, {'Content-Type': 'application/json'}

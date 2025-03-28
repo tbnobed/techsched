@@ -58,7 +58,6 @@
                     <h3 class="card-title">{{ ticket['title'] }}</h3>
                     <div class="ticket-meta d-flex gap-3 mb-4">
                         <span class="badge bg-secondary">
-                            <i data-feather="{{ ticket['category']['icon'] }}" class="feather-sm me-1"></i>
                             {{ ticket['category']['name'] }}
                         </span>
                         {% set status_colors = {

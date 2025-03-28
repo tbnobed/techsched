@@ -86,8 +86,7 @@ def standalone_dashboard():
             'updated_at': ticket.updated_at,
             'category': {
                 'id': ticket.category.id,
-                'name': ticket.category.name,
-                'icon': ticket.category.icon
+                'name': ticket.category.name
             }
         }
         
@@ -105,8 +104,7 @@ def standalone_dashboard():
     categories = [
         {
             'id': category.id,
-            'name': category.name,
-            'icon': category.icon
+            'name': category.name
         }
         for category in TicketCategory.query.all()
     ]
@@ -298,7 +296,6 @@ def tickets_dashboard():
         {
             'id': category.id,
             'name': category.name,
-            'icon': category.icon,
             'description': category.description
         }
         for category in categories_objects
@@ -329,8 +326,7 @@ def tickets_dashboard():
             'due_date': ticket.due_date,
             'category': {
                 'id': ticket.category.id,
-                'name': ticket.category.name,
-                'icon': ticket.category.icon
+                'name': ticket.category.name
             }
         }
         
@@ -508,7 +504,6 @@ def view_ticket(ticket_id):
         {
             'id': category.id,
             'name': category.name,
-            'icon': category.icon,
             'description': category.description
         }
         for category in categories_objects
@@ -530,8 +525,7 @@ def view_ticket(ticket_id):
         'due_date': ticket_obj.due_date,
         'category': {
             'id': ticket_obj.category.id,
-            'name': ticket_obj.category.name,
-            'icon': ticket_obj.category.icon
+            'name': ticket_obj.category.name
         },
         'comments': [{
             'id': comment.id,

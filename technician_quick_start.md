@@ -1,11 +1,15 @@
 # Technician Scheduler Quick Start Guide
 
+*Last Updated: March 28, 2025*
+
 This guide provides a quick overview of essential features for technicians using the scheduling system.
 
 ## Logging In
 
 1. Navigate to the application URL in your web browser.
 2. Enter your email and password.
+   - Your email address is case-insensitive (e.g., tech@example.com or Tech@Example.com will work the same).
+   - Your password remains case-sensitive, so enter it exactly as provided.
 3. Click "Login".
 
 ![Login Screen](attached_assets/image_1743175526122.png)

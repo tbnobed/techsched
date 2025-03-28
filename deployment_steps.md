@@ -190,6 +190,7 @@ DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}
 
 # Email Configuration
 SENDGRID_API_KEY=your_sendgrid_api_key_here  # ADD YOUR KEY HERE
+EMAIL_DOMAIN=scheduler.yourdomain.com  # CHANGE TO YOUR DOMAIN
 ```
 
 4. Update docker-compose.yml for production (Optional, if more customization needed):

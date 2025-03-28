@@ -1,5 +1,7 @@
 # Technician Scheduler - Administrator Guide
 
+*Last Updated: March 28, 2025*
+
 This guide focuses on administrator-specific functions and responsibilities in the Technician Scheduler system.
 
 ## Contents
@@ -61,6 +63,7 @@ The User Management section allows you to create, edit, and manage all user acco
 2. Fill in the following information:
    - **Username**: Display name for the user
    - **Email**: User's email address (must be unique)
+     - Email addresses are stored case-insensitively, so "user@example.com" and "User@Example.com" are treated as the same email.
    - **Password**: Initial password (the user can change this later)
    - **Color**: Assign a color for this user's calendar entries
    - **Administrator**: Check if the user should have admin privileges
@@ -272,8 +275,9 @@ To manage database growth and improve performance:
 **Issue**: User cannot log in
 **Solution**:
 1. Verify the user's email address is correct in the system.
+   - Remember that email addresses are case-insensitive (user@example.com and USER@example.com are treated as the same email).
 2. Reset their password through the User Management interface.
-3. Ensure the user is using the correct email/password combination.
+3. Ensure the user is using the correct email/password combination (passwords remain case-sensitive).
 4. Check browser cookie settings if persistent login issues occur.
 
 ### Schedule Display Issues

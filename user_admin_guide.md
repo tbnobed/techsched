@@ -64,6 +64,8 @@ This guide provides detailed instructions for both regular users and administrat
 ![Login Screen](attached_assets/image_1743175526122.png)
 
 3. Enter your email address and password.
+   - Note: Email addresses are case-insensitive, so "user@example.com" and "User@Example.com" will work the same.
+   - Passwords remain case-sensitive for security.
 4. Click the "Login" button.
 5. If you've forgotten your password, contact your system administrator for assistance.
 
@@ -320,6 +322,7 @@ To manage users in the system:
 3. To create a new user:
    - Click "Create User."
    - Fill in the user details (username, email, password, etc.).
+   - Email addresses are stored case-insensitively, so "user@example.com" and "User@Example.com" are treated as the same email address.
    - Set administrator privileges if needed.
    - Click "Create User" to add them to the system.
 4. To edit a user:

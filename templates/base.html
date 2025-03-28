@@ -300,72 +300,112 @@
             // Update time immediately and then every second
             updateCurrentTime();
             setInterval(updateCurrentTime, 1000);
-        });
-    </script>
-    <script>
-        function updateActiveUsers() {
-            fetch('/api/active_users')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(users => {
-                    const container = document.getElementById('active-users');
-                    if (!Array.isArray(users) || users.length === 0) {
-                        container.innerHTML = '<p class="text-muted">No active technicians</p>';
-                        return;
-                    }
-
-                    let html = '';
-                    users.forEach(user => {
-                        if (user && user.username) {
-                            html += `
-                                <div class="mb-3 p-2 border rounded" style="border-left: 4px solid ${user.color || '#cccccc'} !important">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="mb-0">${user.username}</h6>
-                                    </div>`;
-                            
-                            // Add schedule information if available
-                            if (user.schedule) {
-                                html += `
-                                    <div class="mt-1 small">
-                                        <i data-feather="clock" class="me-1" style="width: 14px; height: 14px;"></i>
-                                        ${user.schedule.start_time} - ${user.schedule.end_time}
-                                    </div>`;
-                                
-                                if (user.schedule.description) {
-                                    html += `<div class="small mt-1 text-muted fst-italic">${user.schedule.description}</div>`;
-                                }
-                            }
-                            
-                            // Add location information if available
-                            if (user.location && user.location.name && user.location.name !== 'No Location') {
-                                html += `
-                                    <div class="mt-1 small">
-                                        <i data-feather="map-pin" class="me-1" style="width: 14px; height: 14px;"></i>
-                                        ${user.location.name}
-                                    </div>`;
-                            }
-                            
-                            html += `</div>`;
+            
+            // Function to fetch and update active users
+            function updateActiveUsers() {
+                fetch('/api/active_users')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
                         }
-                    });
-                    container.innerHTML = html || '<p class="text-muted">No active technicians</p>';
-                    feather.replace();
-                })
-                .catch(error => {
-                    console.error('Error fetching active users:', error);
-                    document.getElementById('active-users').innerHTML = 
-                        '<p class="text-danger">Error loading active users</p>';
-                });
-        }
+                        return response.json();
+                    })
+                    .then(users => {
+                        const container = document.getElementById('active-users');
+                        if (!Array.isArray(users) || users.length === 0) {
+                            container.innerHTML = '<p class="text-muted">No active technicians</p>';
+                            return;
+                        }
 
-        // Update active users immediately and every minute
-        document.addEventListener('DOMContentLoaded', function() {
+                        let html = '';
+                        users.forEach(user => {
+                            if (user && user.username) {
+                                html += `
+                                    <div class="active-user-entry">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0" style="color: ${user.color || '#ffffff'}">${user.username}</h6>
+                                        </div>`;
+                                
+                                // Add schedule information if available
+                                if (user.schedule) {
+                                    html += `
+                                        <div class="mt-1 small">
+                                            <i data-feather="clock" class="me-1" style="width: 14px; height: 14px;"></i>
+                                            ${user.schedule.start_time} - ${user.schedule.end_time}
+                                        </div>`;
+                                    
+                                    if (user.schedule.description) {
+                                        html += `<div class="small mt-1 text-muted fst-italic">${user.schedule.description}</div>`;
+                                    }
+                                }
+                                
+                                // Add location information if available
+                                if (user.location && user.location.name && user.location.name !== 'No Location') {
+                                    html += `
+                                        <div class="mt-1 small">
+                                            <i data-feather="map-pin" class="me-1" style="width: 14px; height: 14px;"></i>
+                                            ${user.location.name}
+                                        </div>`;
+                                }
+                                
+                                html += `</div>`;
+                            }
+                        });
+                        container.innerHTML = html || '<p class="text-muted">No active technicians</p>';
+                        feather.replace();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching active users:', error);
+                        document.getElementById('active-users').innerHTML = 
+                            '<p class="text-danger">Error loading active users</p>';
+                    });
+            }
+            
+            // Function to fetch and update upcoming time off
+            function updateUpcomingTimeOff() {
+                fetch('/api/upcoming_time_off')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(timeOffEntries => {
+                        const container = document.getElementById('upcoming-time-off');
+                        if (!Array.isArray(timeOffEntries) || timeOffEntries.length === 0) {
+                            container.innerHTML = '<p class="text-muted">No upcoming time off</p>';
+                            return;
+                        }
+
+                        let html = '';
+                        timeOffEntries.forEach(entry => {
+                            html += `
+                                <div class="time-off-entry">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0" style="color: ${entry.color || '#ffffff'}">${entry.username}</h6>
+                                    </div>
+                                    <div class="mt-1 small">
+                                        <i data-feather="calendar" class="me-1" style="width: 14px; height: 14px;"></i>
+                                        ${entry.start_date} - ${entry.end_date}
+                                    </div>
+                                    ${entry.description ? `<div class="small mt-1 text-muted fst-italic">${entry.description}</div>` : ''}
+                                </div>`;
+                        });
+                        container.innerHTML = html || '<p class="text-muted">No upcoming time off</p>';
+                        feather.replace();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching time off:', error);
+                        document.getElementById('upcoming-time-off').innerHTML = 
+                            '<p class="text-danger">Error loading time off data</p>';
+                    });
+            }
+
+            // Update active users and time off immediately and every minute
             updateActiveUsers();
+            updateUpcomingTimeOff();
             setInterval(updateActiveUsers, 60000);
+            setInterval(updateUpcomingTimeOff, 60000);
         });
     </script>
 </body>

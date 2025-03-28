@@ -14,6 +14,13 @@
   --dark-info: #3498db;
   --dark-warning: #f39c12;
   --dark-danger: #e74c3c;
+  
+  /* Sidebar section specific colors */
+  --sidebar-time-bg: #1f2d55;
+  --sidebar-active-bg: #2c3c63;
+  --sidebar-timeoff-bg: #2a304f;
+  --sidebar-tickets-bg: #263455;
+  --sidebar-links-bg: #23293f;
 }
 
 body {
@@ -201,6 +208,43 @@ body {
   background-color: var(--dark-active);
 }
 
+/* Sidebar section-specific styling */
+#current-time-display {
+  background-color: var(--sidebar-time-bg);
+  border: 1px solid var(--dark-border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.col-md-3 .card:nth-of-type(1) {
+  background-color: var(--sidebar-active-bg);
+}
+
+.col-md-3 .card:nth-of-type(2) {
+  background-color: var(--sidebar-timeoff-bg);
+}
+
+.col-md-3 .card:nth-of-type(3) {
+  background-color: var(--sidebar-tickets-bg);
+}
+
+.col-md-3 .card:nth-of-type(4) {
+  background-color: var(--sidebar-links-bg);
+}
+
+/* Better contrast for active users and time off section */
+#active-users, #upcoming-time-off {
+  color: var(--dark-text);
+  font-weight: 500;
+}
+
+.active-user-entry, .time-off-entry {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 /* Calendar styling */
 .fc-theme-standard .fc-scrollgrid {
   border-color: var(--dark-border);
@@ -227,6 +271,71 @@ body {
 .fc-theme-standard .fc-button-active {
   background-color: var(--dark-accent);
   border-color: var(--dark-accent);
+}
+
+/* Fix calendar text contrast issues */
+.fc .fc-col-header-cell-cushion {
+  color: var(--dark-text);
+}
+
+.fc .fc-daygrid-day-number {
+  color: var(--dark-text);
+}
+
+.fc-direction-ltr .fc-daygrid-event.fc-event-end {
+  color: var(--dark-text);
+  text-shadow: 0 0 2px rgba(0,0,0,0.7);
+  font-weight: 500;
+}
+
+.fc-direction-ltr .fc-daygrid-event.fc-event-start {
+  color: var(--dark-text);
+  text-shadow: 0 0 2px rgba(0,0,0,0.7);
+  font-weight: 500;
+}
+
+.fc-event-title {
+  color: var(--dark-text);
+  text-shadow: 0 0 2px rgba(0,0,0,0.7);
+  font-weight: 500;
+}
+
+.fc-event-time {
+  color: var(--dark-text);
+  text-shadow: 0 0 2px rgba(0,0,0,0.7);
+  font-weight: 500;
+}
+
+.fc-timegrid-event-harness .fc-timegrid-event {
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--dark-border);
+}
+
+.fc-timegrid-slot-label-cushion {
+  color: var(--dark-text);
+}
+
+.fc-col-header-cell a {
+  color: var(--dark-text);
+  font-weight: 600;
+}
+
+.fc-daygrid-day-frame {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.fc-daygrid-day.fc-day-today {
+  background-color: rgba(233, 69, 96, 0.1) !important;
+}
+
+.fc-day-today .fc-daygrid-day-number {
+  background-color: var(--dark-accent);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  text-align: center;
+  line-height: 24px;
+  margin: 4px;
 }
 
 /* Alert styling */

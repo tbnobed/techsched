@@ -63,8 +63,10 @@
 
     <div class="calendar-grid" style="background-color: #1a202c; color: #e9ecef; border: 2px solid #4a5568; border-radius: 6px; overflow: hidden;">
         <div class="time-column" style="border-right: 2px solid #4a5568;">
+            <!-- Empty space to align with day headers -->
+            <div style="background-color: #2c3e50; height: 39px; border-bottom: 3px solid #4a6583;"></div>
             {% for hour in range(24) %}
-                <div class="hour-slot" style="background-color: #2c3e50; color: white; padding: 8px 12px; text-align: right; font-weight: bold; border-bottom: 2px solid #4a6583;">{{ "%02d:00"|format(hour) }}</div>
+                <div class="hour-slot" style="background-color: #2c3e50; color: white; padding: 16px 12px 15px; text-align: right; font-weight: bold; border-bottom: 1px solid #5a6d82; height: 50px; line-height: 18px;">{{ "%02d:00"|format(hour) }}</div>
             {% endfor %}
         </div>
 
@@ -72,7 +74,7 @@
         {% set current_date = week_start + timedelta(days=day) %}
         {% set is_today = current_date.date() == today.date() %}
         <div class="day-column {{ 'today' if is_today else '' }}" style="background-color: #1e2530; color: #e9ecef; border-right: 1px solid #4a5568;">
-            <div class="day-header {{ 'today' if is_today else '' }}" style="background-color: #2c3e50; color: white; padding: 8px; font-weight: bold; border-bottom: 3px solid #4a6583;">
+            <div class="day-header {{ 'today' if is_today else '' }}" style="background-color: #2c3e50; color: white; padding: 8px; font-weight: bold; border-bottom: 3px solid #4a6583; height: 39px;">
                 {{ current_date.strftime('%A %m/%d') }}
             </div>
             <div class="day-slots" data-date="{{ current_date.strftime('%Y-%m-%d') }}">

@@ -17,17 +17,21 @@ def tickets_dashboard():
     app.logger.debug(f"Raw request URL: {request.url}")
     app.logger.debug(f"Raw query args: {request.args}")
     
-    # Default to showing only open tickets if no filter is specified
-    has_status_filter = 'status' in request.args
-    status_filter = request.args.get('status', 'open' if not has_status_filter else 'all')
+    # Get filters from request args with appropriate defaults
+    # If no URL parameters, default to showing only open tickets
+    if not request.args:
+        app.logger.debug("No filters specified, defaulting to open tickets")
+        status_filter = 'open'
+    else:
+        status_filter = request.args.get('status')
+        app.logger.debug(f"Status filter from request: {status_filter}")
+        
     category_filter = request.args.get('category', 'all')
     priority_filter = request.args.get('priority', 'all')
     
-    app.logger.debug(f"Has explicit status filter: {has_status_filter}")
-    
-    # If URL has no parameters at all, default to open tickets
-    if not request.args and status_filter == 'open':
-        app.logger.debug("No filters specified, defaulting to open tickets")
+    # If status is explicitly set to 'all', make sure it's respected
+    if status_filter == 'all':
+        app.logger.debug("Status filter is 'all', showing all tickets")
     
     # Add debug logging to see what filters are being applied
     app.logger.debug(f"Ticket dashboard filters - status: {status_filter}, category: {category_filter}, priority: {priority_filter}")

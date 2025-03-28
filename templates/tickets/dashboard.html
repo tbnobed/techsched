@@ -27,7 +27,7 @@
                             <select name="status" class="form-select">
                                 <option value="all" {% if request.args.get('status') == 'all' %}selected{% endif %}>All</option>
                                 {% for status in ticket_statuses %}
-                                <option value="{{ status }}" {% if request.args.get('status', 'open' if not request.args else 'all') == status %}selected{% endif %}>
+                                <option value="{{ status }}" {% if request.args.get('status', 'open') == status %}selected{% endif %}>
                                     {{ status|replace('_', ' ')|title }}
                                 </option>
                                 {% endfor %}

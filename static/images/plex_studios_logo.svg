@@ -1,86 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+<svg width="600" height="240" viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg">
   <style>
     @keyframes fadeIn {
       0% { opacity: 0; }
       100% { opacity: 1; }
     }
     
-    @keyframes strokeDraw {
-      0% { stroke-dashoffset: 600; }
-      100% { stroke-dashoffset: 0; }
-    }
-    
-    @keyframes slideInLeft {
-      0% { transform: translateX(-20px); opacity: 0; }
-      100% { transform: translateX(0); opacity: 1; }
-    }
-    
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.03); }
-      100% { transform: scale(1); }
-    }
-    
-    .logo-bg {
-      fill: #111827;
+    .logo-p-group {
       animation: fadeIn 0.8s ease-in-out forwards;
-    }
-    
-    .logo-p-outline {
-      fill: none;
-      stroke: #ffffff;
-      stroke-width: 4;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-dasharray: 600;
-      stroke-dashoffset: 600;
-      animation: strokeDraw 1.5s ease-in-out forwards;
-    }
-    
-    .logo-p-fill {
-      fill: #ffffff;
-      opacity: 0;
-      animation: fadeIn 0.5s ease-in-out 1.5s forwards;
     }
     
     .logo-text {
       font-family: 'Arial', sans-serif;
       font-weight: 800;
-      fill: #ffffff;
+      fill: #002744;
+      animation: fadeIn 0.7s ease-in-out 0.5s forwards;
       opacity: 0;
-      animation: slideInLeft 0.7s ease-in-out 1.8s forwards;
     }
     
     .logo-subtext {
       font-family: 'Arial', sans-serif;
-      fill: #9ca3af;
+      font-weight: 600;
+      fill: #002744;
       text-transform: uppercase;
       letter-spacing: 1px;
+      animation: fadeIn 0.7s ease-in-out 0.8s forwards;
       opacity: 0;
-      animation: slideInLeft 0.7s ease-in-out 2.1s forwards;
-    }
-    
-    .pulse-animation {
-      animation: pulse 2s ease-in-out infinite;
-      animation-delay: 2.5s;
-      transform-origin: center;
     }
   </style>
   
-  <!-- Background -->
-  <rect class="logo-bg" x="0" y="0" width="240" height="240" rx="12" />
-  
-  <!-- P Mark with modern adjustments -->
-  <g transform="translate(50, 50)" class="pulse-animation">
-    <!-- P outline - animated drawing -->
-    <path class="logo-p-outline" d="M20,20 L70,20 L110,50 L70,80 L20,80 L20,120 L20,20 Z" />
+  <!-- P Logo with geometric design -->
+  <g class="logo-p-group" transform="translate(60, 30) scale(0.8)">
+    <!-- Left blue face -->
+    <path d="M20,40 L20,160 L80,120 L80,80 Z" fill="#0078D7" />
     
-    <!-- P filled shape - appears after outline is drawn -->
-    <path class="logo-p-fill" d="M20,20 L70,20 L110,50 L70,80 L20,80 L20,120 L20,20 Z" />
+    <!-- Dark navy face -->
+    <path d="M20,40 L80,80 L140,40 L80,0 Z" fill="#002744" />
+    
+    <!-- Orange top face -->
+    <path d="M80,0 L140,40 L200,0 L140,-40 Z" fill="#FF6C37" />
+    
+    <!-- Light orange right face -->
+    <path d="M140,40 L140,80 L200,40 L200,0 Z" fill="#FFA553" />
+    
+    <!-- Teal bottom face -->
+    <path d="M80,80 L140,80 L140,120 L80,120 Z" fill="#36B1A0" />
+    
+    <!-- Dark navy inner face -->
+    <path d="M80,80 L80,120 L20,160 L20,120 Z" fill="#002744" />
+    
+    <!-- Center hexagon (empty space) -->
+    <path d="M80,40 L110,55 L110,85 L80,100 L50,85 L50,55 Z" fill="white" />
   </g>
   
-  <!-- Text with modern typography -->
-  <text class="logo-text" x="120" y="180" text-anchor="middle" font-size="24" font-weight="bold">THE PLEX STUDIOS</text>
-  <text class="logo-subtext" x="120" y="200" text-anchor="middle" font-size="11">TECHNICIAN SCHEDULER</text>
+  <!-- PLEX text -->
+  <text class="logo-text" x="240" y="120" font-size="72">PLEX</text>
+  
+  <!-- ENGINEERING subtext -->
+  <text class="logo-subtext" x="240" y="170" font-size="32">STUDIOS</text>
 </svg>

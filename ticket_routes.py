@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, session
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, session, after_this_request
 from flask_login import login_required, current_user
 from forms import TicketForm, TicketCommentForm, TicketCategoryForm
 from models import db, Ticket, TicketCategory, TicketComment, TicketHistory, User, TicketStatus
@@ -64,11 +64,35 @@ def tickets_dashboard():
     for ticket in tickets:
         app.logger.debug(f"Ticket #{ticket.id}: {ticket.title} - Status: {ticket.status}, Category: {ticket.category_id}, Priority: {ticket.priority}")
         
-    # DEBUG TEST - Force filter again to verify
+    # FORCE FILTER - Apply filter directly to the data
+    # Force status filter first
+    if status_filter != 'all':
+        app.logger.debug(f"FORCE FILTERING: Filtering tickets by status={status_filter}")
+        # Filter by status in Python
+        tickets = [t for t in tickets if t.status == status_filter]
+        app.logger.debug(f"AFTER STATUS FORCE FILTERING: {len(tickets)} tickets remain")
+    
+    # Force category filter if needed
+    if category_filter != 'all':
+        app.logger.debug(f"FORCE FILTERING: Filtering tickets by category={category_filter}")
+        # Filter by category in Python
+        tickets = [t for t in tickets if t.category_id == int(category_filter)]
+        app.logger.debug(f"AFTER CATEGORY FORCE FILTERING: {len(tickets)} tickets remain")
+    
+    # Force priority filter if needed
     if priority_filter != 'all':
-        app.logger.debug(f"DOUBLE-CHECK: Filtering tickets by priority={priority_filter}")
+        app.logger.debug(f"FORCE FILTERING: Filtering tickets by priority={priority_filter}")
+        # Filter by priority in Python
         tickets = [t for t in tickets if t.priority == int(priority_filter)]
-        app.logger.debug(f"AFTER DOUBLE-CHECK: {len(tickets)} tickets remain")
+        app.logger.debug(f"AFTER PRIORITY FORCE FILTERING: {len(tickets)} tickets remain")
+    
+    # Disable caching for this request to make sure we're getting fresh data
+    @after_this_request
+    def add_no_cache(response):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
         
     # Add a temporary filter to show exactly what's going to the template
     app.logger.debug(f"FINAL TICKETS TO TEMPLATE:")

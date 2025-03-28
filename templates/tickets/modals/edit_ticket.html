@@ -21,8 +21,8 @@
                         <label class="form-label">Category</label>
                         <select name="category_id" class="form-select" required>
                             {% for category in categories %}
-                            <option value="{{ category.id }}" {% if ticket['category_id'] == category.id %}selected{% endif %}>
-                                {{ category.name }}
+                            <option value="{{ category['id'] }}" {% if ticket['category_id'] == category['id'] %}selected{% endif %}>
+                                {{ category['name'] }}
                             </option>
                             {% endfor %}
                         </select>

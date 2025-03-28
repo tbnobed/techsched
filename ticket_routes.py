@@ -70,26 +70,12 @@ def tickets_dashboard():
         app.logger.debug(f"Ticket #{ticket.id}: {ticket.title} - Status: {ticket.status}, Category: {ticket.category_id}, Priority: {ticket.priority}")
         
     # FORCE FILTER - Apply filter directly to the data
-    # Force status filter first
-    if status_filter != 'all':
-        app.logger.debug(f"FORCE FILTERING: Filtering tickets by status={status_filter}")
-        # Filter by status in Python
-        tickets = [t for t in tickets if t.status == status_filter]
-        app.logger.debug(f"AFTER STATUS FORCE FILTERING: {len(tickets)} tickets remain")
+    # No need for the force filtering here as the SQL query should handle it correctly
+    # We'll keep a debug log of found tickets
+    app.logger.debug(f"Found tickets after SQL filtering: {len(tickets)}")
     
-    # Force category filter if needed
-    if category_filter != 'all':
-        app.logger.debug(f"FORCE FILTERING: Filtering tickets by category={category_filter}")
-        # Filter by category in Python
-        tickets = [t for t in tickets if t.category_id == int(category_filter)]
-        app.logger.debug(f"AFTER CATEGORY FORCE FILTERING: {len(tickets)} tickets remain")
-    
-    # Force priority filter if needed
-    if priority_filter != 'all':
-        app.logger.debug(f"FORCE FILTERING: Filtering tickets by priority={priority_filter}")
-        # Filter by priority in Python
-        tickets = [t for t in tickets if t.priority == int(priority_filter)]
-        app.logger.debug(f"AFTER PRIORITY FORCE FILTERING: {len(tickets)} tickets remain")
+    for ticket in tickets:
+        app.logger.debug(f"Found ticket: ID={ticket.id}, Title={ticket.title}, Status={ticket.status}, Priority={ticket.priority}")
     
     # Disable caching for this request to make sure we're getting fresh data
     @after_this_request
@@ -104,7 +90,17 @@ def tickets_dashboard():
     for ticket in tickets:
         app.logger.debug(f"FINAL Ticket #{ticket.id}: {ticket.title} - Priority: {ticket.priority}")
 
-    categories = TicketCategory.query.all()
+    # Get categories and convert to dictionaries
+    categories_objects = TicketCategory.query.all()
+    categories = [
+        {
+            'id': category.id,
+            'name': category.name,
+            'icon': category.icon,
+            'description': category.description
+        }
+        for category in categories_objects
+    ]
     # Get all valid ticket statuses
     ticket_statuses = [
         TicketStatus.OPEN,
@@ -282,7 +278,17 @@ def view_ticket(ticket_id):
     form = TicketForm()
     
     # Get categories and technicians for the modal forms
-    categories = TicketCategory.query.all()
+    categories_objects = TicketCategory.query.all()
+    # Convert categories to dictionaries
+    categories = [
+        {
+            'id': category.id,
+            'name': category.name,
+            'icon': category.icon,
+            'description': category.description
+        }
+        for category in categories_objects
+    ]
     technicians = User.query.all()
 
     # Convert ticket to dictionary to avoid SQLAlchemy caching issues
@@ -348,7 +354,7 @@ def view_ticket(ticket_id):
         form.due_date.data = ticket_obj.due_date
 
         # Populate category choices
-        form.category_id.choices = [(c.id, c.name) for c in categories]
+        form.category_id.choices = [(c['id'], c['name']) for c in categories]
 
         # Populate technician choices for admin users and ticket creators
         if current_user.is_admin or current_user.id == ticket_obj.created_by:

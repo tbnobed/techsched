@@ -19,17 +19,27 @@ def tickets_dashboard():
     
     # Get filters from request args with appropriate defaults
     # Check if no URL parameters or only cache-busting parameters
-    has_only_cache_params = all(k in ['timestamp', 'rand'] for k in request.args.keys()) if request.args else True
+    cache_params = ['timestamp', 'rand']
+    has_only_cache_params = all(k in cache_params for k in request.args.keys()) if request.args else True
     
+    # Extract raw filter values from the request (for debugging)
+    raw_status_filter = request.args.get('status')
+    raw_category_filter = request.args.get('category')
+    raw_priority_filter = request.args.get('priority')
+    
+    app.logger.debug(f"Raw filter values from request - status: {raw_status_filter}, category: {raw_category_filter}, priority: {raw_priority_filter}")
+    
+    # Determine final filter values
     if not request.args or has_only_cache_params:
         app.logger.debug("No filters specified or only cache parameters, defaulting to open tickets")
         status_filter = 'open'
         category_filter = 'all'
         priority_filter = 'all'
     else:
-        status_filter = request.args.get('status', 'open')
-        category_filter = request.args.get('category', 'all')
-        priority_filter = request.args.get('priority', 'all')
+        # Use 'all' as default if not provided
+        status_filter = raw_status_filter if raw_status_filter not in (None, '') else 'all'
+        category_filter = raw_category_filter if raw_category_filter not in (None, '') else 'all'
+        priority_filter = raw_priority_filter if raw_priority_filter not in (None, '') else 'all'
         
         # Log explicit parameter requests for debugging
         app.logger.debug(f"Explicit filter request - status:{status_filter}, category:{category_filter}, priority:{priority_filter}")

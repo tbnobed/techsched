@@ -61,27 +61,41 @@
         }
     </script>
 
-    <div class="calendar-grid" style="background-color: #1a202c; color: #e9ecef; border: 2px solid #4a5568; border-radius: 6px; overflow: hidden; display: grid; grid-template-columns: 80px repeat(7, 1fr);">
-        <div class="time-column" style="border-right: 2px solid #4a5568; grid-column: 1;">
+    <div class="calendar-grid" style="background-color: #1a202c; color: #e9ecef; border: 2px solid #4a5568; border-radius: 6px; overflow: hidden; display: flex;">
+        <div class="time-column" style="border-right: 2px solid #4a5568; width: 80px; min-width: 80px; flex-shrink: 0;">
             {% for hour in range(24) %}
-                <div class="hour-slot" style="background-color: {% if hour == 0 %}#2c3e50{% else %}#2c3e50{% endif %}; color: #e9ecef; padding: 8px 0; text-align: center; font-weight: bold; border-bottom: 2px solid #4a6583; height: 50px; box-sizing: border-box; overflow: hidden; font-size: 14px;">{{ "%02d:00"|format(hour) }}</div>
+                <div class="hour-slot" style="background-color: #2c3e50; color: #cbd5e0; padding: 8px 0; text-align: center; font-weight: bold; border-bottom: 2px solid #4a6583; height: 50px; box-sizing: border-box; font-size: 13px; overflow: visible; line-height: 1; display: flex; justify-content: center; align-items: center;">{{ "%02d:00"|format(hour) }}</div>
             {% endfor %}
         </div>
 
+        <div class="day-columns" style="display: flex; flex-grow: 1;">
         {% for day in range(7) %}
         {% set current_date = week_start + timedelta(days=day) %}
         {% set is_today = current_date.date() == today.date() %}
-        <div class="day-column {{ 'today' if is_today else '' }}" style="background-color: #1e2530; color: #e9ecef; border-right: 1px solid #4a5568; grid-column: {{ day + 2 }};">
-            <div class="day-header {{ 'today' if is_today else '' }}" style="background-color: #2c3e50; color: white; padding: 8px; font-weight: bold; border-bottom: 2px solid #4a6583; text-align: center;">
+        <div class="day-column {{ 'today' if is_today else '' }}" style="background-color: #1e2530; color: #e9ecef; border-right: 1px solid #4a5568; flex: 1;">
+            <div class="day-header {{ 'today' if is_today else '' }}" style="background-color: #2c3e50; color: white; padding: 8px; font-weight: bold; border-bottom: 2px solid #4a6583; text-align: center; height: 50px; box-sizing: border-box;">
                 {{ current_date.strftime('%A %m/%d') }}
             </div>
-            <div class="day-slots" data-date="{{ current_date.strftime('%Y-%m-%d') }}">
+            <div class="day-slots" data-date="{{ current_date.strftime('%Y-%m-%d') }}" style="position: relative;">
                 {% for hour in range(24) %}
                     <div class="time-slot" data-hour="{{ '%02d'|format(hour) }}" style="background-color: #1e2530; color: #e9ecef; border-bottom: 1px solid #5a6d82; height: 50px; box-sizing: border-box;"></div>
                 {% endfor %}
                 {% for schedule in schedules if schedule.start_time.date() == current_date.date() %}
                     <div class="schedule-event"
-                         style="background-color: {{ '#6a6d6c' if schedule.time_off else schedule.technician.color }}"
+                         style="background-color: {{ '#6a6d6c' if schedule.time_off else schedule.technician.color }}; 
+                                position: absolute; 
+                                top: {{ (schedule.start_time.hour * 50) + (schedule.start_time.minute / 60 * 50) }}px;
+                                left: 0;
+                                right: 0;
+                                height: {{ ((schedule.end_time - schedule.start_time).total_seconds() / 3600) * 50 }}px;
+                                z-index: 10;
+                                margin: 1px 2px;
+                                padding: 4px 8px;
+                                color: white;
+                                font-size: 12px;
+                                border-radius: 4px;
+                                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                                overflow: hidden;"
                          data-schedule-id="{{ schedule.id }}"
                          data-technician-id="{{ schedule.technician_id }}"
                          data-start-time="{{ schedule.start_time.strftime('%Y-%m-%d %H:%M:%S') }}"
@@ -90,15 +104,15 @@
                          data-toggle="tooltip"
                          data-html="true"
                          title="<div class='hover-content'><strong>{{ schedule.technician.username }}</strong> <span class='text-muted'>{{ schedule.start_time.strftime('%m/%d/%y') }}</span><br>{{ schedule.start_time.strftime('%H:%M') }}-{{ schedule.end_time.strftime('%H:%M') }} ({{ ((schedule.end_time - schedule.start_time).total_seconds() / 3600)|int }}h){% if schedule.location %}<br><i data-feather='map-pin'></i> {{ schedule.location.name }}{% endif %}{{ ('<br>' + schedule.description) if schedule.description else '' }}</div>">
-                        <div class="schedule-time">
+                        <div class="schedule-time" style="font-weight: bold;">
                             {{ schedule.start_time.strftime('%H:%M') }} - 
                             {{ schedule.end_time.strftime('%H:%M') }}
                         </div>
-                        <div class="schedule-tech">{{ schedule.technician.username }}</div>
+                        <div class="schedule-tech" style="font-weight: 500;">{{ schedule.technician.username }}</div>
                         {% if schedule.location %}
-                        <div class="schedule-location"><i data-feather="map-pin"></i> {{ schedule.location.name }}</div>
+                        <div class="schedule-location" style="font-size: 11px;"><i data-feather="map-pin"></i> {{ schedule.location.name }}</div>
                         {% endif %}
-                        <div class="schedule-desc">{{ schedule.description }}</div>
+                        <div class="schedule-desc" style="font-size: 11px; opacity: 0.9;">{{ schedule.description }}</div>
                     </div>
                 {% endfor %}
             </div>

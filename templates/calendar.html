@@ -61,14 +61,14 @@
         }
     </script>
 
-    <div class="calendar-grid" style="background-color: #1a202c; color: #e9ecef; border: 2px solid #4a5568; border-radius: 6px; overflow: hidden; display: flex; height: 1200px;">
-        <div class="time-column" style="border-right: 2px solid #4a5568; width: 80px; min-width: 80px; flex-shrink: 0; height: 1200px;">
+    <div class="calendar-grid" style="background-color: #1a202c; color: #e9ecef; border: 2px solid #4a5568; border-radius: 6px; overflow-y: auto; overflow-x: hidden; display: flex; height: 1250px;">
+        <div class="time-column" style="border-right: 2px solid #4a5568; width: 80px; min-width: 80px; flex-shrink: 0; height: 1250px;">
             {% for hour in range(24) %}
                 <div class="hour-slot" style="background-color: {% if hour == 0 %}#1e3050{% else %}#2c3e50{% endif %}; color: #ffffff; padding: 8px 0; text-align: center; font-weight: bold; border-bottom: 2px solid #4a6583; height: 50px; box-sizing: border-box; font-size: 13px; line-height: 1; display: flex; justify-content: center; align-items: center;">{{ "%02d:00"|format(hour) }}</div>
             {% endfor %}
         </div>
 
-        <div class="day-columns" style="display: flex; flex-grow: 1; height: 1200px;">
+        <div class="day-columns" style="display: flex; flex-grow: 1; height: 1250px;">
         {% for day in range(7) %}
         {% set current_date = week_start + timedelta(days=day) %}
         {% set is_today = current_date.date() == today.date() %}
@@ -390,6 +390,35 @@ document.addEventListener('DOMContentLoaded', function() {
             boundary: 'window'
         });
     });
+    
+    // Position schedule events in the calendar
+    positionScheduleEvents();
 });
+
+// Function to position schedule events in the calendar
+function positionScheduleEvents() {
+    const scheduleEvents = document.querySelectorAll('.schedule-event');
+    const hourHeight = 50; // Height of each hour slot in pixels
+    
+    scheduleEvents.forEach(event => {
+        const startTime = new Date(event.dataset.startTime);
+        const endTime = new Date(event.dataset.endTime);
+        
+        // Calculate position from top based on start time
+        const startHour = startTime.getHours();
+        const startMinute = startTime.getMinutes();
+        const startTop = (startHour * hourHeight) + ((startMinute / 60) * hourHeight);
+        
+        // Calculate height based on duration
+        const durationMs = endTime - startTime;
+        const durationHours = durationMs / (1000 * 60 * 60);
+        const height = durationHours * hourHeight;
+        
+        // Set the position and height
+        event.style.top = `${startTop}px`;
+        event.style.height = `${height}px`;
+        event.style.width = 'calc(100% - 8px)'; // Set width to fill column minus margin
+    });
+}
 </script>
 {% endblock %}

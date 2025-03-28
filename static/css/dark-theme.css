@@ -300,6 +300,31 @@ body {
   color: var(--dark-text) !important;
 }
 
+/* Force dark background on all calendar cells */
+.fc-scrollgrid-sync-inner,
+.fc-col-header-cell,
+.fc-daygrid-day,
+.fc-daygrid-day-frame,
+.fc-timegrid-slot,
+.fc-timegrid-slots td,
+.fc-timegrid-slot-lane,
+.fc-scrollgrid,
+.fc-scrollgrid-section,
+.fc-scrollgrid-section-body,
+.fc-scrollgrid-section-liquid {
+  background-color: var(--dark-panel) !important;
+  color: var(--dark-text) !important;
+}
+
+/* Force white text on all calendar text elements */
+.fc-scrollgrid-sync-inner *,
+.fc-col-header-cell *,
+.fc-daygrid-day *,
+.fc-timegrid-slot *,
+.fc-timegrid-slots td * {
+  color: var(--dark-text) !important;
+}
+
 .fc-theme-standard .fc-scrollgrid {
   border-color: var(--dark-border);
 }
@@ -362,13 +387,54 @@ body {
 }
 
 .fc-timegrid-slot-label-cushion {
-  color: var(--dark-text);
+  color: var(--dark-text) !important;
   font-weight: bold;
 }
 
 .fc-col-header-cell a {
-  color: var(--dark-text);
+  color: var(--dark-text) !important;
   font-weight: 600;
+}
+
+/* Override any remaining white backgrounds in calendar */
+.fc-day-header,
+.fc-day,
+.fc-day-top,
+.fc-day-number,
+.fc-week,
+.fc-bg,
+.fc-content,
+.fc-widget-content,
+.fc-widget-header,
+.fc-timegrid-axis,
+.fc-timegrid-body,
+.fc-timegrid-col,
+.fc-timegrid-axis-frame,
+.fc-bg table,
+.fc-row table,
+.fc table {
+  background-color: var(--dark-panel) !important;
+  color: var(--dark-text) !important;
+}
+
+/* Style the time display on the left */
+.fc-timegrid-axis {
+  color: var(--dark-text) !important;
+  font-weight: bold;
+  background-color: var(--dark-hover) !important;
+  border-right: 2px solid var(--dark-border) !important;
+}
+
+/* Style the date headers */
+.fc-col-header-cell {
+  background-color: var(--dark-hover) !important;
+  border-bottom: 2px solid var(--dark-border) !important;
+  padding: 6px 0 !important;
+}
+
+/* Today column highlight */
+.fc-day-today .fc-timegrid-col-frame {
+  background-color: rgba(233, 69, 96, 0.1) !important;
 }
 
 /* Make day cells more distinct */

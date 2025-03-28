@@ -404,6 +404,16 @@ def create_ticket():
             app.logger.debug("Starting ticket creation transaction")
 
             # Create the ticket first
+            # Handle due date - ensure it has proper timezone if provided
+            due_date = None
+            if form.due_date.data:
+                app.logger.debug(f"Processing due date from form: {form.due_date.data}")
+                # Make sure the date is timezone-aware (UTC)
+                due_date = form.due_date.data
+                if due_date.tzinfo is None:
+                    due_date = due_date.replace(tzinfo=pytz.UTC)
+                app.logger.debug(f"Processed due date: {due_date}")
+            
             ticket = Ticket(
                 title=form.title.data,
                 description=form.description.data,
@@ -411,7 +421,7 @@ def create_ticket():
                 priority=form.priority.data,
                 created_by=current_user.id,
                 assigned_to=form.assigned_to.data,
-                due_date=form.due_date.data
+                due_date=due_date
             )
 
             # Add ticket to session
@@ -814,12 +824,18 @@ def edit_ticket(ticket_id):
         due_date_val = request.form.get('due_date')
         if due_date_val:
             try:
-                ticket.due_date = datetime.fromisoformat(due_date_val)
-            except ValueError:
+                # HTML date inputs return YYYY-MM-DD format, so we use strptime
+                app.logger.debug(f"Processing due date: {due_date_val}")
+                date_obj = datetime.strptime(due_date_val, '%Y-%m-%d')
+                # Keep the date in UTC for consistency
+                ticket.due_date = date_obj.replace(tzinfo=pytz.UTC)
+                app.logger.debug(f"New due date set to: {ticket.due_date}")
+            except ValueError as e:
                 # If there's a parsing error, keep the existing date
-                app.logger.warning(f"Invalid due date format: {due_date_val}")
+                app.logger.warning(f"Invalid due date format: {due_date_val}, error: {str(e)}")
         else:
             ticket.due_date = None
+            app.logger.debug("Due date cleared/not provided")
 
         # Log changes in ticket history
         changes = []

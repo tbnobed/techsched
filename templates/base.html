@@ -426,7 +426,7 @@
                                 html += `
                                     <div class="active-user-entry mb-2" style="border-left: 3px solid ${user.color || '#3498db'}; padding-left: 8px; margin-bottom: 10px;">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <h6 class="mb-0 username" style="color: ${user.color || '#ffffff'}; ${document.body.classList.contains('light-theme') ? 'text-shadow: 0px 0px 1px #000000;' : ''}">${user.username}</h6>
+                                            <h6 class="mb-0 username" style="color: ${document.body.classList.contains('light-theme') ? '#212529' : user.color || '#ffffff'}">${user.username}</h6>
                                             <span class="badge ${document.body.classList.contains('light-theme') ? 'bg-light text-dark' : 'text-muted'}">
                                                 <i data-feather="clock" class="me-1" style="width: 12px; height: 12px;"></i>
                                                 ${user.schedule ? user.schedule.start_time : ''} - ${user.schedule ? user.schedule.end_time : ''}
@@ -481,7 +481,7 @@
                             html += `
                                 <div class="time-off-entry mb-2" style="border-left: 3px solid ${entry.color || '#3498db'}; padding-left: 8px; margin-bottom: 10px;">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="mb-0 username" style="color: ${entry.color || '#ffffff'}; ${document.body.classList.contains('light-theme') ? 'text-shadow: 0px 0px 1px #000000;' : ''}">${entry.username}</h6>
+                                        <h6 class="mb-0 username" style="color: ${document.body.classList.contains('light-theme') ? '#212529' : entry.color || '#ffffff'}">${entry.username}</h6>
                                         <span class="badge ${document.body.classList.contains('light-theme') ? 'bg-light text-dark' : 'text-muted'}">
                                             <i data-feather="calendar" class="me-1" style="width: 12px; height: 12px;"></i>
                                             ${entry.start_date} - ${entry.end_date}

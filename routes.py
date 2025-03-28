@@ -1060,7 +1060,52 @@ def inject_quick_links():
         return QuickLink.query.order_by(QuickLink.order.asc(), QuickLink.category).all()
     
     def get_user_tickets():
-        return get_open_tickets(5)  # Limit to 5 tickets
+        # Get current filter parameters from the request
+        from flask import request
+        
+        # If we're on the tickets dashboard, respect the current filters
+        if request.path.startswith('/tickets/dashboard'):
+            # Get current filter state
+            status = request.args.get('status', 'open')
+            category = request.args.get('category', 'all')
+            priority = request.args.get('priority', 'all')
+            
+            # Import needed models
+            from models import Ticket, TicketStatus
+            
+            # Base query - respect current status filter if it's set
+            query = Ticket.query
+            
+            # Apply the status filter
+            if status != 'all':
+                query = query.filter(Ticket.status == status)
+            else:
+                # If no specific status filter, show active tickets (open, in_progress, pending)
+                query = query.filter(
+                    Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.PENDING])
+                )
+                
+            # Apply category filter if set
+            if category != 'all':
+                try:
+                    category_id = int(category)
+                    query = query.filter(Ticket.category_id == category_id)
+                except (ValueError, TypeError):
+                    pass
+                    
+            # Apply priority filter if set
+            if priority != 'all':
+                try:
+                    priority_value = int(priority)
+                    query = query.filter(Ticket.priority == priority_value)
+                except (ValueError, TypeError):
+                    pass
+                    
+            # Get up to 5 tickets with current filters
+            return query.order_by(Ticket.priority.desc(), Ticket.created_at.desc()).limit(5).all()
+        else:
+            # For other pages, show standard active tickets
+            return get_open_tickets(5)  # Limit to 5 tickets
     
     return dict(
         get_quick_links=get_quick_links,

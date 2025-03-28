@@ -1063,9 +1063,34 @@ def inject_quick_links():
         # Always show active tickets in the sidebar regardless of main content filters
         return get_open_tickets(5)  # Limit to 5 tickets
     
+    def get_active_sidebar_tickets():
+        """
+        This function always returns active tickets for the sidebar
+        regardless of any filtering applied in the main dashboard.
+        """
+        from models import Ticket, TicketStatus
+        from app import app
+        
+        app.logger.debug("Getting active tickets for sidebar (independent of dashboard filters)")
+        
+        # Get all active tickets (open, in_progress, pending) for sidebar
+        query = Ticket.query.filter(
+            Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.PENDING])
+        ).order_by(
+            # Order by priority (highest first) and then creation date (newest first)
+            Ticket.priority.desc(),
+            Ticket.created_at.desc()
+        ).limit(5)
+        
+        tickets = query.all()
+        app.logger.debug(f"Found {len(tickets)} active tickets for sidebar")
+        
+        return tickets
+    
     return dict(
         get_quick_links=get_quick_links,
-        get_user_tickets=get_user_tickets
+        get_user_tickets=get_user_tickets,
+        get_active_sidebar_tickets=get_active_sidebar_tickets
     )
 
 @app.route('/api/upcoming_time_off')

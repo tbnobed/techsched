@@ -725,6 +725,12 @@ def admin_delete_user(user_id):
         return redirect(url_for('admin_dashboard'))
 
     user = User.query.get_or_404(user_id)
+    
+    # Prevent deletion of the System user
+    if user.username == "System":
+        flash('Cannot delete the System user as it is required for system operations.')
+        return redirect(url_for('admin_dashboard'))
+    
     try:
         # Get a special system user to reassign content to
         # Create one if it doesn't exist

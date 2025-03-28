@@ -259,33 +259,33 @@ body {
 }
 
 /* Darker calendar header */
-.fc-header-toolbar {
-  background-color: #152238;
+.fc .fc-toolbar {
+  background-color: #152238 !important;
   padding: 10px;
   border-radius: 6px;
   margin-bottom: 15px !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.fc-theme-standard .fc-button {
-  background-color: #293b5f;
-  border-color: #354a70;
-  color: var(--dark-text);
-  font-weight: 500;
-  padding: 6px 12px;
-  transition: all 0.2s ease;
+.fc .fc-button {
+  background-color: #293b5f !important;
+  border-color: #354a70 !important;
+  color: var(--dark-text) !important;
+  font-weight: 500 !important;
+  padding: 6px 12px !important;
+  transition: all 0.2s ease !important;
 }
 
-.fc-theme-standard .fc-button:hover {
-  background-color: #354a70;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+.fc .fc-button:hover {
+  background-color: #354a70 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2) !important;
 }
 
-.fc-theme-standard .fc-button-active {
-  background-color: var(--dark-accent);
-  border-color: var(--dark-accent);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+.fc .fc-button-active {
+  background-color: var(--dark-accent) !important;
+  border-color: var(--dark-accent) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
 }
 
 /* Fix calendar text contrast issues */

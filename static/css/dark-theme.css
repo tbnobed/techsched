@@ -159,12 +159,27 @@ body {
 }
 
 .modal-content {
-  background-color: var(--dark-card);
-  border-color: var(--dark-border);
+  background-color: var(--dark-card) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
 }
 
 .modal-header, .modal-footer {
-  border-color: var(--dark-border);
+  border-color: var(--dark-border) !important;
+  background-color: var(--dark-panel) !important;
+}
+
+.modal-header .modal-title {
+  color: var(--dark-text) !important;
+}
+
+.modal-body {
+  background-color: var(--dark-card) !important;
+  color: var(--dark-text) !important;
+}
+
+.btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%) !important;
 }
 
 .close {

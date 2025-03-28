@@ -102,8 +102,13 @@ with app.app_context():
 
 # Import and register blueprints
 from routes import *
-from ticket_routes import tickets
+from ticket_routes import tickets, get_active_sidebar_tickets
 app.register_blueprint(tickets)
+
+# Register the get_active_sidebar_tickets function with the app context
+@app.context_processor
+def inject_active_sidebar_tickets():
+    return dict(get_active_sidebar_tickets=get_active_sidebar_tickets)
 
 # API Routes
 @app.route('/api/active_users')

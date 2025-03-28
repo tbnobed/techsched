@@ -11,33 +11,27 @@ from email_utils import send_ticket_assigned_notification, send_ticket_comment_n
 # Update Blueprint to use the correct template directory
 tickets = Blueprint('tickets', __name__)
 
-# Add context processor for ticket blueprint to make get_active_sidebar_tickets available
-@tickets.context_processor
-def tickets_context_processor():
-    def get_active_sidebar_tickets():
-        """
-        This function always returns active tickets for the sidebar
-        regardless of any filtering applied in the main dashboard.
-        """
-        app.logger.debug("Getting active tickets for sidebar from tickets blueprint")
-        
-        # Get all active tickets (open, in_progress, pending) for sidebar
-        query = Ticket.query.filter(
-            Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.PENDING])
-        ).order_by(
-            # Order by priority (highest first) and then creation date (newest first)
-            Ticket.priority.desc(),
-            Ticket.created_at.desc()
-        ).limit(5)
-        
-        tickets = query.all()
-        app.logger.debug(f"Found {len(tickets)} active tickets for sidebar")
-        
-        return tickets
+# Create function that will be registered with the main app context
+def get_active_sidebar_tickets():
+    """
+    This function always returns active tickets for the sidebar
+    regardless of any filtering applied in the main dashboard.
+    """
+    app.logger.debug("Getting active tickets for sidebar from global context")
     
-    return dict(
-        get_active_sidebar_tickets=get_active_sidebar_tickets
-    )
+    # Get all active tickets (open, in_progress, pending) for sidebar
+    query = Ticket.query.filter(
+        Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.PENDING])
+    ).order_by(
+        # Order by priority (highest first) and then creation date (newest first)
+        Ticket.priority.desc(),
+        Ticket.created_at.desc()
+    ).limit(5)
+    
+    tickets = query.all()
+    app.logger.debug(f"Found {len(tickets)} active tickets for sidebar")
+    
+    return tickets
 
 @tickets.route('/tickets/standalone_dashboard')
 @login_required

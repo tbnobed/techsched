@@ -169,34 +169,32 @@
         const applyFilterBtn = document.getElementById('apply-filters-btn');
         if (applyFilterBtn) {
             applyFilterBtn.addEventListener('click', function() {
-                // Get filter values
-                const statusValue = document.getElementById('status-filter').value;
-                const categoryValue = document.getElementById('category-filter').value;
-                const priorityValue = document.getElementById('priority-filter').value;
+                // Use form data to collect all filter values consistently
+                const form = document.getElementById('filter-form');
+                const formData = new FormData(form);
                 
-                // Build URL with cache busting parameters
-                // Get the current URL path (either /tickets/dashboard or /tickets/standalone_dashboard)
+                // Build query string
+                const params = new URLSearchParams();
+                
+                // Add all form values
+                for (const [key, value] of formData.entries()) {
+                    if (value) {
+                        params.append(key, value);
+                    }
+                }
+                
+                // Add cache-busting parameter
+                params.append('timestamp', Date.now());
+                params.append('rand', Math.random());
+                
+                // Keep the current path and just update query params
                 const currentPath = window.location.pathname;
+                const newUrl = `${currentPath}?${params.toString()}`;
                 
-                let url = `${currentPath}?timestamp=${Date.now()}&rand=${Math.random()}`;
-                
-                // Add filter parameters - only if they have values
-                if (statusValue) {
-                    url += `&status=${statusValue}`;
-                }
-                
-                if (categoryValue && categoryValue !== 'all') {
-                    url += `&category=${categoryValue}`;
-                } 
-                
-                if (priorityValue && priorityValue !== 'all') {
-                    url += `&priority=${priorityValue}`;
-                }
-                
-                console.log('Navigating to URL:', url);
+                console.log('Navigating to URL:', newUrl);
                 
                 // Force reload the page with the new URL
-                window.location.href = url;
+                window.location.href = newUrl;
             });
         }
         

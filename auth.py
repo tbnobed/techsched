@@ -31,12 +31,42 @@ def login():
             # Login with email (case-insensitive using SQL LOWER function)
             email_search = login_input.lower()
             app.logger.debug(f"Looking up by email (lowercase): {email_search}")
-            user = User.query.filter(db.func.lower(User.email) == email_search).first()
+            
+            # Get SQL query for debugging
+            query = User.query.filter(db.func.lower(User.email) == email_search)
+            app.logger.debug(f"SQL query: {query}")
+            
+            # Execute the query
+            user = query.first()
+            
+            # If no user found, try to get all emails for debugging
+            if not user:
+                all_emails = [u.email for u in User.query.all()]
+                app.logger.debug(f"All emails in database: {all_emails}")
+                
+                # Also try a direct query with LIKE for debugging
+                like_users = User.query.filter(User.email.ilike(f"%{email_search}%")).all()
+                app.logger.debug(f"Users with similar emails: {[u.email for u in like_users]}")
         else:
             # Case-insensitive username search using SQL LOWER function
             app.logger.debug(f"Looking up by username (case-insensitive): {login_input}")
             username_search = login_input.lower()
-            user = User.query.filter(db.func.lower(User.username) == username_search).first()
+            
+            # Get SQL query for debugging
+            query = User.query.filter(db.func.lower(User.username) == username_search)
+            app.logger.debug(f"SQL query: {query}")
+            
+            # Execute the query
+            user = query.first()
+            
+            # If no user found, try to get all usernames for debugging
+            if not user:
+                all_usernames = [u.username for u in User.query.all()]
+                app.logger.debug(f"All usernames in database: {all_usernames}")
+                
+                # Also try a direct query with LIKE for debugging
+                like_users = User.query.filter(User.username.ilike(f"%{username_search}%")).all()
+                app.logger.debug(f"Users with similar usernames: {[u.username for u in like_users]}")
             
         # Debug log what we found
         if user:
@@ -44,10 +74,14 @@ def login():
         else:
             app.logger.warning(f"Failed login attempt for email: {login_input}")
             
+        # Try password check if we found a user
         if user and user.check_password(form.password.data):
+            # Log the successful login with more details
+            app.logger.info(f"User {user.username} logged in successfully")
             login_user(user, remember=form.remember_me.data)
             next_page = request.args.get('next')
-            app.logger.debug(f"Login successful for user: {user.username}")
+            app.logger.debug(f"Session after login: {session}")
+            app.logger.debug(f"Redirecting to: {next_page if next_page else 'calendar'}")
             return redirect(next_page if next_page else url_for('tickets.tickets_dashboard'))
             
         app.logger.warning(f"Invalid credentials for login input: {login_input}")

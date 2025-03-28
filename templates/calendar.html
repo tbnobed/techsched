@@ -87,10 +87,15 @@
                     {% set end_minute = schedule.end_time.minute %}
                     
                     {% set start_position = start_hour * 50 + (start_minute / 60) * 50 %}
-                    {% set duration_hours = (end_hour - start_hour) + (end_minute - start_minute) / 60 %}
-                    {% if end_hour == 0 and end_minute == 0 %}
+                    
+                    {% if end_hour < start_hour or (end_hour == start_hour and end_minute < start_minute) %}
+                        {% set duration_hours = (24 + end_hour - start_hour) + (end_minute - start_minute) / 60 %}
+                    {% elif end_hour == 0 and end_minute == 0 %}
                         {% set duration_hours = (24 - start_hour) - (start_minute / 60) %}
+                    {% else %}
+                        {% set duration_hours = (end_hour - start_hour) + (end_minute - start_minute) / 60 %}
                     {% endif %}
+                    
                     {% set height = duration_hours * 50 %}
                     
                     <div class="schedule-event"
@@ -419,14 +424,18 @@
 <script>
 // Initialize tooltips after the document is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
-    tooltipTriggerList.forEach(function(tooltipTriggerEl) {
-        new bootstrap.Tooltip(tooltipTriggerEl, {
-            html: true,
-            container: 'body',
-            boundary: 'window'
+    try {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function(tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl, {
+                html: true,
+                container: 'body',
+                boundary: 'window'
+            });
         });
-    });
+    } catch (e) {
+        console.log('Tooltip initialization error:', e);
+    }
     
     // Position schedule events in the calendar
     // Position handled by Jinja2 template calculations now

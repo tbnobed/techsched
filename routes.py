@@ -1260,7 +1260,7 @@ def download_backup():
             'schedules': [schedule.to_dict() for schedule in Schedule.query.all()],
             'quick_links': [link.to_dict() for link in QuickLink.query.all()],
             'ticket_categories': [category.to_dict() for category in TicketCategory.query.all()],
-            'tickets': [ticket.to_dict() for ticket in Ticket.query.filter_by(archived=False).all()],
+            'tickets': [ticket.to_dict() for ticket in Ticket.query.all()],  # Include all tickets (archived and non-archived)
             'email_settings': [settings.to_dict() for settings in EmailSettings.query.all()]
         }
 

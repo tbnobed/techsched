@@ -947,3 +947,63 @@ def manage_categories():
                          categories=categories,
                          active_sidebar_tickets=active_sidebar_tickets,
                          form=form)
+
+@tickets.route('/tickets/categories/edit/<int:category_id>', methods=['GET', 'POST'])
+@login_required
+def edit_category(category_id):
+    """Edit an existing ticket category"""
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('tickets.tickets_dashboard'))
+        
+    category = TicketCategory.query.get_or_404(category_id)
+    
+    form = TicketCategoryForm(obj=category)
+    if form.validate_on_submit():
+        category.name = form.name.data
+        category.description = form.description.data
+        category.icon = form.icon.data
+        category.priority_level = form.priority_level.data
+        
+        db.session.commit()
+        flash('Category updated successfully', 'success')
+        return redirect(url_for('tickets.manage_categories'))
+        
+    # Get active tickets for the sidebar
+    active_sidebar_tickets = Ticket.query.filter(
+        Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.PENDING])
+    ).order_by(
+        Ticket.priority.desc(),
+        Ticket.created_at.desc()
+    ).limit(5).all()
+    
+    return render_template('tickets/edit_category.html',
+                           category=category,
+                           form=form,
+                           active_sidebar_tickets=active_sidebar_tickets)
+                           
+@tickets.route('/tickets/categories/delete/<int:category_id>')
+@login_required
+def delete_category(category_id):
+    """Delete a ticket category"""
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('tickets.tickets_dashboard'))
+        
+    category = TicketCategory.query.get_or_404(category_id)
+    
+    # Check if the category is in use by any tickets
+    if Ticket.query.filter_by(category_id=category_id).first():
+        flash('Cannot delete category that is used by existing tickets', 'error')
+        return redirect(url_for('tickets.manage_categories'))
+    
+    try:
+        db.session.delete(category)
+        db.session.commit()
+        flash('Category deleted successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error deleting category: {str(e)}")
+        flash('Error deleting category', 'error')
+        
+    return redirect(url_for('tickets.manage_categories'))

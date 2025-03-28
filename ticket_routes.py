@@ -55,11 +55,20 @@ def tickets_dashboard():
         query = query.filter(Ticket.status == status_filter)
         app.logger.debug(f"After status filter ({status_filter}): {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
     if category_filter != 'all':
-        query = query.filter(Ticket.category_id == category_filter)
-        app.logger.debug(f"After category filter ({category_filter}): {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
+        try:
+            category_id = int(category_filter)
+            query = query.filter(Ticket.category_id == category_id)
+            app.logger.debug(f"After category filter ({category_filter}): {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
+        except (ValueError, TypeError):
+            app.logger.error(f"Invalid category filter value: {category_filter}")
+
     if priority_filter != 'all':
-        query = query.filter(Ticket.priority == int(priority_filter))
-        app.logger.debug(f"After priority filter ({priority_filter}): {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
+        try:
+            priority_value = int(priority_filter)
+            query = query.filter(Ticket.priority == priority_value)
+            app.logger.debug(f"After priority filter ({priority_filter}): {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
+        except (ValueError, TypeError):
+            app.logger.error(f"Invalid priority filter value: {priority_filter}")
 
     # Show all tickets for all users
     tickets = query.order_by(Ticket.created_at.desc()).all()

@@ -408,10 +408,14 @@ def create_ticket():
             due_date = None
             if form.due_date.data:
                 app.logger.debug(f"Processing due date from form: {form.due_date.data}")
-                # Make sure the date is timezone-aware (UTC)
-                due_date = form.due_date.data
-                if due_date.tzinfo is None:
-                    due_date = due_date.replace(tzinfo=pytz.UTC)
+                # Make sure we create a proper datetime object at midnight in UTC
+                date_obj = form.due_date.data
+                due_date = datetime(
+                    year=date_obj.year,
+                    month=date_obj.month,
+                    day=date_obj.day,
+                    tzinfo=pytz.UTC
+                )
                 app.logger.debug(f"Processed due date: {due_date}")
             
             ticket = Ticket(
@@ -798,6 +802,7 @@ def assign_ticket(ticket_id):
 def edit_ticket(ticket_id):
     """Edit an existing ticket"""
     ticket = Ticket.query.get_or_404(ticket_id)
+    app.logger.debug(f"Editing ticket #{ticket_id}")
 
     # Check if user has permission to edit
     if not (current_user.is_admin or ticket.created_by == current_user.id):
@@ -805,11 +810,16 @@ def edit_ticket(ticket_id):
         return redirect(url_for('tickets.tickets_dashboard'))
 
     if request.method == 'POST':
+        # Log all form data for debugging
+        app.logger.debug(f"Form data received: {request.form}")
+        
         # Get form data directly
         old_title = ticket.title
         old_description = ticket.description
         old_category_id = ticket.category_id
         old_priority = ticket.priority
+        old_due_date = ticket.due_date
+        app.logger.debug(f"Original due date: {old_due_date}")
 
         # Update ticket with form data
         ticket.title = request.form.get('title')
@@ -827,8 +837,15 @@ def edit_ticket(ticket_id):
                 # HTML date inputs return YYYY-MM-DD format, so we use strptime
                 app.logger.debug(f"Processing due date: {due_date_val}")
                 date_obj = datetime.strptime(due_date_val, '%Y-%m-%d')
-                # Keep the date in UTC for consistency
-                ticket.due_date = date_obj.replace(tzinfo=pytz.UTC)
+                
+                # Create a datetime at midnight in UTC for the given date
+                # This ensures we have a timezone-aware datetime object
+                ticket.due_date = datetime(
+                    year=date_obj.year,
+                    month=date_obj.month,
+                    day=date_obj.day,
+                    tzinfo=pytz.UTC
+                )
                 app.logger.debug(f"New due date set to: {ticket.due_date}")
             except ValueError as e:
                 # If there's a parsing error, keep the existing date
@@ -847,11 +864,27 @@ def edit_ticket(ticket_id):
             changes.append(f"Category changed")
         if old_priority != ticket.priority:
             changes.append(f"Priority changed from {old_priority} to {ticket.priority}")
+            
+        # Check for due date changes
+        if old_due_date != ticket.due_date:
+            old_date_str = old_due_date.strftime('%Y-%m-%d') if old_due_date else 'None'
+            new_date_str = ticket.due_date.strftime('%Y-%m-%d') if ticket.due_date else 'None'
+            changes.append(f"Due date changed from {old_date_str} to {new_date_str}")
+            app.logger.debug(f"Due date changed from {old_due_date} to {ticket.due_date}")
 
+        # Always mark the ticket as modified to ensure due date changes are saved
+        db.session.add(ticket)
+        
         if changes:
             ticket.log_history(current_user, "edited", ", ".join(changes))
-            db.session.commit()
+            
+        # Always commit changes
+        db.session.commit()
+        
+        if changes:
             flash('Ticket updated successfully', 'success')
+        else:
+            flash('No changes made to ticket', 'info')
 
         return redirect(url_for('tickets.view_ticket', ticket_id=ticket.id))
 

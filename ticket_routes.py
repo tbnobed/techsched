@@ -18,9 +18,11 @@ def tickets_dashboard():
     app.logger.debug(f"Raw query args: {request.args}")
     
     # Get filters from request args with appropriate defaults
-    # If no URL parameters, default to showing only open tickets
-    if not request.args:
-        app.logger.debug("No filters specified, defaulting to open tickets")
+    # Check if no URL parameters or only cache-busting parameters
+    has_only_cache_params = all(k in ['timestamp', 'rand'] for k in request.args.keys()) if request.args else True
+    
+    if not request.args or has_only_cache_params:
+        app.logger.debug("No filters specified or only cache parameters, defaulting to open tickets")
         status_filter = 'open'
         category_filter = 'all'
         priority_filter = 'all'
@@ -28,6 +30,9 @@ def tickets_dashboard():
         status_filter = request.args.get('status', 'open')
         category_filter = request.args.get('category', 'all')
         priority_filter = request.args.get('priority', 'all')
+        
+        # Log explicit parameter requests for debugging
+        app.logger.debug(f"Explicit filter request - status:{status_filter}, category:{category_filter}, priority:{priority_filter}")
         
         app.logger.debug(f"Status filter from request: {status_filter}")
         app.logger.debug(f"Category filter from request: {category_filter}")
@@ -109,20 +114,61 @@ def tickets_dashboard():
         TicketStatus.CLOSED
     ]
 
-    # Final debug check before rendering
-    app.logger.debug(f"RENDERING TEMPLATE WITH {len(tickets)} TICKETS:")
-    for idx, ticket in enumerate(tickets):
-        app.logger.debug(f"RENDER TICKET #{idx+1}: ID={ticket.id}, Title={ticket.title}, Status={ticket.status}, Priority={ticket.priority}")
+    # For robust filtering, convert SQLAlchemy objects to simple dictionaries
+    # This will eliminate any potential SQLAlchemy caching issues
+    filtered_tickets = []
+    for ticket in tickets:
+        # Create a simple dict with only the data we need
+        ticket_dict = {
+            'id': ticket.id,
+            'title': ticket.title,
+            'status': ticket.status,
+            'priority': ticket.priority,
+            'assigned_to': ticket.assigned_to,
+            'created_by': ticket.created_by,
+            'created_at': ticket.created_at,
+            'updated_at': ticket.updated_at,
+            'due_date': ticket.due_date,
+            'category': {
+                'id': ticket.category.id,
+                'name': ticket.category.name,
+                'icon': ticket.category.icon
+            }
+        }
+        
+        # Add assigned technician info if available
+        if ticket.assigned_technician:
+            ticket_dict['assigned_technician'] = {
+                'username': ticket.assigned_technician.username
+            }
+        else:
+            ticket_dict['assigned_technician'] = None
+            
+        filtered_tickets.append(ticket_dict)
     
-    # Pass ticket IDs as a separate variable to confirm what's being sent
-    ticket_ids = [t.id for t in tickets]
-    app.logger.debug(f"TICKET IDS PASSED TO TEMPLATE: {ticket_ids}")
+    # Final logging to verify what's being sent
+    app.logger.debug(f"RENDERING TEMPLATE WITH {len(filtered_tickets)} TICKETS:")
+    for idx, ticket in enumerate(filtered_tickets):
+        app.logger.debug(f"RENDER TICKET #{idx+1}: ID={ticket['id']}, Title={ticket['title']}, Status={ticket['status']}, Priority={ticket['priority']}")
+    
+    # Add timestamp to prevent any caching
+    timestamp = int(datetime.now().timestamp() * 1000)
+    
+    # Pass very explicit filtering info to the template
+    filter_info = {
+        'status': status_filter,
+        'category': category_filter,
+        'priority': priority_filter,
+        'timestamp': timestamp
+    }
     
     return render_template('tickets/dashboard.html', 
-                         tickets=tickets,
+                         tickets=filtered_tickets,
                          categories=categories,
                          ticket_statuses=ticket_statuses,
-                         ticket_count=len(tickets))
+                         ticket_count=len(filtered_tickets),
+                         filter_info=filter_info,
+                         timestamp=timestamp)
 
 @tickets.route('/tickets/create', methods=['GET', 'POST'])
 @login_required

@@ -220,39 +220,82 @@ body {
 
 /* Mini-calendar styles override for dark theme */
 .mini-calendar {
-  background-color: var(--dark-card);
-  border-color: var(--dark-border);
-  color: var(--dark-text);
+  background-color: var(--dark-card) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2) !important;
+}
+
+#calendar-month-year {
+  color: var(--dark-text) !important;
 }
 
 .day-names {
-  color: var(--dark-muted);
+  color: var(--dark-muted) !important;
+}
+
+.day-names div {
+  color: var(--dark-muted) !important;
 }
 
 .day-item {
-  color: var(--dark-text);
+  color: var(--dark-text) !important;
+  border-radius: 4px !important;
 }
 
 .day-item:hover:not(.disabled) {
-  background-color: var(--dark-hover);
+  background-color: var(--dark-hover) !important;
 }
 
 .day-item.outside-month {
-  color: var(--dark-muted);
+  color: var(--dark-muted) !important;
 }
 
 .day-item.disabled {
-  color: var(--dark-muted);
-  background-color: rgba(0, 0, 0, 0.2);
+  color: var(--dark-muted) !important;
+  background-color: rgba(0, 0, 0, 0.2) !important;
 }
 
 .day-item.today {
-  border: 1px solid var(--primary-color);
+  border: 1px solid var(--dark-accent) !important;
+}
+
+.day-item.selected {
+  background-color: var(--dark-accent) !important;
+  color: white !important;
+}
+
+.day-item.primary-date {
+  background-color: var(--dark-info) !important;
+  color: white !important;
 }
 
 .date-tag {
-  background-color: var(--dark-hover);
-  color: var(--dark-text);
+  background-color: var(--dark-hover) !important;
+  color: var(--dark-text) !important;
+  border-radius: 4px !important;
+  border: 1px solid var(--dark-border) !important;
+}
+
+#selected-dates-container .text-muted {
+  color: var(--dark-muted) !important;
+}
+
+.selected-dates strong {
+  color: var(--dark-text) !important;
+}
+
+.month-navigator button,
+#clear-selection {
+  color: var(--dark-text) !important;
+  background-color: var(--dark-panel) !important;
+  border-color: var(--dark-border) !important;
+}
+
+.month-navigator button:hover,
+#clear-selection:hover {
+  background-color: var(--dark-hover) !important;
 }
 
 .alert-info {

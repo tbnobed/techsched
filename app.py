@@ -110,6 +110,11 @@ app.register_blueprint(tickets)
 def inject_active_sidebar_tickets():
     return dict(get_active_sidebar_tickets=get_active_sidebar_tickets)
 
+@app.context_processor
+def inject_now():
+    from datetime import datetime
+    return {'now': datetime.now()}
+
 # API Routes
 @app.route('/api/active_users')
 @login_required

@@ -249,14 +249,27 @@ body {
   background-color: var(--dark-card);
   border-color: var(--dark-border);
   color: var(--dark-text);
+  animation: none !important; /* Prevent animations */
+  transition: none !important; /* Prevent transitions */
+  box-shadow: 0 5px 15px rgba(0,0,0,.5);
+  position: relative;
+  z-index: 1050;
 }
 
 .modal-header, .modal-footer {
   border-color: var(--dark-border);
+  animation: none !important;
+  transition: none !important;
 }
 
 .modal-title {
   color: var(--dark-text);
+}
+
+.modal-body {
+  padding: 20px;
+  animation: none !important;
+  transition: none !important;
 }
 
 .modal-body .form-label {
@@ -269,6 +282,8 @@ body {
   background-color: var(--dark-input-bg);
   border-color: var(--dark-border);
   color: var(--dark-text);
+  animation: none !important;
+  transition: none !important;
 }
 
 .modal-body .form-control:focus, 
@@ -276,7 +291,9 @@ body {
   background-color: var(--dark-input-bg);
   border-color: var(--dark-accent);
   color: var(--dark-text);
-  box-shadow: 0 0 0 0.2rem rgba(233, 69, 96, 0.25);
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+  animation: none !important;
+  transition: none !important;
 }
 
 .modal-body .form-check-label {
@@ -299,6 +316,12 @@ body {
   background-color: var(--dark-info);
   border-color: var(--dark-info); 
   color: var(--dark-text);
+}
+
+/* Prevent modal backdrop animation */
+.modal-backdrop {
+  animation: none !important;
+  transition: none !important;
 }
 
 /* Mini-calendar styles override for dark theme */
@@ -769,12 +792,14 @@ body {
   background-color: #7f8c8d;
 }
 
-/* Modal styling */
+/* Modal styling - Fixed to prevent flashing */
 .modal-content {
   background-color: #162439 !important;
   color: var(--dark-text) !important;
   border-color: var(--dark-border) !important;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5) !important;
+  animation: none !important;
+  transition: none !important;
 }
 
 .modal-header {
@@ -784,6 +809,8 @@ body {
   border-bottom: 2px solid #2c3e50 !important;
   border-top-left-radius: 6px !important;
   border-top-right-radius: 6px !important;
+  animation: none !important;
+  transition: none !important;
 }
 
 .modal-footer {
@@ -792,6 +819,8 @@ body {
   border-top: 2px solid #2c3e50 !important;
   border-bottom-left-radius: 6px !important;
   border-bottom-right-radius: 6px !important;
+  animation: none !important;
+  transition: none !important;
 }
 
 .modal-header .modal-title {
@@ -803,6 +832,8 @@ body {
   color: white !important;
   text-shadow: none !important;
   opacity: 0.8 !important;
+  animation: none !important;
+  transition: none !important;
 }
 
 .modal-header .close:hover {
@@ -814,6 +845,8 @@ body {
   background-color: #111f36 !important;
   color: var(--dark-text) !important;
   padding: 20px !important;
+  animation: none !important;
+  transition: none !important;
 }
 
 .modal-footer .btn-primary {
@@ -834,6 +867,21 @@ body {
 
 .modal-dialog {
   box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22) !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Fix modal backdrop animations */
+.modal-backdrop {
+  animation: none !important;
+  transition: none !important;
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Fix conflicting animations */
+.fade {
+  animation: none !important;
+  transition: none !important;
 }
 
 /* Dropdown menu styling */

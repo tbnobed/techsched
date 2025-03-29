@@ -1,5 +1,15 @@
 # Release Notes - Technician Scheduler
 
+## Version 1.2.1 (March 29, 2025)
+
+### New Features and Improvements
+- **Database schema update utilities**: Added tools to simplify database schema updates during PostgreSQL version upgrades.
+- **Enhanced deployment documentation**: Added detailed guides for database schema migrations.
+
+### Bug Fixes
+- Fixed database compatibility issue with PostgreSQL 15 by adding schema update scripts.
+- Added missing columns when upgrading from older database schema versions.
+
 ## Version 1.2.0 (March 28, 2025)
 
 ### New Features and Improvements

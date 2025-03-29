@@ -62,6 +62,70 @@ sudo systemctl enable docker
 
 ### 3. Database Management
 
+#### Database Schema Updates:
+When upgrading PostgreSQL or after application updates, you may need to update the database schema to match the latest application code. The following steps will help you perform this update:
+
+```bash
+# Create the update_schema.sql file
+cat <<EOF > /opt/technician-scheduler/update_schema.sql
+-- Schema update script for Plex Technician Scheduler application
+-- This script adds any missing columns required by the application
+
+-- Add theme_preference column to user table if it doesn't exist
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS theme_preference VARCHAR(20) DEFAULT 'dark';
+
+-- Add archived column to ticket table if it doesn't exist
+ALTER TABLE ticket ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT false;
+
+-- Run VACUUM to optimize the database after schema changes
+VACUUM ANALYZE;
+EOF
+
+# Create update script
+cat <<EOF > /opt/technician-scheduler/update_database.sh
+#!/bin/bash
+# Database schema update script for Plex Technician Scheduler
+
+set -e  # Exit immediately if a command exits with a non-zero status
+
+echo "=== Plex Technician Scheduler Database Update ==="
+echo "This script will update your database schema to match the current application version."
+echo
+
+# Check if the containers are running
+if ! docker-compose ps | grep -q "db.*Up"; then
+    echo "Starting database container..."
+    docker-compose up -d db
+    # Wait for database to be ready
+    echo "Waiting for database to be ready..."
+    sleep 10
+fi
+
+echo "Applying schema updates..."
+# Run the SQL update script
+cat update_schema.sql | docker-compose exec -T db psql -U technician_scheduler_user -d technician_scheduler
+
+echo
+echo "Schema update completed."
+echo "You can now restart your application with:"
+echo "  docker-compose down && docker-compose up -d"
+EOF
+
+# Make the script executable
+chmod +x /opt/technician-scheduler/update_database.sh
+```
+
+To use the update script:
+```bash
+cd /opt/technician-scheduler
+./update_database.sh
+```
+
+This script should be run whenever:
+1. You upgrade PostgreSQL to a newer version
+2. You update the application code with schema changes
+3. You encounter database-related errors after an update
+
 #### Regular Backups:
 ```bash
 # Create backup directory
@@ -470,6 +534,13 @@ docker-compose exec db psql -U "$POSTGRES_USER" -c "SELECT * FROM pg_stat_activi
 
 # Check database size and health
 docker-compose exec db psql -U "$POSTGRES_USER" -c "SELECT pg_size_pretty(pg_database_size('$POSTGRES_DB'));"
+
+# For schema-related errors like "column X does not exist", run the schema update script:
+cd /opt/technician-scheduler
+./update_database.sh
+
+# To manually check if a specific column exists:
+docker-compose exec db psql -U "$POSTGRES_USER" -c "SELECT column_name FROM information_schema.columns WHERE table_name = 'user' AND column_name = 'theme_preference';"
 ```
 
 3. Application Performance Issues:
@@ -514,6 +585,12 @@ sudo fail2ban-client status
   - Make sure the web service can reach the database container
   - Check if the database is at capacity (memory/disk)
   - Restart the database container: `docker-compose restart db`
+  
+- If you encounter database schema errors (e.g., "column X does not exist"):
+  - Run the update_database.sh script to add missing columns
+  - This is especially important after PostgreSQL version upgrades
+  - If the error persists, check if the column exists in models.py but not in the database
+  - For a full schema reset (last resort), use the backup/restore process
 
 - If the application crashes:
   - Review application logs: `docker-compose logs web`
@@ -581,6 +658,13 @@ cd /opt/technician-scheduler
 # Change the image line from "image: postgres:15" to "image: postgres:16" or newer
 
 # Restart with the new PostgreSQL version
+docker-compose down
+docker-compose up -d
+
+# Run the schema update script to ensure compatibility with the application
+./update_database.sh
+
+# Restart the application with the updated schema
 docker-compose down
 docker-compose up -d
 

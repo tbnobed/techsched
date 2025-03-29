@@ -3,10 +3,6 @@ import logging
 from app import app, db
 from models import User
 from flask import jsonify
-from mlb_routes import mlb
-
-# Register blueprints
-app.register_blueprint(mlb)
 
 @app.route('/debug_users_list')
 def debug_users_list():

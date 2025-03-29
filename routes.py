@@ -645,7 +645,7 @@ def admin_create_user():
             user.set_password(form.password.data)
 
             # Log the creation attempt
-            app.logger.info(f"Creating new user with username: {user.username}, email: {user.email}")
+            app.logger.info(f"Creating new user with username: {user.username}, email: {user.email}, timezone: {user.timezone}")
 
             db.session.add(user)
             db.session.commit()
@@ -684,10 +684,10 @@ def admin_edit_user(user_id):
         form.email.data = user.email
         form.color.data = user.color
         form.is_admin.data = user.is_admin
-        return render_template('admin/dashboard.html', 
-                            users=User.query.all(),
-                            form=AdminUserForm(),
-                            edit_form=form)
+        form.timezone.data = user.timezone
+        return render_template('admin/edit_user.html', 
+                            user=user,
+                            form=form)
 
     if request.method == 'POST':
         # Get form data directly from request.form
@@ -700,9 +700,10 @@ def admin_edit_user(user_id):
             
         color = request.form.get('color')
         password = request.form.get('password')
+        timezone = request.form.get('timezone')
         is_admin = request.form.get('is_admin') == 'on'
 
-        app.logger.debug(f"Processed form data: username={username}, email={email}, color={color}, is_admin={is_admin}")
+        app.logger.debug(f"Processed form data: username={username}, email={email}, color={color}, timezone={timezone}, is_admin={is_admin}")
 
         try:
             # Check if username is already taken by another user (case-insensitive using PostgreSQL LOWER)
@@ -731,6 +732,7 @@ def admin_edit_user(user_id):
             user.email = email.lower() if email else ""
             user.color = color
             user.is_admin = is_admin
+            user.timezone = timezone
 
             if password:
                 user.set_password(password)
@@ -740,7 +742,7 @@ def admin_edit_user(user_id):
 
             # Verify the changes were saved
             updated_user = User.query.get(user_id)
-            app.logger.debug(f"Updated user values: username={updated_user.username}, email={updated_user.email}, color={updated_user.color}, is_admin={updated_user.is_admin}")
+            app.logger.debug(f"Updated user values: username={updated_user.username}, email={updated_user.email}, color={updated_user.color}, timezone={updated_user.timezone}, is_admin={updated_user.is_admin}")
 
             flash('User updated successfully!')
         except Exception as e:

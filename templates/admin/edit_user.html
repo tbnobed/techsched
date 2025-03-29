@@ -3,13 +3,16 @@
 {% block content %}
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h3>Edit User: {{ user.username }}</h3>
+                    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                        <i data-feather="arrow-left" class="me-1"></i> Back to Dashboard
+                    </a>
                 </div>
                 <div class="card-body">
-                    <form method="POST">
+                    <form method="POST" action="{{ url_for('admin_edit_user', user_id=user.id) }}">
                         {{ form.csrf_token }}
                         <div class="mb-3">
                             {{ form.username.label(class="form-label") }}
@@ -28,6 +31,10 @@
                             {{ form.password.label(class="form-label") }}
                             {{ form.password(class="form-control admin-form-field", placeholder="Leave blank to keep current password") }}
                         </div>
+                        <div class="mb-3">
+                            {{ form.timezone.label(class="form-label") }}
+                            {{ form.timezone(class="form-select admin-form-field") }}
+                        </div>
                         <div class="mb-3 form-check">
                             {{ form.is_admin(class="form-check-input") }}
                             {{ form.is_admin.label(class="form-check-label") }}
@@ -44,8 +51,10 @@
 </div>
 
 <script>
-document.querySelector('input[type="color"]').addEventListener('input', function() {
-    document.querySelector('.color-preview').style.backgroundColor = this.value;
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelector('input[type="color"]').addEventListener('input', function() {
+        document.querySelector('.color-preview').style.backgroundColor = this.value;
+    });
 });
 </script>
 {% endblock %}

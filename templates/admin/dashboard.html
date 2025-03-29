@@ -121,6 +121,10 @@
                             {{ form.color.label(class="form-label") }}
                             {{ form.color(class="form-control") }}
                         </div>
+                        <div class="mb-3">
+                            {{ form.timezone.label(class="form-label") }}
+                            {{ form.timezone(class="form-select") }}
+                        </div>
                         <div class="mb-3 form-check">
                             {{ form.is_admin(class="form-check-input") }}
                             {{ form.is_admin.label(class="form-check-label") }}
@@ -157,9 +161,9 @@
                                 </td>
                                 <td>{{ "Admin" if user.is_admin else "Technician" }}</td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editUserModal{{ user.id }}">
+                                    <a href="{{ url_for('admin_edit_user', user_id=user.id) }}" class="btn btn-sm btn-primary">
                                         Edit
-                                    </button>
+                                    </a>
                                     <button type="button" class="btn btn-sm btn-danger" onclick="deleteUser({{ user.id }})">
                                         Delete
                                     </button>

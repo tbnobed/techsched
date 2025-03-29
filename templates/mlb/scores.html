@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+<style>
+    .mlb-score-card {
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 20px;
+        transition: transform 0.2s;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .mlb-score-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .team-logo {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+    }
+    
+    .team-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .team-score {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    .game-status {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .winner {
+        font-weight: bold;
+    }
+    
+    .game-details {
+        font-size: 0.85rem;
+        color: var(--bs-secondary);
+    }
+    
+    .date-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .date-nav .current-date {
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+    
+    .date-nav .nav-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        background-color: var(--bs-primary);
+        color: white;
+        text-decoration: none;
+        transition: background-color 0.2s;
+    }
+    
+    .date-nav .nav-btn:hover {
+        background-color: var(--bs-primary-dark);
+    }
+    
+    .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 300px;
+    }
+    
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-left-color: var(--bs-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .no-games {
+        text-align: center;
+        padding: 3rem;
+        color: var(--bs-secondary);
+        font-style: italic;
+    }
+    
+    .innings-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">MLB Scores</h1>
+    
+    <div class="date-nav">
+        <a href="{{ url_for('mlb.scores', date=(selected_date - timedelta(days=1)).strftime('%Y-%m-%d')) }}" class="nav-btn">
+            <i data-feather="chevron-left"></i> Previous Day
+        </a>
+        <div class="current-date">{{ selected_date.strftime('%A, %B %d, %Y') }}</div>
+        <a href="{{ url_for('mlb.scores', date=(selected_date + timedelta(days=1)).strftime('%Y-%m-%d')) }}" class="nav-btn">
+            Next Day <i data-feather="chevron-right"></i>
+        </a>
+    </div>
+    
+    {% if loading %}
+    <div class="loading-container">
+        <div class="spinner"></div>
+    </div>
+    {% elif games %}
+    <div class="row">
+        {% for game in games %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card mlb-score-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="game-status">{{ game.status }}</div>
+                    {% if game.inning %}
+                    <div class="innings-label">{{ game.inning }}</div>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center {% if game.away_score > game.home_score and game.status == 'Final' %}winner{% endif %}">
+                            <img src="{{ game.away_team_logo }}" alt="{{ game.away_team }}" class="team-logo me-2">
+                            <div class="team-name">{{ game.away_team }}</div>
+                        </div>
+                        <div class="team-score">{{ game.away_score }}</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center {% if game.home_score > game.away_score and game.status == 'Final' %}winner{% endif %}">
+                            <img src="{{ game.home_team_logo }}" alt="{{ game.home_team }}" class="team-logo me-2">
+                            <div class="team-name">{{ game.home_team }}</div>
+                        </div>
+                        <div class="team-score">{{ game.home_score }}</div>
+                    </div>
+                    
+                    {% if game.details %}
+                    <div class="game-details mt-3">
+                        {{ game.details }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-games">
+        <h3>No games scheduled for this date</h3>
+        <p>Try selecting a different date</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

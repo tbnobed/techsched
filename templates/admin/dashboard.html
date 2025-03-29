@@ -3,6 +3,24 @@
 {% block head_extra %}
 <style>
 /* Modal fixes for flickering issue */
+.no-animations {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    -webkit-animation: none !important;
+    -moz-animation: none !important;
+    -o-animation: none !important;
+    -ms-animation: none !important;
+}
+
+.modal.fade.no-animations {
+    opacity: 1;
+}
+
+.modal-backdrop.fade.no-animations {
+    opacity: 0.5;
+}
+
 .modal.static {
     animation: none !important;
     transition: none !important;
@@ -148,15 +166,15 @@
                                 </td>
                             </tr>
 
-                            <!-- Edit User Modal - Modified to prevent flashing issues -->
-                            <div class="modal static" id="editUserModal{{ user.id }}" tabindex="-1" data-bs-backdrop="static">
-                                <div class="modal-dialog">
-                                    <div class="modal-content" style="animation: none !important; transition: none !important;">
-                                        <div class="modal-header" style="animation: none !important; transition: none !important;">
+                            <!-- Edit User Modal - Fixed for Dark Mode flickering issues -->
+                            <div class="modal fade no-animations" id="editUserModal{{ user.id }}" tabindex="-1" data-bs-backdrop="static">
+                                <div class="modal-dialog no-animations">
+                                    <div class="modal-content no-animations">
+                                        <div class="modal-header no-animations">
                                             <h5 class="modal-title">Edit User: {{ user.username }}</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
-                                        <div class="modal-body" style="animation: none !important; transition: none !important;">
+                                        <div class="modal-body no-animations">
                                             <form method="POST" action="{{ url_for('admin_edit_user', user_id=user.id) }}">
                                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <div class="mb-3">
@@ -170,6 +188,7 @@
                                                 <div class="mb-3">
                                                     <label class="form-label">Color</label>
                                                     <input type="color" name="color" class="form-control form-control-color" value="{{ user.color }}" title="Choose your color">
+                                                    <div class="mt-2 color-preview" style="width: 100%; height: 24px; background-color: {{ user.color }}; border: 1px solid #ddd; border-radius: 4px;"></div>
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">New Password</label>
@@ -201,25 +220,23 @@ function deleteUser(userId) {
     }
 }
 
-// Add event listeners for color input changes
+// Modal initialization to prevent flickering
 document.addEventListener('DOMContentLoaded', function() {
+    // Add event listeners for color input changes 
     document.querySelectorAll('input[type="color"]').forEach(input => {
         input.addEventListener('input', function() {
-            const form = this.closest('form');
-            if (form) {
-                console.log('Color changed to:', this.value);
+            // Update the preview div that follows this input
+            const colorPreview = this.parentNode.querySelector('.color-preview');
+            if (colorPreview) {
+                colorPreview.style.backgroundColor = this.value;
             }
         });
     });
-
-    // Add form submission logging
-    document.querySelectorAll('form[id^="editForm"]').forEach(form => {
-        form.addEventListener('submit', function(e) {
-            console.log('Submitting form:', this.id);
-            const formData = new FormData(this);
-            for (let pair of formData.entries()) {
-                console.log(pair[0] + ': ' + pair[1]);
-            }
+    
+    // Remove animation classes from modal backdrops when they appear
+    document.body.addEventListener('shown.bs.modal', function() {
+        document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+            backdrop.classList.add('no-animations');
         });
     });
 });

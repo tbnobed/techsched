@@ -19,117 +19,59 @@ def login():
     
     form = LoginForm()
     if form.validate_on_submit():
-        # Make input lowercase for case-insensitive login
-        login_input = form.email.data if form.email.data else ""
-        app.logger.debug(f"Login form submitted for email: {login_input}")
-        
-        # Initialize user to None
-        user = None
-        
-        # Check if this is a username or email login
-        if '@' in login_input:
-            # Login with email (case-insensitive)
-            app.logger.debug(f"Looking up by email (case-insensitive): {login_input}")
+        try:
+            # Make input lowercase for case-insensitive login
+            login_input = form.email.data.strip() if form.email.data else ""
+            app.logger.debug(f"Login form submitted for email: {login_input}")
             
-            # Use db.func.lower for consistent case-insensitive matching
-            app.logger.debug(f"Searching for email with db.func.lower(): {login_input.lower()}")
+            # Initialize user to None
+            user = None
             
-            # Get all emails for debugging
-            all_emails = [u.email for u in User.query.all()]
-            app.logger.debug(f"All emails in database: {all_emails}")
-            
-            # Try direct comparisons for debugging
-            app.logger.debug(f"Input email normalized: '{login_input.lower()}' (length: {len(login_input.lower())})")
-            
-            # Find potential matches
-            potential_matches = []
-            exact_match_found = False
-            
-            for email in all_emails:
-                if email.lower() == login_input.lower():
-                    exact_match_found = True
-                    app.logger.debug(f"EXACT MATCH FOUND comparing '{email.lower()}' and '{login_input.lower()}'")
-                    if email.lower() != login_input:
-                        app.logger.debug(f"Case difference: DB has '{email}', user entered '{login_input}'")
+            # ***** SIMPLIFIED LOGIN LOGIC *****
+            # Check if this is a username or email login
+            if '@' in login_input:
+                # Get all users and do direct string comparison with lowercase emails
+                app.logger.debug(f"Email login attempt: {login_input}")
                 
-                # Add to potential matches if similar
-                if login_input.lower() in email.lower():
-                    potential_matches.append(email)
-            
-            app.logger.debug(f"Exact match found: {exact_match_found}")
-            app.logger.debug(f"Potential matches: {potential_matches}")
-            
-            # Run the actual query - try string comparison first
-            email_to_find = login_input.lower()
-            app.logger.debug(f"Trying to find user with email (case folded): '{email_to_find}'")
-            
-            # Try the query with a direct string match first
-            for u in User.query.all():
-                if u.email.lower() == login_input.lower():
-                    app.logger.debug(f"Found direct match! DB: '{u.email}' vs Input: '{login_input}'")
-                    user = u
-                    break
+                # Try direct string comparison instead of SQLAlchemy query
+                for u in User.query.all():
+                    if u.email.lower() == login_input.lower():
+                        user = u
+                        app.logger.debug(f"Found user {u.username} with matching email (case-insensitive)")
+                        break
             else:
-                # If loop completes without break, try the SQLAlchemy query
-                app.logger.debug(f"No direct match found, trying SQLAlchemy query")
-                user = User.query.filter(db.func.lower(User.email) == db.func.lower(login_input)).first()
-            
-            app.logger.debug(f"Search result: {user.username if user else 'No user found'}")
-            
-            # If no user found, log debugging information
-            if not user:
-                all_emails = [u.email for u in User.query.all()]
-                app.logger.debug(f"All emails in database: {all_emails}")
+                # Username login attempt
+                app.logger.debug(f"Username login attempt: {login_input}")
                 
-                # Try partial matching for debugging
-                like_users = User.query.filter(db.func.lower(User.email).like(f"%{login_input.lower()}%")).all()
-                app.logger.debug(f"Users with similar emails: {[u.email for u in like_users]}")
+                # Try direct string comparison instead of SQLAlchemy query
+                for u in User.query.all():
+                    if u.username.lower() == login_input.lower():
+                        user = u
+                        app.logger.debug(f"Found user with matching username (case-insensitive)")
+                        break
+            
+            # Log the user found (or not)
+            if user:
+                app.logger.debug(f"Found user: {user.username}, {user.email}")
+            else:
+                app.logger.warning(f"Failed login attempt - no matching user for: {login_input}")
                 
-                # Log more detailed comparison for debugging
-                app.logger.debug(f"Looking for email matching {login_input.lower()} (normalized to lowercase)")
-                for email in all_emails:
-                    app.logger.debug(f"Comparing with {email.lower()} - Match: {email.lower() == login_input.lower()}")
-        else:
-            # Case-insensitive username search
-            app.logger.debug(f"Looking up by username (case-insensitive): {login_input}")
-            
-            # Use db.func.lower for consistent case-insensitive matching
-            user = User.query.filter(db.func.lower(User.username) == db.func.lower(login_input)).first()
-            
-            app.logger.debug(f"Search result: {user.username if user else 'No user found'}")
-            
-            # If no user found, log debugging information
-            if not user:
-                all_usernames = [u.username for u in User.query.all()]
-                app.logger.debug(f"All usernames in database: {all_usernames}")
+            # Try password check if we found a user
+            if user and user.check_password(form.password.data):
+                # Log the successful login with more details
+                app.logger.info(f"User {user.username} ({user.email}) logged in successfully")
+                login_user(user, remember=form.remember_me.data)
+                next_page = request.args.get('next')
+                app.logger.debug(f"Session after login: {session}")
+                app.logger.debug(f"Redirecting to: {next_page if next_page else 'tickets.tickets_dashboard'}")
+                return redirect(next_page if next_page else url_for('tickets.tickets_dashboard'))
                 
-                # Try partial matching for debugging
-                like_users = User.query.filter(db.func.lower(User.username).like(f"%{login_input.lower()}%")).all()
-                app.logger.debug(f"Users with similar usernames: {[u.username for u in like_users]}")
-                
-                # Log more detailed comparison for debugging
-                app.logger.debug(f"Looking for username matching {login_input.lower()} (normalized to lowercase)")
-                for username in all_usernames:
-                    app.logger.debug(f"Comparing with {username.lower()} - Match: {username.lower() == login_input.lower()}")
+            app.logger.warning(f"Invalid credentials for login input: {login_input}")
+            flash('Invalid username/email or password')
             
-        # Debug log what we found
-        if user:
-            app.logger.debug(f"Found user: {user.username}, {user.email}")
-        else:
-            app.logger.warning(f"Failed login attempt for email: {login_input}")
-            
-        # Try password check if we found a user
-        if user and user.check_password(form.password.data):
-            # Log the successful login with more details
-            app.logger.info(f"User {user.username} logged in successfully")
-            login_user(user, remember=form.remember_me.data)
-            next_page = request.args.get('next')
-            app.logger.debug(f"Session after login: {session}")
-            app.logger.debug(f"Redirecting to: {next_page if next_page else 'calendar'}")
-            return redirect(next_page if next_page else url_for('tickets.tickets_dashboard'))
-            
-        app.logger.warning(f"Invalid credentials for login input: {login_input}")
-        flash('Invalid username/email or password')
+        except Exception as e:
+            app.logger.error(f"Error during login: {str(e)}")
+            flash('An error occurred during login. Please try again.')
         
     return render_template('login.html', form=form)
 

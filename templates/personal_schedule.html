@@ -73,7 +73,7 @@
                         </div>
                         {% endif %}
                         {% if schedule.description %}
-                        <div class="schedule-description">{{ schedule.description }}</div>
+                        <div class="schedule-desc">{{ schedule.description }}</div>
                         {% endif %}
                     </div>
                 {% endfor %}
@@ -91,7 +91,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="schedule_form" method="POST" action="{{ url_for('new_schedule') }}">
+                    <form id="schedule_form" method="POST" action="{{ url_for('new_schedule', personal_view='true') }}">
                         {{ form.hidden_tag() }}
                         <input type="hidden" id="schedule_id" name="schedule_id">
                         <input type="hidden" name="personal_view" value="true">
@@ -263,7 +263,7 @@
     font-style: italic;
 }
 
-.schedule-location, .schedule-description {
+.schedule-location, .schedule-desc {
     margin-top: 2px;
     white-space: nowrap;
     overflow: hidden;
@@ -424,9 +424,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Set the time off checkbox
                 document.getElementById('time_off').checked = timeOff;
                 
-                // Get description from the schedule element
+                // Get description - try both .schedule-description and .schedule-desc for compatibility
+                let description = '';
                 const descElement = scheduleEvent.querySelector('.schedule-description');
-                document.getElementById('description').value = descElement ? descElement.textContent : '';
+                const descAltElement = scheduleEvent.querySelector('.schedule-desc');
+                
+                if (descElement) {
+                    description = descElement.textContent;
+                } else if (descAltElement) {
+                    description = descAltElement.textContent;
+                }
+                
+                document.getElementById('description').value = description || '';
                 
                 // Set modal title
                 document.querySelector('#scheduleModal .modal-title').textContent = 'Edit Schedule';

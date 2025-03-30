@@ -44,12 +44,12 @@
         {% set current_date = week_start + timedelta(days=day) %}
         {% set is_today = current_date.date() == today.date() %}
         <div class="day-column {{ 'today' if is_today else '' }}">
-            <div class="day-header {{ 'today' if is_today else '' }}">
+            <div class="day-header {{ 'today' if is_today else '' }}" data-bs-toggle="modal" data-bs-target="#scheduleModal" data-date="{{ current_date.strftime('%Y-%m-%d') }}">
                 {{ current_date.strftime('%A %m/%d') }}
             </div>
             <div class="day-slots" data-date="{{ current_date.strftime('%Y-%m-%d') }}">
                 {% for hour in range(24) %}
-                    <div class="time-slot" data-hour="{{ '%02d'|format(hour) }}"></div>
+                    <div class="time-slot" data-hour="{{ '%02d'|format(hour) }}" data-bs-toggle="modal" data-bs-target="#scheduleModal" data-date="{{ current_date.strftime('%Y-%m-%d') }}"></div>
                 {% endfor %}
                 {% for schedule in schedules if schedule.start_time.date() == current_date.date() %}
                     <div class="schedule-event"
@@ -177,6 +177,7 @@
     border-bottom: 1px solid var(--border-color);
     background: linear-gradient(to bottom, var(--calendar-header-start), var(--calendar-header-end));
     border-radius: 4px 4px 0 0;
+    cursor: pointer;
 }
 
 .day-header.today {
@@ -220,6 +221,12 @@
 .time-slot {
     height: 60px;
     border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.time-slot:hover {
+    background-color: rgba(0, 123, 255, 0.1);
 }
 
 .schedule-event {
@@ -440,7 +447,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('deleteScheduleBtn').style.display = 'none';
                 
                 // Set default date to the clicked day or today
-                const clickedDate = event.relatedTarget ? event.relatedTarget.getAttribute('data-date') : null;
+                let clickedDate = null;
+                if (event.relatedTarget) {
+                    clickedDate = event.relatedTarget.getAttribute('data-date');
+                    
+                    // If the time slot was clicked, also set a default time
+                    if (event.relatedTarget.classList.contains('time-slot')) {
+                        const clickedHour = event.relatedTarget.getAttribute('data-hour');
+                        if (clickedHour) {
+                            document.getElementById('start_time_input').value = `${clickedHour}:00`;
+                            document.getElementById('end_time_input').value = `${parseInt(clickedHour) + 1}:00`;
+                        }
+                    }
+                }
                 if (clickedDate) {
                     document.getElementById('schedule_date').value = clickedDate;
                     primaryDate = clickedDate;

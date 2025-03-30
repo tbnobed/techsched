@@ -38,9 +38,41 @@ def login():
             all_emails = [u.email for u in User.query.all()]
             app.logger.debug(f"All emails in database: {all_emails}")
             
-            # Try the query and log the SQL
-            app.logger.debug(f"Running query: db.func.lower(User.email) == db.func.lower('{login_input}')")
-            user = User.query.filter(db.func.lower(User.email) == db.func.lower(login_input)).first()
+            # Try direct comparisons for debugging
+            app.logger.debug(f"Input email normalized: '{login_input.lower()}' (length: {len(login_input.lower())})")
+            
+            # Find potential matches
+            potential_matches = []
+            exact_match_found = False
+            
+            for email in all_emails:
+                if email.lower() == login_input.lower():
+                    exact_match_found = True
+                    app.logger.debug(f"EXACT MATCH FOUND comparing '{email.lower()}' and '{login_input.lower()}'")
+                    if email.lower() != login_input:
+                        app.logger.debug(f"Case difference: DB has '{email}', user entered '{login_input}'")
+                
+                # Add to potential matches if similar
+                if login_input.lower() in email.lower():
+                    potential_matches.append(email)
+            
+            app.logger.debug(f"Exact match found: {exact_match_found}")
+            app.logger.debug(f"Potential matches: {potential_matches}")
+            
+            # Run the actual query - try string comparison first
+            email_to_find = login_input.lower()
+            app.logger.debug(f"Trying to find user with email (case folded): '{email_to_find}'")
+            
+            # Try the query with a direct string match first
+            for u in User.query.all():
+                if u.email.lower() == login_input.lower():
+                    app.logger.debug(f"Found direct match! DB: '{u.email}' vs Input: '{login_input}'")
+                    user = u
+                    break
+            else:
+                # If loop completes without break, try the SQLAlchemy query
+                app.logger.debug(f"No direct match found, trying SQLAlchemy query")
+                user = User.query.filter(db.func.lower(User.email) == db.func.lower(login_input)).first()
             
             app.logger.debug(f"Search result: {user.username if user else 'No user found'}")
             

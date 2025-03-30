@@ -457,8 +457,11 @@
                         let html = '';
                         users.forEach(user => {
                             if (user && user.username) {
+                                // Clean the color code to create a valid class name
+                                const colorClass = user.color ? `user-color-${user.color.replace('#', '')}` : '';
+                                
                                 html += `
-                                    <div class="active-user-entry mb-2" style="border-left: 3px solid ${user.color || '#3498db'}; padding-left: 8px; margin-bottom: 10px;">
+                                    <div class="active-user-entry mb-2 ${colorClass}" style="--user-color: ${user.color || '#3498db'};">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <h6 class="mb-0 username" style="color: ${document.body.classList.contains('light-theme') ? '#000000' : user.color || '#ffffff'} !important">${user.username}</h6>
                                             <span class="badge ${document.body.classList.contains('light-theme') ? 'bg-dark text-white' : 'text-muted'}">
@@ -512,8 +515,11 @@
 
                         let html = '';
                         timeOffEntries.forEach(entry => {
+                            // Clean the color code to create a valid class name
+                            const colorClass = entry.color ? `user-color-${entry.color.replace('#', '')}` : '';
+                            
                             html += `
-                                <div class="time-off-entry mb-2" style="border-left: 3px solid ${entry.color || '#3498db'}; padding-left: 8px; margin-bottom: 10px;">
+                                <div class="time-off-entry mb-2 ${colorClass}" style="--user-color: ${entry.color || '#3498db'};">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h6 class="mb-0 username" style="color: ${document.body.classList.contains('light-theme') ? '#000000' : entry.color || '#ffffff'} !important">${entry.username}</h6>
                                         <span class="badge ${document.body.classList.contains('light-theme') ? 'bg-dark text-white' : 'text-muted'}">

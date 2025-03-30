@@ -694,7 +694,7 @@ body {
 .active-user-entry, .time-off-entry {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.85));
   border-radius: 16px;
-  padding: 16px;
+  padding: 16px 16px 16px 20px;
   margin-bottom: 16px;
   border: none;
   box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05);
@@ -708,9 +708,9 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  width: 6px;
+  width: 8px;
   height: 100%;
-  background: linear-gradient(to bottom, #6366f1, #818cf8, #a5b4fc);
+  background: var(--user-color, linear-gradient(to bottom, #6366f1, #818cf8, #a5b4fc));
   border-radius: 4px 0 0 4px;
 }
 
@@ -721,11 +721,34 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(165, 180, 252, 0.03));
+  background: linear-gradient(135deg, 
+              rgba(var(--user-color-rgb, 99, 102, 241), 0.05), 
+              rgba(var(--user-color-rgb, 165, 180, 252), 0.03));
   opacity: 0;
   transition: opacity 0.3s ease;
   z-index: 0;
   border-radius: 16px;
+}
+
+/* Color customization for individual users - fallback colors with gradients */
+.user-color-3498db::before {
+  background: linear-gradient(to bottom, #3498db, #54a0ff, #81ecec) !important;
+}
+
+.user-color-e74c3c::before {
+  background: linear-gradient(to bottom, #e74c3c, #ff6b6b, #fab1a0) !important;
+}
+
+.user-color-2ecc71::before {
+  background: linear-gradient(to bottom, #2ecc71, #55efc4, #81ecec) !important;
+}
+
+.user-color-f39c12::before {
+  background: linear-gradient(to bottom, #f39c12, #fdcb6e, #ffeaa7) !important;
+}
+
+.user-color-9b59b6::before {
+  background: linear-gradient(to bottom, #9b59b6, #a29bfe, #d6a2e8) !important;
 }
 
 .active-user-entry .username, .time-off-entry .username {

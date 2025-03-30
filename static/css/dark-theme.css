@@ -18,11 +18,11 @@
   --dark-danger: #ef4444;
   
   /* Sidebar section specific colors - updated for modern palette with gradients */
-  --sidebar-time-bg: linear-gradient(135deg, #131d31, #192440);
+  --sidebar-time-bg: linear-gradient(135deg, #131d31, #5d7ed0);
   --sidebar-active-bg: linear-gradient(135deg, #192f69, #2a4494);
-  --sidebar-timeoff-bg: linear-gradient(135deg, #2e2a7b, #4338ca);
-  --sidebar-tickets-bg: linear-gradient(135deg, #4633a0, #6d28d9);
-  --sidebar-links-bg: linear-gradient(135deg, #2563eb, #4f46e5);
+  --sidebar-timeoff-bg: linear-gradient(135deg, #2e2a7b, #877eed);
+  --sidebar-tickets-bg: linear-gradient(135deg, #4633a0, #8e59e3);
+  --sidebar-links-bg: linear-gradient(135deg, #2563eb, #9390c6);
 
   /* For Bootstrap compatibility */
   --primary-color: #3b82f6;
@@ -207,9 +207,9 @@ body {
   background-color: var(--dark-card);
   border-color: var(--dark-border);
   color: var(--dark-text);
-  border-radius: 8px;
-  margin-bottom: 4px;
-  padding: 0.75rem 1rem;
+  border-radius: 18px;
+  margin-bottom: 5px;
+  padding: 0.5rem 1rem;
   transition: all 0.2s ease-in-out;
 }
 

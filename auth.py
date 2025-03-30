@@ -32,6 +32,14 @@ def login():
             app.logger.debug(f"Looking up by email (case-insensitive): {login_input}")
             
             # Use db.func.lower for consistent case-insensitive matching
+            app.logger.debug(f"Searching for email with db.func.lower(): {login_input.lower()}")
+            
+            # Get all emails for debugging
+            all_emails = [u.email for u in User.query.all()]
+            app.logger.debug(f"All emails in database: {all_emails}")
+            
+            # Try the query and log the SQL
+            app.logger.debug(f"Running query: db.func.lower(User.email) == db.func.lower('{login_input}')")
             user = User.query.filter(db.func.lower(User.email) == db.func.lower(login_input)).first()
             
             app.logger.debug(f"Search result: {user.username if user else 'No user found'}")

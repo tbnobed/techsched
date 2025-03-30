@@ -888,8 +888,15 @@ def personal_schedule():
     form = ScheduleForm()
     form.technician.choices = [(current_user.id, current_user.username)]
     form.technician.data = current_user.id
+    
+    # Set up location choices
+    locations = Location.query.filter_by(active=True).order_by(Location.name).all()
+    form.location_id.choices = [(l.id, l.name) for l in locations]
+    # Add an empty choice if no locations exist
+    if not locations:
+        form.location_id.choices = [(0, 'No locations available')]
 
-    return render_template('calendar.html', 
+    return render_template('personal_schedule.html', 
                          schedules=schedules,
                          week_start=week_start,
                          week_end=week_start + timedelta(days=7),

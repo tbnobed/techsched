@@ -571,7 +571,7 @@ body {
 .active-user-entry, .time-off-entry {
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  padding: 12px;
+  padding: 16px 16px 16px 20px;
   margin-bottom: 12px;
   border: none;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -585,10 +585,31 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  width: 4px;
+  width: 8px;
   height: 100%;
-  background: linear-gradient(to bottom, #4f46e5, #6366f1);
+  background: var(--user-color, linear-gradient(to bottom, #4f46e5, #6366f1));
   border-radius: 4px 0 0 4px;
+}
+
+/* Color customization for individual users - fallback colors with gradients */
+.user-color-3498db::before {
+  background: linear-gradient(to bottom, #3498db, #54a0ff, #81ecec) !important;
+}
+
+.user-color-e74c3c::before {
+  background: linear-gradient(to bottom, #e74c3c, #ff6b6b, #fab1a0) !important;
+}
+
+.user-color-2ecc71::before {
+  background: linear-gradient(to bottom, #2ecc71, #55efc4, #81ecec) !important;
+}
+
+.user-color-f39c12::before {
+  background: linear-gradient(to bottom, #f39c12, #fdcb6e, #ffeaa7) !important;
+}
+
+.user-color-9b59b6::before {
+  background: linear-gradient(to bottom, #9b59b6, #a29bfe, #d6a2e8) !important;
 }
 
 .active-user-entry .username, .time-off-entry .username {
@@ -686,14 +707,19 @@ body {
 }
 
 .day-header {
-  background-color: #152238 !important;
+  background: linear-gradient(135deg, #0f172a, #1e293b) !important;
   color: var(--dark-text) !important;
-  border-bottom: 2px solid var(--dark-border) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  padding: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15) !important;
 }
 
 .day-header.today {
-  background-color: var(--dark-accent) !important;
-  color: var(--dark-text) !important;
+  background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+  color: white !important;
+  border-bottom: none !important;
 }
 
 .hour-slot {
@@ -740,8 +766,53 @@ body {
 }
 
 .fc-timegrid-event-harness .fc-timegrid-event {
-  background-color: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--dark-border);
+  background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+  border: none !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25) !important;
+  border-radius: 8px !important;
+  padding: 4px 8px !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.fc-timegrid-event-harness .fc-timegrid-event:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Add gradient colors to different user events in dark theme */
+.fc-event[style*="background-color: #3498db"],
+.fc-event[style*="background-color:#3498db"] {
+  background: linear-gradient(135deg, #3498db, #38bdf8) !important;
+  border: none !important;
+  box-shadow: 0 4px 6px rgba(52, 152, 219, 0.4) !important;
+}
+
+.fc-event[style*="background-color: #e74c3c"],
+.fc-event[style*="background-color:#e74c3c"] {
+  background: linear-gradient(135deg, #e74c3c, #f87171) !important;
+  border: none !important;
+  box-shadow: 0 4px 6px rgba(231, 76, 60, 0.4) !important;
+}
+
+.fc-event[style*="background-color: #2ecc71"],
+.fc-event[style*="background-color:#2ecc71"] {
+  background: linear-gradient(135deg, #2ecc71, #4ade80) !important;
+  border: none !important;
+  box-shadow: 0 4px 6px rgba(46, 204, 113, 0.4) !important;
+}
+
+.fc-event[style*="background-color: #f39c12"],
+.fc-event[style*="background-color:#f39c12"] {
+  background: linear-gradient(135deg, #f39c12, #fbbf24) !important;
+  border: none !important;
+  box-shadow: 0 4px 6px rgba(243, 156, 18, 0.4) !important;
+}
+
+.fc-event[style*="background-color: #9b59b6"],
+.fc-event[style*="background-color:#9b59b6"] {
+  background: linear-gradient(135deg, #9b59b6, #c084fc) !important;
+  border: none !important;
+  box-shadow: 0 4px 6px rgba(155, 89, 182, 0.4) !important;
 }
 
 .fc-timegrid-slot-label-cushion {
@@ -758,17 +829,27 @@ body {
 }
 
 .fc-daygrid-day.fc-day-today {
-  background-color: rgba(233, 69, 96, 0.1) !important;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(99, 102, 241, 0.05)) !important;
+  box-shadow: inset 0 0 16px rgba(79, 70, 229, 0.08) !important;
 }
 
 .fc-day-today .fc-daygrid-day-number {
-  background-color: var(--dark-accent);
+  background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   text-align: center;
-  line-height: 24px;
-  margin: 4px;
+  line-height: 30px;
+  margin: 6px;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.fc-day-today .fc-daygrid-day-number:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(79, 70, 229, 0.4);
 }
 
 /* Alert styling */
@@ -798,23 +879,53 @@ body {
 
 /* Ticket badges and status coloring */
 .ticket-status-open {
-  background-color: var(--dark-info);
+  background: linear-gradient(135deg, #0ea5e9, #38bdf8) !important;
+  border: none;
+  padding: 0.45em 0.75em;
+  font-size: 0.85em;
+  font-weight: 500;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .ticket-status-in-progress {
-  background-color: var(--dark-warning);
+  background: linear-gradient(135deg, #f59e0b, #fbbf24) !important;
+  border: none;
+  padding: 0.45em 0.75em;
+  font-size: 0.85em;
+  font-weight: 500;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .ticket-status-pending {
-  background-color: #9b59b6;
+  background: linear-gradient(135deg, #6366f1, #818cf8) !important;
+  border: none;
+  padding: 0.45em 0.75em;
+  font-size: 0.85em;
+  font-weight: 500;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .ticket-status-resolved {
-  background-color: var(--dark-success);
+  background: linear-gradient(135deg, #10b981, #34d399) !important;
+  border: none;
+  padding: 0.45em 0.75em;
+  font-size: 0.85em;
+  font-weight: 500;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .ticket-status-closed {
-  background-color: #7f8c8d;
+  background: linear-gradient(135deg, #64748b, #94a3b8) !important;
+  border: none;
+  padding: 0.45em 0.75em;
+  font-size: 0.85em;
+  font-weight: 500;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 /* Modal styling - Fixed to prevent flashing */

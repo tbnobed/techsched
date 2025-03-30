@@ -21,15 +21,17 @@
         }
         
         .page-transition-logo {
-            width: 40px;
-            height: 40px;
+            width: 60px;
+            height: 60px;
             position: fixed;
             top: 50%;
             left: 50%;
-            margin-top: -20px;
-            margin-left: -20px;
+            margin-top: -30px;
+            margin-left: -30px;
             z-index: 9999;
             animation: rotate 0.8s ease-in-out;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
         }
         
         .navbar-brand img {
@@ -571,7 +573,7 @@
                         
                         // Create transition logo element
                         const transitionLogo = document.createElement('img');
-                        transitionLogo.src = "{{ url_for('static', filename='images/plex_studios_logo_small.svg') }}";
+                        transitionLogo.src = "{{ url_for('static', filename='images/plex_logo_small.png') }}";
                         transitionLogo.className = 'page-transition-logo';
                         document.body.appendChild(transitionLogo);
                         

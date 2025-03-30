@@ -207,10 +207,10 @@ body {
   background-color: var(--dark-card);
   border-color: var(--dark-border);
   color: var(--dark-text);
-  border-radius: 18px;
-  margin-bottom: 5px;
-  padding: 0.5rem 1rem;
-  transition: all 0.2s ease-in-out;
+  border-radius: 1px;
+  margin-bottom: 1px;
+  padding: 0.75rem 1rem;
+  transition: all 0.8s ease-in-out;
 }
 
 .list-group-item-action:hover {

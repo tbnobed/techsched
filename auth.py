@@ -8,42 +8,47 @@ auth = Blueprint('auth', __name__)
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    Handle user login with case-insensitive username/email comparison.
+    This function uses SQLAlchemy's func.lower() for proper case-insensitive database queries.
+    """
     if current_user.is_authenticated:
         return redirect(url_for('tickets.tickets_dashboard'))
     
-    # Add debug logging for the session
-    from app import app
+    # Initialize logging
+    from app import app, db
     from flask import session
+    from sqlalchemy import func
+    
     app.logger.debug(f"Login attempt - Method: {request.method}")
-    app.logger.debug(f"Session before login: {session}")
     
     form = LoginForm()
     if form.validate_on_submit():
         try:
-            # This is all we need for case-insensitive email login
+            # Get the email or username from the form
             email_or_username = form.email.data.strip() if form.email.data else ""
             password = form.password.data
-            
-            app.logger.debug(f"Login attempt with: {email_or_username}")
             
             # Find user by email OR username - case insensitive
             user = None
             
-            # True case-insensitive lookup using custom Python code instead of SQLAlchemy
-            # We check ONLY the lowercase versions of both the input and database values
-            input_lower = email_or_username.lower()
-            
-            for u in User.query.all():
-                # If input is an email address
-                if '@' in email_or_username and u.email and u.email.lower() == input_lower:
-                    app.logger.debug(f"Found user by email match: {u.username} / {u.email}")
-                    user = u
-                    break
-                # If input is a username
-                elif '@' not in email_or_username and u.username and u.username.lower() == input_lower:
-                    app.logger.debug(f"Found user by username match: {u.username} / {u.email}")
-                    user = u
-                    break
+            # Check if input looks like an email address
+            if '@' in email_or_username:
+                # Use SQLAlchemy's func.lower for case-insensitive email comparison
+                app.logger.debug(f"Attempting email login with: '{email_or_username}'")
+                
+                # Find the user with a case-insensitive email match
+                user = User.query.filter(func.lower(User.email) == func.lower(email_or_username)).first()
+                if user:
+                    app.logger.debug(f"Found user by email: {user.username} / {user.email}")
+            else:
+                # Handle username lookup (also case-insensitive)
+                app.logger.debug(f"Attempting username login with: '{email_or_username}'")
+                
+                # Find the user with a case-insensitive username match
+                user = User.query.filter(func.lower(User.username) == func.lower(email_or_username)).first()
+                if user:
+                    app.logger.debug(f"Found user by username: {user.username} / {user.email}")
                     
             if user:
                 app.logger.debug(f"User lookup result: Found user {user.username}")

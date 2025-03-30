@@ -70,6 +70,12 @@ class User(UserMixin, db.Model):
     @property
     def email_normalized(self):
         return self.email.lower() if self.email else None
+        
+    def check_email(self, email):
+        """Case-insensitive email comparison - returns True if emails match ignoring case"""
+        if not self.email or not email:
+            return False
+        return self.email.lower() == email.lower()
     
 # NOTE: The SQLAlchemy validates decorator was causing issues,
 # so we're using Python property functionality to handle email normalization

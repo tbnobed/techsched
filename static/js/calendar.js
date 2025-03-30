@@ -572,11 +572,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
             const weekStart = urlParams.get('week_start');
             
+            // Check if we're in personal view
+            const isPersonalView = window.location.pathname.includes('/personal_schedule');
+            const deletePath = isPersonalView ? '/schedule/delete/' : '/schedule/delete/';
+            
             // Redirect with the week_start parameter to maintain the same view
             if (weekStart) {
-                window.location.href = `/schedule/delete/${scheduleId}?week_start=${weekStart}`;
+                window.location.href = `${deletePath}${scheduleId}?week_start=${weekStart}${isPersonalView ? '&personal_view=true' : ''}`;
             } else {
-                window.location.href = `/schedule/delete/${scheduleId}`;
+                window.location.href = `${deletePath}${scheduleId}${isPersonalView ? '?personal_view=true' : ''}`;
             }
         }
     });

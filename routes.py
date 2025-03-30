@@ -303,6 +303,7 @@ def calendar():
 def new_schedule():
     # Get the week_start parameter to maintain the same view
     week_start = request.args.get('week_start')
+    personal_view = request.args.get('personal_view') == 'true'
     
     form = ScheduleForm()
 
@@ -355,7 +356,10 @@ def new_schedule():
 
             if overlapping_schedules and not form.time_off.data:
                 flash('Schedule conflicts with existing appointments.')
-                return redirect(url_for('calendar', week_start=week_start))
+                if personal_view:
+                    return redirect(url_for('personal_schedule', week_start=week_start))
+                else:
+                    return redirect(url_for('calendar', week_start=week_start))
 
             # Check if we have repeat days selected
             repeat_days = form.repeat_days.data
@@ -365,7 +369,10 @@ def new_schedule():
                 schedule = Schedule.query.get_or_404(schedule_id)
                 if schedule.technician_id != current_user.id and not current_user.is_admin:
                     flash('You do not have permission to edit this schedule.')
-                    return redirect(url_for('calendar', week_start=week_start))
+                    if personal_view:
+                        return redirect(url_for('personal_schedule', week_start=week_start))
+                    else:
+                        return redirect(url_for('calendar', week_start=week_start))
 
                 old_desc = schedule.description
                 schedule.start_time = start_time_utc
@@ -391,7 +398,10 @@ def new_schedule():
                     
                     if not dates:
                         flash('No valid dates selected for scheduling.')
-                        return redirect(url_for('calendar'))
+                        if personal_view:
+                            return redirect(url_for('personal_schedule', week_start=week_start))
+                        else:
+                            return redirect(url_for('calendar', week_start=week_start))
                     
                     # Create a schedule for each selected day
                     for date_str in dates:
@@ -464,27 +474,40 @@ def new_schedule():
                     send_schedule_notification(schedule, 'created', f"Schedule created by {current_user.username}")
                     db.session.commit()
                     flash('Schedule created successfully!')
-            return redirect(url_for('calendar', week_start=week_start))
+            if personal_view:
+                return redirect(url_for('personal_schedule', week_start=week_start))
+            else:
+                return redirect(url_for('calendar', week_start=week_start))
 
         except Exception as e:
             db.session.rollback()
             flash('Error saving schedule. Please check the time entries.')
             app.logger.error(f"Error saving schedule: {str(e)}")
-            return redirect(url_for('calendar', week_start=week_start))
+            if personal_view:
+                return redirect(url_for('personal_schedule', week_start=week_start))
+            else:
+                return redirect(url_for('calendar', week_start=week_start))
 
-    return redirect(url_for('calendar', week_start=week_start))
+    if personal_view:
+        return redirect(url_for('personal_schedule', week_start=week_start))
+    else:
+        return redirect(url_for('calendar', week_start=week_start))
 
 @app.route('/schedule/delete/<int:schedule_id>')
 @login_required
 def delete_schedule(schedule_id):
     # Get current week start to maintain the same view
     week_start = request.args.get('week_start')
+    personal_view = request.args.get('personal_view') == 'true'
     
     schedule = Schedule.query.get_or_404(schedule_id)
 
     if schedule.technician_id != current_user.id and not current_user.is_admin:
         flash('You do not have permission to delete this schedule.')
-        return redirect(url_for('calendar', week_start=week_start))
+        if personal_view:
+            return redirect(url_for('personal_schedule', week_start=week_start))
+        else:
+            return redirect(url_for('calendar', week_start=week_start))
 
     try:
         send_schedule_notification(schedule, 'deleted', f"Schedule deleted by {current_user.username}")
@@ -497,7 +520,10 @@ def delete_schedule(schedule_id):
         app.logger.error(f"Error deleting schedule: {str(e)}")
 
     # Redirect back to the same week view
-    return redirect(url_for('calendar', week_start=week_start))
+    if personal_view:
+        return redirect(url_for('personal_schedule', week_start=week_start))
+    else:
+        return redirect(url_for('calendar', week_start=week_start))
 
 @app.route('/schedule/copy_previous_week', methods=['POST'])
 @login_required

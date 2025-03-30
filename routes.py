@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, make_response
 from flask_login import login_user, logout_user, login_required, current_user
-from app import app, db
+from app import app, db, is_mobile_device
 from models import User, Schedule, QuickLink, Location, EmailSettings, TicketCategory, Ticket, TicketComment, TicketHistory, TicketStatus
 from forms import (
     LoginForm, RegistrationForm, ScheduleForm, AdminUserForm, EditUserForm, 
@@ -287,16 +287,29 @@ def calendar():
     # Get all active locations for the filter dropdown
     locations = Location.query.filter_by(active=True).order_by(Location.name).all()
 
-    return render_template('calendar.html', 
-                         schedules=schedules,
-                         week_start=week_start,
-                         week_end=week_start + timedelta(days=7),
-                         form=form,
-                         locations=locations,
-                         selected_location=location_filter,
-                         today=datetime.now(current_user.get_timezone()),
-                         datetime=datetime,
-                         timedelta=timedelta)
+    # Check if user is on a mobile device
+    if is_mobile_device():
+        return render_template('mobile_calendar.html', 
+                            schedules=schedules,
+                            week_start=week_start,
+                            week_end=week_start + timedelta(days=7),
+                            form=form,
+                            locations=locations,
+                            selected_location=location_filter,
+                            today=datetime.now(current_user.get_timezone()),
+                            datetime=datetime,
+                            timedelta=timedelta)
+    else:
+        return render_template('calendar.html', 
+                            schedules=schedules,
+                            week_start=week_start,
+                            week_end=week_start + timedelta(days=7),
+                            form=form,
+                            locations=locations,
+                            selected_location=location_filter,
+                            today=datetime.now(current_user.get_timezone()),
+                            datetime=datetime,
+                            timedelta=timedelta)
 
 @app.route('/schedule/new', methods=['GET', 'POST'])
 @login_required
@@ -896,15 +909,27 @@ def personal_schedule():
     if not locations:
         form.location_id.choices = [(0, 'No locations available')]
 
-    return render_template('personal_schedule.html', 
-                         schedules=schedules,
-                         week_start=week_start,
-                         week_end=week_start + timedelta(days=7),
-                         form=form,
-                         today=datetime.now(current_user.get_timezone()),
-                         datetime=datetime,
-                         timedelta=timedelta,
-                         personal_view=True)
+    # Check if user is on a mobile device
+    if is_mobile_device():
+        return render_template('mobile_personal_schedule.html', 
+                            schedules=schedules,
+                            week_start=week_start,
+                            week_end=week_start + timedelta(days=7),
+                            form=form,
+                            today=datetime.now(current_user.get_timezone()),
+                            datetime=datetime,
+                            timedelta=timedelta,
+                            personal_view=True)
+    else:
+        return render_template('personal_schedule.html', 
+                            schedules=schedules,
+                            week_start=week_start,
+                            week_end=week_start + timedelta(days=7),
+                            form=form,
+                            today=datetime.now(current_user.get_timezone()),
+                            datetime=datetime,
+                            timedelta=timedelta,
+                            personal_view=True)
 
 @app.route('/admin/export_schedules')
 @login_required

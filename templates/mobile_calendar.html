@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Mobile Calendar | The Plex Studios{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mobile-title mb-3">
+                <button class="btn btn-sm" onclick="previousWeek()">
+                    <i data-feather="chevron-left"></i>
+                </button>
+                <span id="current-date-range">{{ week_start.strftime('%b %d') }} - {{ (week_start + timedelta(days=6)).strftime('%b %d, %Y') }}</span>
+                <button class="btn btn-sm" onclick="nextWeek()">
+                    <i data-feather="chevron-right"></i>
+                </button>
+            </h2>
+        </div>
+    </div>
+
+    <div class="mobile-controls mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
+                <i data-feather="arrow-left"></i> Previous Week
+            </a>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#scheduleModal">
+                <i data-feather="plus"></i> Add Schedule
+            </button>
+            <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
+                Next Week <i data-feather="arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Mobile-friendly daily view (one day at a time) -->
+    <div class="mobile-calendar">
+        <div class="day-selector mb-3">
+            <ul class="nav nav-pills nav-fill">
+                {% for day in range(7) %}
+                {% set current_date = week_start + timedelta(days=day) %}
+                <li class="nav-item">
+                    <button class="nav-link {% if day == 0 %}active{% endif %}" 
+                            onclick="showDay({{ day }})"
+                            data-day="{{ day }}">
+                        {{ current_date.strftime('%a') }}<br>
+                        <span class="day-number">{{ current_date.day }}</span>
+                    </button>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        {% for day in range(7) %}
+        {% set current_date = week_start + timedelta(days=day) %}
+        <div class="day-container {% if day != 0 %}d-none{% endif %}" id="day-{{ day }}">
+            <div class="day-header">
+                <h4>{{ current_date.strftime('%A, %B %d, %Y') }}</h4>
+            </div>
+            <div class="day-schedules">
+                {% set day_schedules = [] %}
+                {% for schedule in schedules if schedule.start_time.date() == current_date.date() %}
+                    {% do day_schedules.append(schedule) %}
+                {% endfor %}
+                
+                {% if day_schedules|length > 0 %}
+                    {% for schedule in day_schedules %}
+                    <div class="mobile-schedule-card" 
+                         style="border-left: 4px solid {{ schedule.technician.color }};"
+                         data-bs-toggle="modal" 
+                         data-bs-target="#scheduleModal"
+                         data-schedule-id="{{ schedule.id }}"
+                         data-start-time="{{ schedule.start_time }}"
+                         data-end-time="{{ schedule.end_time }}"
+                         data-time-off="{{ 'true' if schedule.time_off else 'false' }}">
+                        <div class="schedule-time">
+                            {{ schedule.start_time.strftime('%I:%M %p') }} - {{ schedule.end_time.strftime('%I:%M %p') }}
+                        </div>
+                        <div class="schedule-tech">
+                            {{ schedule.technician.username }}
+                        </div>
+                        {% if schedule.location %}
+                        <div class="schedule-location">
+                            <i data-feather="map-pin" class="feather-small"></i> {{ schedule.location.name }}
+                        </div>
+                        {% endif %}
+                        {% if schedule.description %}
+                        <div class="schedule-desc">
+                            {{ schedule.description }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-day-message">
+                        <p>No schedules for this day.</p>
+                        <button class="btn btn-sm btn-outline-primary" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#scheduleModal"
+                                data-date="{{ current_date.strftime('%Y-%m-%d') }}">
+                            Add Schedule
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Schedule Modal -->
+{{ super() }}
+
+<style>
+.mobile-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, var(--accent-color-1), var(--accent-color-2));
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.mobile-controls {
+    margin-bottom: 15px;
+}
+
+.day-selector .nav-link {
+    padding: 8px 5px;
+    text-align: center;
+    border-radius: 4px;
+    margin: 0 2px;
+    font-size: 0.9rem;
+}
+
+.day-selector .nav-link.active {
+    background: linear-gradient(135deg, var(--accent-color-1), var(--accent-color-2));
+    color: white;
+}
+
+.day-number {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.day-container {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.day-header {
+    background: linear-gradient(to bottom, var(--calendar-header-start), var(--calendar-header-end));
+    color: var(--text-color);
+    padding: 10px;
+    text-align: center;
+}
+
+.day-schedules {
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.mobile-schedule-card {
+    background-color: var(--calendar-bg);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.mobile-schedule-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.schedule-time {
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.schedule-tech {
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+
+.schedule-location, .schedule-desc {
+    font-size: 0.9rem;
+    margin-top: 5px;
+    color: var(--text-secondary);
+}
+
+.empty-day-message {
+    text-align: center;
+    padding: 20px 0;
+    color: var(--text-muted);
+}
+
+.feather-small {
+    width: 14px;
+    height: 14px;
+}
+</style>
+
+<script>
+function showDay(dayIndex) {
+    // Hide all day containers
+    document.querySelectorAll('.day-container').forEach(container => {
+        container.classList.add('d-none');
+    });
+    
+    // Show the selected day
+    document.getElementById(`day-${dayIndex}`).classList.remove('d-none');
+    
+    // Update active state in the pills
+    document.querySelectorAll('.day-selector .nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    document.querySelector(`.day-selector .nav-link[data-day="${dayIndex}"]`).classList.add('active');
+}
+
+function previousWeek() {
+    window.location.href = "{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}";
+}
+
+function nextWeek() {
+    window.location.href = "{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}";
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace({
+            'stroke-width': 1.5,
+            'width': 16,
+            'height': 16
+        });
+    }
+    
+    // Add event listeners to the schedule cards
+    document.querySelectorAll('.mobile-schedule-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const scheduleId = this.getAttribute('data-schedule-id');
+            const startTime = new Date(this.getAttribute('data-start-time'));
+            const endTime = new Date(this.getAttribute('data-end-time'));
+            const timeOff = this.getAttribute('data-time-off') === 'true';
+            
+            // Populate the modal with schedule data
+            document.getElementById('schedule_id').value = scheduleId;
+            document.getElementById('schedule_date').valueAsDate = startTime;
+            
+            // Set start and end times
+            const startHour = document.getElementById('start_hour');
+            if (startHour) {
+                startHour.value = String(startTime.getHours()).padStart(2, '0');
+            }
+            
+            const endHour = document.getElementById('end_hour');
+            if (endHour) {
+                const displayEndHour = endTime.getHours() === 0 ? '00' : String(endTime.getHours()).padStart(2, '0');
+                endHour.value = displayEndHour;
+            }
+            
+            // Set time off checkbox
+            document.getElementById('time_off').checked = timeOff;
+            
+            // Get description
+            const descElement = this.querySelector('.schedule-desc');
+            document.getElementById('description').value = descElement ? descElement.textContent.trim() : '';
+            
+            // Update modal title and buttons
+            document.querySelector('#scheduleModal .modal-title').textContent = 'Edit Schedule';
+            document.getElementById('delete_button').style.display = 'block';
+            document.querySelector('#scheduleModal .btn-primary').textContent = 'Save Changes';
+            
+            // Set up delete button event
+            document.getElementById('delete_button').onclick = function() {
+                if (confirm('Are you sure you want to delete this schedule?')) {
+                    window.location.href = `/schedule/delete/${scheduleId}?week_start={{ week_start.strftime('%Y-%m-%d') }}`;
+                }
+            };
+        });
+    });
+});
+</script>
+{% endblock %}

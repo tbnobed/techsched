@@ -1,5 +1,6 @@
 import os
 import logging
+import re
 from datetime import timedelta
 from flask import Flask, jsonify, redirect, url_for, request, session
 from flask_sqlalchemy import SQLAlchemy
@@ -30,6 +31,14 @@ def nl2br_filter(s):
     if not s:
         return ""
     return Markup(s.replace('\n', '<br>\n'))
+
+# Function to detect mobile devices
+def is_mobile_device():
+    """Check if the user is using a mobile device"""
+    user_agent = request.headers.get('User-Agent', '').lower()
+    # Pattern to match common mobile devices
+    pattern = r"android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile"
+    return bool(re.search(pattern, user_agent))
 
 # Configuration
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "a secret key"
@@ -117,6 +126,11 @@ def inject_active_sidebar_tickets():
 def inject_now():
     from datetime import datetime
     return {'now': datetime.now()}
+
+@app.context_processor
+def inject_mobile_detection():
+    """Inject mobile device detection function into templates"""
+    return {'is_mobile': is_mobile_device}
 
 # API Routes
 @app.route('/api/active_users')

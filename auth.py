@@ -28,44 +28,36 @@ def login():
         
         # Check if this is a username or email login
         if '@' in login_input:
-            # Login with email (case-insensitive using SQL LOWER function)
-            email_search = login_input.lower()
-            app.logger.debug(f"Looking up by email (lowercase): {email_search}")
+            # Login with email (case-insensitive)
+            app.logger.debug(f"Looking up by email (case-insensitive): {login_input}")
             
-            # PostgreSQL LOWER function for proper case-insensitive compare
-            query = User.query.filter(db.func.lower(User.email) == db.func.lower(email_search))
-            app.logger.debug(f"SQL query: {query}")
+            # Use PostgreSQL ILIKE for case-insensitive matching
+            user = User.query.filter(User.email.ilike(login_input)).first()
+            app.logger.debug(f"Search result: {user.username if user else 'No user found'}")
             
-            # Execute the query
-            user = query.first()
-            
-            # If no user found, try to get all emails for debugging
+            # If no user found with exact match, try to get all emails for debugging
             if not user:
                 all_emails = [u.email for u in User.query.all()]
                 app.logger.debug(f"All emails in database: {all_emails}")
                 
-                # Also try a direct query with LIKE for debugging
-                like_users = User.query.filter(User.email.ilike(f"%{email_search}%")).all()
+                # Try an additional search with ILIKE
+                like_users = User.query.filter(User.email.ilike(f"%{login_input}%")).all()
                 app.logger.debug(f"Users with similar emails: {[u.email for u in like_users]}")
         else:
-            # Case-insensitive username search using SQL LOWER function
+            # Case-insensitive username search
             app.logger.debug(f"Looking up by username (case-insensitive): {login_input}")
-            username_search = login_input.lower()
             
-            # PostgreSQL LOWER function for proper case-insensitive compare
-            query = User.query.filter(db.func.lower(User.username) == db.func.lower(username_search))
-            app.logger.debug(f"SQL query: {query}")
-            
-            # Execute the query
-            user = query.first()
+            # Use PostgreSQL ILIKE for case-insensitive matching
+            user = User.query.filter(User.username.ilike(login_input)).first()
+            app.logger.debug(f"Search result: {user.username if user else 'No user found'}")
             
             # If no user found, try to get all usernames for debugging
             if not user:
                 all_usernames = [u.username for u in User.query.all()]
                 app.logger.debug(f"All usernames in database: {all_usernames}")
                 
-                # Also try a direct query with LIKE for debugging
-                like_users = User.query.filter(User.username.ilike(f"%{username_search}%")).all()
+                # Try an additional search with ILIKE
+                like_users = User.query.filter(User.username.ilike(f"%{login_input}%")).all()
                 app.logger.debug(f"Users with similar usernames: {[u.username for u in like_users]}")
             
         # Debug log what we found

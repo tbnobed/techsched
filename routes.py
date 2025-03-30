@@ -621,15 +621,15 @@ def admin_create_user():
             email = form.email.data.lower() if form.email.data else ""
             username = form.username.data
             
-            # Check if user already exists (case-insensitive using PostgreSQL ILIKE)
-            existing_email_user = User.query.filter(User.email.ilike(email)).first()
+            # Check if user already exists (case-insensitive)
+            existing_email_user = User.query.filter(db.func.lower(User.email) == email.lower()).first()
             if existing_email_user:
                 flash('Email already registered.')
                 return redirect(url_for('admin_dashboard'))
                 
-            # Check if username already exists (case-insensitive using PostgreSQL ILIKE)
+            # Check if username already exists (case-insensitive)
             if username:
-                existing_user = User.query.filter(User.username.ilike(username)).first()
+                existing_user = User.query.filter(db.func.lower(User.username) == username.lower()).first()
                 if existing_user:
                     flash('Username already registered. Please choose another username.')
                     return redirect(url_for('admin_dashboard'))
@@ -706,21 +706,21 @@ def admin_edit_user(user_id):
         app.logger.debug(f"Processed form data: username={username}, email={email}, color={color}, timezone={timezone}, is_admin={is_admin}")
 
         try:
-            # Check if username is already taken by another user (case-insensitive using PostgreSQL ILIKE)
+            # Check if username is already taken by another user (case-insensitive)
             if username:
                 username_conflict = User.query.filter(
                     User.id != user_id,
-                    User.username.ilike(username)
+                    db.func.lower(User.username) == username.lower()
                 ).first()
                 if username_conflict:
                     flash(f'Username "{username}" is already taken. Please use a different username.')
                     return redirect(url_for('admin_dashboard'))
             
-            # Check if email is already taken by another user (case-insensitive using PostgreSQL ILIKE)
+            # Check if email is already taken by another user (case-insensitive)
             if email:
                 email_conflict = User.query.filter(
                     User.id != user_id,
-                    User.email.ilike(email)
+                    db.func.lower(User.email) == email.lower()
                 ).first()
                 if email_conflict:
                     flash(f'Email "{email}" is already registered to another user.')
@@ -773,7 +773,7 @@ def admin_delete_user(user_id):
     try:
         # Get a special system user to reassign content to
         # Create one if it doesn't exist (case-insensitive check)
-        system_user = User.query.filter(User.username.ilike("System")).first()
+        system_user = User.query.filter(db.func.lower(User.username) == "system").first()
         if not system_user:
             system_user = User(
                 username="System",
@@ -1648,7 +1648,7 @@ def restore_backup():
                                 user_username = comment_data.get('username')
                                 if not user_username or user_username not in users_by_username:
                                     # Try to use system user for comments if the original user isn't found (case-insensitive)
-                                    system_user = User.query.filter(User.username.ilike("System")).first()
+                                    system_user = User.query.filter(db.func.lower(User.username) == "system").first()
                                     if not system_user:
                                         # Create system user if needed
                                         system_user = User(
@@ -1689,7 +1689,7 @@ def restore_backup():
                                 user_username = history_data.get('username')
                                 if not user_username or user_username not in users_by_username:
                                     # Try to use system user for history entries if the original user isn't found (case-insensitive)
-                                    system_user = User.query.filter(User.username.ilike("System")).first()
+                                    system_user = User.query.filter(db.func.lower(User.username) == "system").first()
                                     if not system_user:
                                         # Create system user if needed
                                         system_user = User(

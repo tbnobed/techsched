@@ -359,17 +359,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Global variables for the modal
+    let currentMonth = new Date();
+    let selectedDates = [];
+    let primaryDate = null;
+    let scheduleDates = [];
+    
     // Only initialize calendar components when the modal is opened
     const scheduleModal = document.getElementById('scheduleModal');
     if (scheduleModal) {
         scheduleModal.addEventListener('show.bs.modal', function() {
-            // Calendar initialization
-            let currentMonth = new Date();
-            let selectedDates = [];
-            let primaryDate = null;
-            
             // Get all schedule dates for highlighting
-            const scheduleDates = [];
+            scheduleDates = [];
             document.querySelectorAll('.schedule-event').forEach(event => {
                 const startTime = new Date(event.getAttribute('data-start-time'));
                 const dateStr = startTime.toISOString().split('T')[0];
@@ -379,82 +380,84 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // Initialize the mini calendar
-            if (typeof initMiniCalendar === 'function') {
+            try {
                 initMiniCalendar();
+            } catch (e) {
+                console.error("Error initializing mini calendar:", e);
             }
-        });
-    }
-    
-    // Initialize form handlers for the modal
-    document.getElementById('scheduleModal').addEventListener('show.bs.modal', function(event) {
-        // Clear previous selections
-        selectedDates = [];
-        primaryDate = null;
-        clearDateSelection();
+            
+            // Clear previous selections
+            selectedDates = [];
+            primaryDate = null;
+            try {
+                clearDateSelection();
+            } catch (e) {
+                console.error("Error clearing date selection:", e);
+            }
         
-        // If triggered by a schedule event (for editing)
-        if (event.relatedTarget && event.relatedTarget.classList.contains('schedule-event')) {
-            const scheduleEvent = event.relatedTarget;
-            document.getElementById('schedule_id').value = scheduleEvent.getAttribute('data-schedule-id');
-            
-            // Populate the form with existing data
-            const startTime = new Date(scheduleEvent.getAttribute('data-start-time'));
-            const endTime = new Date(scheduleEvent.getAttribute('data-end-time'));
-            const timeOff = scheduleEvent.getAttribute('data-time-off') === 'true';
-            
-            // Set the date
-            document.getElementById('schedule_date').valueAsDate = startTime;
-            
-            // Set the times
-            document.getElementById('start_time_input').value = 
-                `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')}`;
-            document.getElementById('end_time_input').value = 
-                `${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}`;
-            
-            // Set the time off checkbox
-            document.getElementById('time_off').checked = timeOff;
-            
-            // Get description from the schedule element
-            const descElement = scheduleEvent.querySelector('.schedule-description');
-            document.getElementById('description').value = descElement ? descElement.textContent : '';
-            
-            // Set modal title
-            document.querySelector('#scheduleModal .modal-title').textContent = 'Edit Schedule';
-            
-            // Show delete button
-            document.getElementById('deleteScheduleBtn').style.display = 'block';
-            document.getElementById('deleteScheduleBtn').onclick = function() {
-                if (confirm('Are you sure you want to delete this schedule?')) {
-                    window.location.href = `/schedule/delete/${scheduleEvent.getAttribute('data-schedule-id')}?week_start={{ week_start.strftime('%Y-%m-%d') }}&personal_view=true`;
-                }
-            };
-        } else {
-            // Creating new schedule
-            document.getElementById('schedule_id').value = '';
-            document.getElementById('description').value = '';
-            document.getElementById('time_off').checked = false;
-            document.querySelector('#scheduleModal .modal-title').textContent = 'Add New Schedule';
-            document.getElementById('deleteScheduleBtn').style.display = 'none';
-            
-            // Set default date to the clicked day or today
-            const clickedDate = event.relatedTarget ? event.relatedTarget.getAttribute('data-date') : null;
-            if (clickedDate) {
-                document.getElementById('schedule_date').value = clickedDate;
-                primaryDate = clickedDate;
-                selectedDates = [clickedDate];
-                updateSelectedDatesDisplay();
+            // If triggered by a schedule event (for editing)
+            if (event.relatedTarget && event.relatedTarget.classList.contains('schedule-event')) {
+                const scheduleEvent = event.relatedTarget;
+                document.getElementById('schedule_id').value = scheduleEvent.getAttribute('data-schedule-id');
+                
+                // Populate the form with existing data
+                const startTime = new Date(scheduleEvent.getAttribute('data-start-time'));
+                const endTime = new Date(scheduleEvent.getAttribute('data-end-time'));
+                const timeOff = scheduleEvent.getAttribute('data-time-off') === 'true';
+                
+                // Set the date
+                document.getElementById('schedule_date').valueAsDate = startTime;
+                
+                // Set the times
+                document.getElementById('start_time_input').value = 
+                    `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')}`;
+                document.getElementById('end_time_input').value = 
+                    `${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}`;
+                
+                // Set the time off checkbox
+                document.getElementById('time_off').checked = timeOff;
+                
+                // Get description from the schedule element
+                const descElement = scheduleEvent.querySelector('.schedule-description');
+                document.getElementById('description').value = descElement ? descElement.textContent : '';
+                
+                // Set modal title
+                document.querySelector('#scheduleModal .modal-title').textContent = 'Edit Schedule';
+                
+                // Show delete button
+                document.getElementById('deleteScheduleBtn').style.display = 'block';
+                document.getElementById('deleteScheduleBtn').onclick = function() {
+                    if (confirm('Are you sure you want to delete this schedule?')) {
+                        window.location.href = `/schedule/delete/${scheduleEvent.getAttribute('data-schedule-id')}?week_start={{ week_start.strftime('%Y-%m-%d') }}&personal_view=true`;
+                    }
+                };
             } else {
-                const now = new Date();
-                document.getElementById('schedule_date').valueAsDate = now;
+                // Creating new schedule
+                document.getElementById('schedule_id').value = '';
+                document.getElementById('description').value = '';
+                document.getElementById('time_off').checked = false;
+                document.querySelector('#scheduleModal .modal-title').textContent = 'Add New Schedule';
+                document.getElementById('deleteScheduleBtn').style.display = 'none';
+                
+                // Set default date to the clicked day or today
+                const clickedDate = event.relatedTarget ? event.relatedTarget.getAttribute('data-date') : null;
+                if (clickedDate) {
+                    document.getElementById('schedule_date').value = clickedDate;
+                    primaryDate = clickedDate;
+                    selectedDates = [clickedDate];
+                    updateSelectedDatesDisplay();
+                } else {
+                    const now = new Date();
+                    document.getElementById('schedule_date').valueAsDate = now;
+                }
+                
+                // Set default times (9am - 5pm)
+                document.getElementById('start_time_input').value = '09:00';
+                document.getElementById('end_time_input').value = '17:00';
             }
             
-            // Set default times (9am - 5pm)
-            document.getElementById('start_time_input').value = '09:00';
-            document.getElementById('end_time_input').value = '17:00';
-        }
-        
-        // Update the calendar display
-        updateMiniCalendar();
+            // Update the calendar display
+            updateMiniCalendar();
     });
     
     // Handle form submission

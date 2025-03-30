@@ -91,9 +91,10 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="schedule_form" method="POST" action="{{ url_for('new_schedule', personal_view=personal_view) }}">
+                    <form id="schedule_form" method="POST" action="{{ url_for('new_schedule') }}">
                         {{ form.hidden_tag() }}
                         <input type="hidden" id="schedule_id" name="schedule_id">
+                        <input type="hidden" name="personal_view" value="true">
                         {% if request.args.get('week_start') %}
                         <input type="hidden" name="week_start" value="{{ request.args.get('week_start') }}">
                         {% endif %}

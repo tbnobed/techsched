@@ -302,8 +302,8 @@ def calendar():
 @login_required
 def new_schedule():
     # Get the week_start parameter to maintain the same view
-    week_start = request.args.get('week_start')
-    personal_view = request.args.get('personal_view') == 'true'
+    week_start = request.args.get('week_start') or request.form.get('week_start')
+    personal_view = request.args.get('personal_view') == 'true' or request.form.get('personal_view') == 'true'
     
     form = ScheduleForm()
 
@@ -497,8 +497,8 @@ def new_schedule():
 @login_required
 def delete_schedule(schedule_id):
     # Get current week start to maintain the same view
-    week_start = request.args.get('week_start')
-    personal_view = request.args.get('personal_view') == 'true'
+    week_start = request.args.get('week_start') or request.form.get('week_start')
+    personal_view = request.args.get('personal_view') == 'true' or request.form.get('personal_view') == 'true'
     
     schedule = Schedule.query.get_or_404(schedule_id)
 

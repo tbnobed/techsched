@@ -190,6 +190,10 @@
     min-height: 600px;
     max-height: calc(100vh - 200px);
     overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    margin-bottom: 20px;
+    width: 100%;
 }
 
 .time-column {
@@ -232,6 +236,17 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     background: linear-gradient(135deg, var(--event-gradient-start), var(--event-gradient-end));
 }
+
+/* Make sure events are positioned correctly using JavaScript */
+{% for day in range(7) %}
+{% set current_date = week_start + timedelta(days=day) %}
+{% for schedule in schedules if schedule.start_time.date() == current_date.date() %}
+.day-column:nth-child({{ day + 2 }}) .schedule-event[data-schedule-id="{{ schedule.id }}"] {
+    top: {{ ((schedule.start_time.hour * 60 + schedule.start_time.minute) / 60) * 60 }}px;
+    height: {{ (((schedule.end_time - schedule.start_time).total_seconds() / 3600) * 60) }}px;
+}
+{% endfor %}
+{% endfor %}
 
 .schedule-time {
     font-weight: bold;
@@ -334,6 +349,7 @@
 <script>
 // Initialize tooltips and calendar javascript after the document is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips for schedule events
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
     tooltipTriggerList.forEach(function(tooltipTriggerEl) {
         new bootstrap.Tooltip(tooltipTriggerEl, {
@@ -343,23 +359,31 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Calendar initialization
-    let currentMonth = new Date();
-    let selectedDates = [];
-    let primaryDate = null;
-    
-    // Get all schedule dates for highlighting
-    const scheduleDates = [];
-    document.querySelectorAll('.schedule-event').forEach(event => {
-        const startTime = new Date(event.getAttribute('data-start-time'));
-        const dateStr = startTime.toISOString().split('T')[0];
-        if (!scheduleDates.includes(dateStr)) {
-            scheduleDates.push(dateStr);
-        }
-    });
-    
-    // Initialize the mini calendar
-    initMiniCalendar();
+    // Only initialize calendar components when the modal is opened
+    const scheduleModal = document.getElementById('scheduleModal');
+    if (scheduleModal) {
+        scheduleModal.addEventListener('show.bs.modal', function() {
+            // Calendar initialization
+            let currentMonth = new Date();
+            let selectedDates = [];
+            let primaryDate = null;
+            
+            // Get all schedule dates for highlighting
+            const scheduleDates = [];
+            document.querySelectorAll('.schedule-event').forEach(event => {
+                const startTime = new Date(event.getAttribute('data-start-time'));
+                const dateStr = startTime.toISOString().split('T')[0];
+                if (!scheduleDates.includes(dateStr)) {
+                    scheduleDates.push(dateStr);
+                }
+            });
+            
+            // Initialize the mini calendar
+            if (typeof initMiniCalendar === 'function') {
+                initMiniCalendar();
+            }
+        });
+    }
     
     // Initialize form handlers for the modal
     document.getElementById('scheduleModal').addEventListener('show.bs.modal', function(event) {

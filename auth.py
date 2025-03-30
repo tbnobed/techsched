@@ -31,48 +31,39 @@ def login():
             email_or_username = form.email.data.strip() if form.email.data else ""
             password = form.password.data
             
-            app.logger.debug(f"Login form submitted with: '{email_or_username}'")
+            app.logger.debug(f"Login form submitted for email: {email_or_username}")
             
-            # Find user by email OR username - case insensitive
+            # Find user by email OR username - using case-insensitive matching
             user = None
             
-            # The simplest and most direct approach: query with func.lower
-            app.logger.debug(f"Trying simplified case-insensitive lookup with func.lower")
-            
             if '@' in email_or_username:
-                # Email login attempt
-                app.logger.debug(f"Attempting case-insensitive email login")
+                # Email login
                 user = User.query.filter(func.lower(User.email) == func.lower(email_or_username)).first()
             else:
-                # Username login attempt
-                app.logger.debug(f"Attempting case-insensitive username login")
+                # Username login
                 user = User.query.filter(func.lower(User.username) == func.lower(email_or_username)).first()
             
-            # Log the result
+            # Log the result of the lookup
             if user:
                 app.logger.debug(f"Found user: ID={user.id}, username={user.username}, email={user.email}")
-            else:
-                app.logger.debug(f"No user found with identifier: {email_or_username}")
                 
-                # For debugging, show all users with similar emails
-                if '@' in email_or_username:
-                    email_part = email_or_username.split('@')[0].lower()
-                    similar_users = User.query.filter(func.lower(User.email).like(f"%{email_part}%")).all()
+                # Check the password
+                if user.check_password(password):
+                    app.logger.info(f"Successful login for user: {user.username} ({user.email})")
+                    login_user(user, remember=form.remember_me.data)
                     
-                    if similar_users:
-                        app.logger.debug(f"Found {len(similar_users)} similar users:")
-                        for u in similar_users:
-                            app.logger.debug(f"  ID={u.id}, username={u.username}, email={u.email}")
-            
-            # Authenticate if we found a user
-            if user and user.check_password(password):
-                app.logger.info(f"Successful login for user: {user.username} ({user.email})")
-                login_user(user, remember=form.remember_me.data)
-                next_page = request.args.get('next')
-                return redirect(next_page if next_page else url_for('tickets.tickets_dashboard'))
-            else:
-                if user:
+                    # Update session information for debugging
+                    app.logger.debug(f"Session after login: {session}")
+                    
+                    # Redirect to appropriate page
+                    next_page = request.args.get('next')
+                    return redirect(next_page if next_page else url_for('tickets.tickets_dashboard'))
+                else:
                     app.logger.warning(f"Password incorrect for user: {user.username}")
+                    app.logger.warning(f"Failed login attempt for email: {email_or_username}")
+                    flash('Invalid email or password')
+            else:
+                app.logger.debug(f"No user found with email/username: {email_or_username}")
                 flash('Invalid email or password')
                 
         except Exception as e:

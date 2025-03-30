@@ -29,15 +29,18 @@ def login():
             # Find user by email OR username - case insensitive
             user = None
             
-            # Case-insensitive lookup using custom Python code instead of SQLAlchemy
+            # True case-insensitive lookup using custom Python code instead of SQLAlchemy
+            # We check ONLY the lowercase versions of both the input and database values
+            input_lower = email_or_username.lower()
+            
             for u in User.query.all():
                 # If input is an email address
-                if '@' in email_or_username and u.email and u.email.lower() == email_or_username.lower():
+                if '@' in email_or_username and u.email and u.email.lower() == input_lower:
                     app.logger.debug(f"Found user by email match: {u.username} / {u.email}")
                     user = u
                     break
                 # If input is a username
-                elif '@' not in email_or_username and u.username and u.username.lower() == email_or_username.lower():
+                elif '@' not in email_or_username and u.username and u.username.lower() == input_lower:
                     app.logger.debug(f"Found user by username match: {u.username} / {u.email}")
                     user = u
                     break

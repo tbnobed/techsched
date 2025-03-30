@@ -29,17 +29,27 @@ def login():
                 # Email login attempt - find the user by exact email, case-insensitive
                 app.logger.debug(f"Looking for exact email match: {login_input}")
                 
-                # The issue is likely that the OSandoval@tbn.tv is being entered but
-                # the database has osandoval@tbn.tv (lowercase)
-                desired_email = login_input.lower()
-                app.logger.debug(f"Normalized input email to lowercase: {desired_email}")
+                # Normalize emails by stripping and lowercasing
+                desired_email = login_input.strip().lower()
+                app.logger.debug(f"Normalized input email to lowercase: '{desired_email}'")
                 
-                # Find direct matches
+                # Print all users and their email addresses for debugging
                 all_users = User.query.all()
                 app.logger.debug(f"Total users in database: {len(all_users)}")
                 
+                app.logger.debug("ALL USERS IN DATABASE:")
+                for idx, u in enumerate(all_users):
+                    app.logger.debug(f"  {idx+1}. {u.username}: '{u.email}' → normalized: '{u.email.lower() if u.email else ''}'")
+                
+                # SPECIFIC CHECK FOR OSANDOVAL USER
+                osandoval_users = [u for u in all_users if 'sandoval' in u.email.lower()]
+                if osandoval_users:
+                    app.logger.debug(f"Found {len(osandoval_users)} Sandoval users:")
+                    for u in osandoval_users:
+                        app.logger.debug(f"  - ID {u.id}: {u.username} / {u.email}")
+                
                 for user in all_users:
-                    db_email = user.email.lower() if user.email else ""
+                    db_email = user.email.lower().strip() if user.email else ""
                     app.logger.debug(f"Comparing DB email: '{db_email}' with input: '{desired_email}'")
                     if db_email == desired_email:
                         app.logger.info(f"Found exact email match for {user.username}")

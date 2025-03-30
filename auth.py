@@ -8,68 +8,84 @@ auth = Blueprint('auth', __name__)
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
-    """
-    Handle user login with case-insensitive username/email comparison.
-    This function uses SQLAlchemy's func.lower() for proper case-insensitive database queries.
-    """
     if current_user.is_authenticated:
         return redirect(url_for('tickets.tickets_dashboard'))
     
-    # Initialize logging
-    from app import app, db
+    # Add debug logging for the session
+    from app import app
     from flask import session
-    from sqlalchemy import func
-    import traceback
-    
     app.logger.debug(f"Login attempt - Method: {request.method}")
     app.logger.debug(f"Session before login: {session}")
     
     form = LoginForm()
     if form.validate_on_submit():
-        try:
-            # Get the email or username from the form
-            email_or_username = form.email.data.strip() if form.email.data else ""
-            password = form.password.data
+        # Make input lowercase for case-insensitive login
+        login_input = form.email.data if form.email.data else ""
+        app.logger.debug(f"Login form submitted for email: {login_input}")
+        
+        # Initialize user to None
+        user = None
+        
+        # Check if this is a username or email login
+        if '@' in login_input:
+            # Login with email (case-insensitive using SQL LOWER function)
+            email_search = login_input.lower()
+            app.logger.debug(f"Looking up by email (lowercase): {email_search}")
             
-            app.logger.debug(f"Login form submitted for email: {email_or_username}")
+            # PostgreSQL LOWER function for proper case-insensitive compare
+            query = User.query.filter(db.func.lower(User.email) == db.func.lower(email_search))
+            app.logger.debug(f"SQL query: {query}")
             
-            # Find user by email OR username - using case-insensitive matching
-            user = None
+            # Execute the query
+            user = query.first()
             
-            if '@' in email_or_username:
-                # Email login
-                user = User.query.filter(func.lower(User.email) == func.lower(email_or_username)).first()
-            else:
-                # Username login
-                user = User.query.filter(func.lower(User.username) == func.lower(email_or_username)).first()
-            
-            # Log the result of the lookup
-            if user:
-                app.logger.debug(f"Found user: ID={user.id}, username={user.username}, email={user.email}")
+            # If no user found, try to get all emails for debugging
+            if not user:
+                all_emails = [u.email for u in User.query.all()]
+                app.logger.debug(f"All emails in database: {all_emails}")
                 
-                # Check the password
-                if user.check_password(password):
-                    app.logger.info(f"Successful login for user: {user.username} ({user.email})")
-                    login_user(user, remember=form.remember_me.data)
-                    
-                    # Update session information for debugging
-                    app.logger.debug(f"Session after login: {session}")
-                    
-                    # Redirect to appropriate page
-                    next_page = request.args.get('next')
-                    return redirect(next_page if next_page else url_for('tickets.tickets_dashboard'))
-                else:
-                    app.logger.warning(f"Password incorrect for user: {user.username}")
-                    app.logger.warning(f"Failed login attempt for email: {email_or_username}")
-                    flash('Invalid email or password')
-            else:
-                app.logger.debug(f"No user found with email/username: {email_or_username}")
-                flash('Invalid email or password')
+                # Also try a direct query with LIKE for debugging
+                like_users = User.query.filter(User.email.ilike(f"%{email_search}%")).all()
+                app.logger.debug(f"Users with similar emails: {[u.email for u in like_users]}")
+        else:
+            # Case-insensitive username search using SQL LOWER function
+            app.logger.debug(f"Looking up by username (case-insensitive): {login_input}")
+            username_search = login_input.lower()
+            
+            # PostgreSQL LOWER function for proper case-insensitive compare
+            query = User.query.filter(db.func.lower(User.username) == db.func.lower(username_search))
+            app.logger.debug(f"SQL query: {query}")
+            
+            # Execute the query
+            user = query.first()
+            
+            # If no user found, try to get all usernames for debugging
+            if not user:
+                all_usernames = [u.username for u in User.query.all()]
+                app.logger.debug(f"All usernames in database: {all_usernames}")
                 
-        except Exception as e:
-            app.logger.error(f"Error during login: {str(e)}")
-            app.logger.error(traceback.format_exc())
-            flash('An error occurred during login. Please try again.')
+                # Also try a direct query with LIKE for debugging
+                like_users = User.query.filter(User.username.ilike(f"%{username_search}%")).all()
+                app.logger.debug(f"Users with similar usernames: {[u.username for u in like_users]}")
+            
+        # Debug log what we found
+        if user:
+            app.logger.debug(f"Found user: {user.username}, {user.email}")
+        else:
+            app.logger.warning(f"Failed login attempt for email: {login_input}")
+            
+        # Try password check if we found a user
+        if user and user.check_password(form.password.data):
+            # Log the successful login with more details
+            app.logger.info(f"User {user.username} logged in successfully")
+            login_user(user, remember=form.remember_me.data)
+            next_page = request.args.get('next')
+            app.logger.debug(f"Session after login: {session}")
+            app.logger.debug(f"Redirecting to: {next_page if next_page else 'calendar'}")
+            return redirect(next_page if next_page else url_for('tickets.tickets_dashboard'))
+            
+        app.logger.warning(f"Invalid credentials for login input: {login_input}")
+        flash('Invalid username/email or password')
         
     return render_template('login.html', form=form)
 

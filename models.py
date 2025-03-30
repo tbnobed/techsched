@@ -70,13 +70,6 @@ class User(UserMixin, db.Model):
     @property
     def email_normalized(self):
         return self.email.lower() if self.email else None
-        
-    def check_email(self, email):
-        """Case-insensitive email comparison - returns True if emails match ignoring case"""
-        if not self.email or not email:
-            return False
-        # Strip whitespace and compare lowercase versions
-        return self.email.strip().lower() == email.strip().lower()
     
 # NOTE: The SQLAlchemy validates decorator was causing issues,
 # so we're using Python property functionality to handle email normalization
@@ -94,27 +87,7 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        """
-        Verify that the provided password matches the stored hash
-        Return True if matches, False otherwise
-        Logs are added for debugging password matching issues
-        """
-        # Handle the case where either the stored hash or provided password is invalid
-        if not self.password_hash or not password:
-            from app import app
-            app.logger.error(f"Invalid password check: password_hash={bool(self.password_hash)}, password provided={bool(password)}")
-            return False
-            
-        # Check the password using werkzeug's check_password_hash
-        result = check_password_hash(self.password_hash, password)
-        
-        # Add debug logging
-        from app import app
-        if not result:
-            app.logger.debug(f"Password check failed for user {self.username} (ID: {self.id})")
-            app.logger.debug(f"Password provided length: {len(password)}")
-            
-        return result
+        return check_password_hash(self.password_hash, password)
 
     def get_timezone(self):
         """Get the user's timezone or fallback to app default"""

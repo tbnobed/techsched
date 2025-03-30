@@ -375,7 +375,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Only initialize calendar components when the modal is opened
     const scheduleModal = document.getElementById('scheduleModal');
     if (scheduleModal) {
-        scheduleModal.addEventListener('show.bs.modal', function() {
+        scheduleModal.addEventListener('show.bs.modal', function(event) {
             // Get all schedule dates for highlighting
             scheduleDates = [];
             document.querySelectorAll('.schedule-event').forEach(event => {
@@ -486,31 +486,53 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Update the calendar display
             updateMiniCalendar();
-    });
+        });
+    }
     
     // Handle form submission
-    document.getElementById('schedule_form').addEventListener('submit', function(event) {
-        // Combine the date and time inputs
-        const dateInput = document.getElementById('schedule_date').value;
-        const startTimeInput = document.getElementById('start_time_input').value;
-        const endTimeInput = document.getElementById('end_time_input').value;
-        
-        if (dateInput && startTimeInput && endTimeInput) {
-            const startDateTime = new Date(`${dateInput}T${startTimeInput}`);
-            const endDateTime = new Date(`${dateInput}T${endTimeInput}`);
-            
-            document.getElementById('start_time').value = 
-                `${startDateTime.getFullYear()}-${String(startDateTime.getMonth() + 1).padStart(2, '0')}-${String(startDateTime.getDate()).padStart(2, '0')} ${String(startDateTime.getHours()).padStart(2, '0')}:${String(startDateTime.getMinutes()).padStart(2, '0')}`;
-            
-            document.getElementById('end_time').value = 
-                `${endDateTime.getFullYear()}-${String(endDateTime.getMonth() + 1).padStart(2, '0')}-${String(endDateTime.getDate()).padStart(2, '0')} ${String(endDateTime.getHours()).padStart(2, '0')}:${String(endDateTime.getMinutes()).padStart(2, '0')}`;
+    try {
+        const scheduleForm = document.getElementById('schedule_form');
+        if (scheduleForm) {
+            scheduleForm.addEventListener('submit', function(event) {
+                try {
+                    // Combine the date and time inputs
+                    const dateInput = document.getElementById('schedule_date').value;
+                    const startTimeInput = document.getElementById('start_time_input').value;
+                    const endTimeInput = document.getElementById('end_time_input').value;
+                    
+                    if (dateInput && startTimeInput && endTimeInput) {
+                        const startDateTime = new Date(`${dateInput}T${startTimeInput}`);
+                        const endDateTime = new Date(`${dateInput}T${endTimeInput}`);
+                        
+                        const startTimeElement = document.getElementById('start_time');
+                        const endTimeElement = document.getElementById('end_time');
+                        
+                        if (startTimeElement && endTimeElement) {
+                            startTimeElement.value = 
+                                `${startDateTime.getFullYear()}-${String(startDateTime.getMonth() + 1).padStart(2, '0')}-${String(startDateTime.getDate()).padStart(2, '0')} ${String(startDateTime.getHours()).padStart(2, '0')}:${String(startDateTime.getMinutes()).padStart(2, '0')}`;
+                            
+                            endTimeElement.value = 
+                                `${endDateTime.getFullYear()}-${String(endDateTime.getMonth() + 1).padStart(2, '0')}-${String(endDateTime.getDate()).padStart(2, '0')} ${String(endDateTime.getHours()).padStart(2, '0')}:${String(endDateTime.getMinutes()).padStart(2, '0')}`;
+                        }
+                    }
+                    
+                    // Set the repeat days field
+                    if (selectedDates.length > 0) {
+                        const repeatDaysElement = document.getElementById('repeat_days');
+                        if (repeatDaysElement) {
+                            repeatDaysElement.value = selectedDates.join(',');
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error in form submission handler:", error);
+                }
+            });
+        } else {
+            console.error("Schedule form element not found");
         }
-        
-        // Set the repeat days field
-        if (selectedDates.length > 0) {
-            document.getElementById('repeat_days').value = selectedDates.join(',');
-        }
-    });
+    } catch (error) {
+        console.error("Error setting up form submission handler:", error);
+    }
 
     // Functions for the mini calendar
     function initMiniCalendar() {

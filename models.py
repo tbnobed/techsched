@@ -75,7 +75,8 @@ class User(UserMixin, db.Model):
         """Case-insensitive email comparison - returns True if emails match ignoring case"""
         if not self.email or not email:
             return False
-        return self.email.lower() == email.lower()
+        # Strip whitespace and compare lowercase versions
+        return self.email.strip().lower() == email.strip().lower()
     
 # NOTE: The SQLAlchemy validates decorator was causing issues,
 # so we're using Python property functionality to handle email normalization

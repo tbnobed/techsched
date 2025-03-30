@@ -19,8 +19,10 @@ def login():
     from app import app, db
     from flask import session
     from sqlalchemy import func
+    import traceback
     
     app.logger.debug(f"Login attempt - Method: {request.method}")
+    app.logger.debug(f"Session before login: {session}")
     
     form = LoginForm()
     if form.validate_on_submit():
@@ -29,45 +31,53 @@ def login():
             email_or_username = form.email.data.strip() if form.email.data else ""
             password = form.password.data
             
+            app.logger.debug(f"Login form submitted with: '{email_or_username}'")
+            
             # Find user by email OR username - case insensitive
             user = None
             
-            # Check if input looks like an email address
+            # The simplest and most direct approach: query with func.lower
+            app.logger.debug(f"Trying simplified case-insensitive lookup with func.lower")
+            
             if '@' in email_or_username:
-                # Use SQLAlchemy's func.lower for case-insensitive email comparison
-                app.logger.debug(f"Attempting email login with: '{email_or_username}'")
-                
-                # Find the user with a case-insensitive email match
+                # Email login attempt
+                app.logger.debug(f"Attempting case-insensitive email login")
                 user = User.query.filter(func.lower(User.email) == func.lower(email_or_username)).first()
-                if user:
-                    app.logger.debug(f"Found user by email: {user.username} / {user.email}")
             else:
-                # Handle username lookup (also case-insensitive)
-                app.logger.debug(f"Attempting username login with: '{email_or_username}'")
-                
-                # Find the user with a case-insensitive username match
+                # Username login attempt
+                app.logger.debug(f"Attempting case-insensitive username login")
                 user = User.query.filter(func.lower(User.username) == func.lower(email_or_username)).first()
-                if user:
-                    app.logger.debug(f"Found user by username: {user.username} / {user.email}")
-                    
+            
+            # Log the result
             if user:
-                app.logger.debug(f"User lookup result: Found user {user.username}")
-                
-                # Verify password if user found
-                if user.check_password(password):
-                    app.logger.info(f"Successful login for: {user.username} ({user.email})")
-                    login_user(user, remember=form.remember_me.data)
-                    next_page = request.args.get('next')
-                    return redirect(next_page if next_page else url_for('tickets.tickets_dashboard'))
-                else:
-                    app.logger.warning(f"Password incorrect for user: {user.username}")
-                    flash('Invalid username/email or password')
+                app.logger.debug(f"Found user: ID={user.id}, username={user.username}, email={user.email}")
             else:
-                app.logger.warning(f"No user found for: {email_or_username}")
-                flash('Invalid username/email or password')
+                app.logger.debug(f"No user found with identifier: {email_or_username}")
+                
+                # For debugging, show all users with similar emails
+                if '@' in email_or_username:
+                    email_part = email_or_username.split('@')[0].lower()
+                    similar_users = User.query.filter(func.lower(User.email).like(f"%{email_part}%")).all()
+                    
+                    if similar_users:
+                        app.logger.debug(f"Found {len(similar_users)} similar users:")
+                        for u in similar_users:
+                            app.logger.debug(f"  ID={u.id}, username={u.username}, email={u.email}")
+            
+            # Authenticate if we found a user
+            if user and user.check_password(password):
+                app.logger.info(f"Successful login for user: {user.username} ({user.email})")
+                login_user(user, remember=form.remember_me.data)
+                next_page = request.args.get('next')
+                return redirect(next_page if next_page else url_for('tickets.tickets_dashboard'))
+            else:
+                if user:
+                    app.logger.warning(f"Password incorrect for user: {user.username}")
+                flash('Invalid email or password')
+                
         except Exception as e:
             app.logger.error(f"Error during login: {str(e)}")
-            app.logger.exception("Exception details:")
+            app.logger.error(traceback.format_exc())
             flash('An error occurred during login. Please try again.')
         
     return render_template('login.html', form=form)

@@ -83,8 +83,8 @@
     </div>
 
     <!-- Schedule Modal -->
-    <div class="modal fade" id="scheduleModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+    <div class="modal fade" id="scheduleModal" tabindex="-1">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Add New Schedule</h5>
@@ -97,6 +97,13 @@
                         <input type="hidden" name="personal_view" value="true">
                         {% if request.args.get('week_start') %}
                         <input type="hidden" name="week_start" value="{{ request.args.get('week_start') }}">
+                        {% endif %}
+                        
+                        {% if current_user.is_admin %}
+                        <div class="mb-3">
+                            {{ form.technician.label(class="form-label") }}
+                            {{ form.technician(class="form-control") }}
+                        </div>
                         {% endif %}
                         <div class="mb-3">
                             {{ form.description.label(class="form-label") }}
@@ -112,34 +119,84 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Repeat Schedule</label>
-                            <div id="miniCalendar" class="mini-calendar">
-                                <!-- Calendar will be generated here by JavaScript -->
+                            <div class="mt-2">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="repeat_days_toggle" onchange="toggleRepeatDaysSelection()">
+                                    <label class="form-check-label" for="repeat_days_toggle">Schedule for multiple days</label>
+                                </div>
                             </div>
-                            <div id="selected-dates-container" class="mt-2 d-flex flex-wrap">
-                                <!-- Selected dates will appear here -->
+                            <div id="repeat_days_container" class="mt-2" style="display: none;">
+                                <div class="alert alert-info mb-3">
+                                    <small>Select the days to create this schedule. The same time and details will be used for all selected days.</small>
+                                </div>
+                                <div class="mini-calendar">
+                                    <div class="month-navigator d-flex justify-content-between align-items-center mb-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="prev-month">
+                                            <i data-feather="chevron-left"></i>
+                                        </button>
+                                        <h6 class="m-0" id="calendar-month-year">March 2025</h6>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="next-month">
+                                            <i data-feather="chevron-right"></i>
+                                        </button>
+                                    </div>
+                                    <div class="calendar-days">
+                                        <div class="day-names d-flex">
+                                            <div>Sun</div>
+                                            <div>Mon</div>
+                                            <div>Tue</div>
+                                            <div>Wed</div>
+                                            <div>Thu</div>
+                                            <div>Fri</div>
+                                            <div>Sat</div>
+                                        </div>
+                                        <div class="day-grid" id="calendar-days">
+                                            <!-- Days will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="selected-dates mt-3">
+                                    <div class="d-flex mb-2">
+                                        <strong>Selected Dates:</strong>
+                                        <button type="button" class="btn btn-sm btn-link ms-auto" id="clear-selection">Clear All</button>
+                                    </div>
+                                    <div id="selected-dates-container" class="d-flex flex-wrap">
+                                        <!-- Selected dates will appear here -->
+                                        <span class="text-muted" id="no-dates-selected">No additional dates selected</span>
+                                    </div>
+                                </div>
                             </div>
-                            {{ form.repeat_days(id="repeat_days", class="d-none") }}
                         </div>
                         <div class="row mb-3">
                             <div class="col">
                                 <label class="form-label">Start Time</label>
-                                <input type="time" id="start_time_input" class="form-control" value="09:00">
-                                {{ form.start_time(id="start_time", class="d-none") }}
+                                <select id="start_hour" class="form-control" onchange="updateEndTimeOptions()">
+                                    {% for hour in range(24) %}
+                                        <option value="{{ '%02d'|format(hour) }}">{{ '%02d:00'|format(hour) }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="col">
                                 <label class="form-label">End Time</label>
-                                <input type="time" id="end_time_input" class="form-control" value="17:00">
-                                {{ form.end_time(id="end_time", class="d-none") }}
+                                <select id="end_hour" class="form-control">
+                                    {% for hour in range(1, 24) %}
+                                        <option value="{{ '%02d'|format(hour) }}">{{ '%02d:00'|format(hour) }}</option>
+                                    {% endfor %}
+                                    <option value="00">00:00</option>
+                                </select>
                             </div>
                         </div>
-                        <div class="mb-3 form-check">
-                            {{ form.time_off(class="form-check-input", id="time_off") }}
+                        <div class="mb-3">
                             {{ form.time_off.label(class="form-check-label") }}
+                            {{ form.time_off(class="form-check-input", id="time_off") }}
                         </div>
+                        {{ form.start_time(type="hidden", id="start_time_input") }}
+                        {{ form.end_time(type="hidden", id="end_time_input") }}
+                        {{ form.repeat_days(type="hidden", id="repeat_days_input") }}
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" id="deleteScheduleBtn">Delete</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Save Schedule</button>
+                            <button type="button" id="delete_button" class="btn btn-danger" style="display: none;">Delete</button>
+                            <button type="button" id="copy_button" class="btn btn-info" style="display: none;">Copy Schedule</button>
+                            <button type="submit" class="btn btn-primary">Add Schedule</button>
                         </div>
                     </form>
                 </div>
@@ -354,9 +411,20 @@
 </style>
 
 <script>
-// Initialize tooltips and calendar javascript after the document is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tooltips for schedule events
+    // Function to toggle repeat days selection
+window.toggleRepeatDaysSelection = function() {
+    const container = document.getElementById('repeat_days_container');
+    if (container) {
+        if (document.getElementById('repeat_days_toggle').checked) {
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+        }
+    }
+};
+
+// Initialize tooltips for schedule events
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
     tooltipTriggerList.forEach(function(tooltipTriggerEl) {
         new bootstrap.Tooltip(tooltipTriggerEl, {

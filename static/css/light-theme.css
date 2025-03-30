@@ -315,10 +315,97 @@ body {
   background-color: var(--light-card);
   border-color: var(--light-border);
   color: var(--light-text);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  padding: 0.85rem 1rem;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
 }
 
 .list-group-item-action:hover {
   background-color: var(--light-hover);
+  transform: translateY(-2px) translateX(3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Add gradient background to active tickets */
+.card-header h5.card-title:contains('Active Tickets') ~ .card-body .list-group-item,
+.card:nth-of-type(3) .list-group-item-action {
+  background: linear-gradient(120deg, #f8fafc, #eef2ff);
+  border-left: 4px solid;
+  border-color: #6366f1;
+  margin-bottom: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Active tickets hover effect */
+.card:nth-of-type(3) .list-group-item-action:hover {
+  transform: translateY(-3px) translateX(2px);
+  background: linear-gradient(120deg, #f1f5f9, #e0e7ff);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Style for different priority levels in active tickets */
+.list-group-item[data-priority="3"] {
+  background: linear-gradient(120deg, #f8fafc, rgba(239, 68, 68, 0.05)) !important;
+  border-left: 4px solid #ef4444;
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.1);
+}
+
+.list-group-item[data-priority="2"] {
+  background: linear-gradient(120deg, #f8fafc, rgba(245, 158, 11, 0.05)) !important;
+  border-left: 4px solid #f59e0b;
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.1);
+}
+
+.list-group-item[data-priority="1"] {
+  background: linear-gradient(120deg, #f8fafc, rgba(14, 165, 233, 0.05)) !important;
+  border-left: 4px solid #0ea5e9;
+  box-shadow: 0 4px 8px rgba(14, 165, 233, 0.1);
+}
+
+.list-group-item[data-priority="0"] {
+  background: linear-gradient(120deg, #f8fafc, rgba(100, 116, 139, 0.05)) !important;
+  border-left: 4px solid #64748b;
+  box-shadow: 0 4px 8px rgba(100, 116, 139, 0.1);
+}
+
+/* Hover effects for priority tickets */
+.list-group-item[data-priority="3"]:hover {
+  background: linear-gradient(120deg, #f8fafc, rgba(239, 68, 68, 0.1)) !important;
+  box-shadow: 0 6px 12px rgba(239, 68, 68, 0.15);
+}
+
+.list-group-item[data-priority="2"]:hover {
+  background: linear-gradient(120deg, #f8fafc, rgba(245, 158, 11, 0.1)) !important;
+  box-shadow: 0 6px 12px rgba(245, 158, 11, 0.15);
+}
+
+.list-group-item[data-priority="1"]:hover {
+  background: linear-gradient(120deg, #f8fafc, rgba(14, 165, 233, 0.1)) !important;
+  box-shadow: 0 6px 12px rgba(14, 165, 233, 0.15);
+}
+
+.list-group-item[data-priority="0"]:hover {
+  background: linear-gradient(120deg, #f8fafc, rgba(100, 116, 139, 0.1)) !important;
+  box-shadow: 0 6px 12px rgba(100, 116, 139, 0.15);
+}
+
+/* Visual improvements for ticket title and status */
+.list-group-item .fw-bold {
+  font-size: 0.95rem;
+  letter-spacing: 0.25px;
+  margin-bottom: 4px;
+}
+
+.list-group-item .text-muted {
+  font-size: 0.8rem;
+  opacity: 0.85;
 }
 
 .nav-link {

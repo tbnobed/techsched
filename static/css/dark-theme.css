@@ -1,28 +1,28 @@
 /* Modern Dark Theme CSS - Plex Studios */
 :root {
   /* Base colors - more modern shades */
-  --dark-bg: #121826;
-  --dark-panel: #192231;
-  --dark-card: #252f3f;
-  --dark-accent: #3b82f6;
+  --dark-bg: #0d1117;
+  --dark-panel: #131b2a;
+  --dark-card: #1e2f4f;
+  --dark-accent: #6366f1;
   --dark-text: #f3f4f6;
   --dark-text-secondary: #d1d5db;
   --dark-muted: #9ca3af;
   --dark-border: #374151;
-  --dark-hover: #323f55;
-  --dark-active: #3b4a67;
-  --dark-input-bg: #2a3649;
+  --dark-hover: #2a3859;
+  --dark-active: #374a80;
+  --dark-input-bg: #1b2842;
   --dark-success: #10b981;
   --dark-info: #0ea5e9;
   --dark-warning: #f59e0b;
   --dark-danger: #ef4444;
   
-  /* Sidebar section specific colors - updated for modern palette */
-  --sidebar-time-bg: #1e293b;
-  --sidebar-active-bg: #1e3a8a;
-  --sidebar-timeoff-bg: #312e81;
-  --sidebar-tickets-bg: #3b0764;
-  --sidebar-links-bg: #134e4a;
+  /* Sidebar section specific colors - updated for modern palette with gradients */
+  --sidebar-time-bg: linear-gradient(135deg, #131d31, #192440);
+  --sidebar-active-bg: linear-gradient(135deg, #192f69, #2a4494);
+  --sidebar-timeoff-bg: linear-gradient(135deg, #2e2a7b, #4338ca);
+  --sidebar-tickets-bg: linear-gradient(135deg, #4633a0, #6d28d9);
+  --sidebar-links-bg: linear-gradient(135deg, #2563eb, #4f46e5);
 
   /* For Bootstrap compatibility */
   --primary-color: #3b82f6;
@@ -41,15 +41,15 @@ body {
 .card {
   background-color: var(--dark-card);
   border: 1px solid var(--dark-border);
-  border-radius: 10px;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease-in-out;
 }
 
 .card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
 }
 
 .card-header {
@@ -532,25 +532,34 @@ body {
 
 /* Sidebar section-specific styling */
 #current-time-display {
-  background-color: var(--sidebar-time-bg);
-  border: 1px solid var(--dark-border);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  background: var(--sidebar-time-bg);
+  border: none;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+  border-radius: 16px;
 }
 
 .col-md-3 .card:nth-of-type(1) {
-  background-color: var(--sidebar-active-bg);
+  background: var(--sidebar-active-bg);
+  border: none;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
 }
 
 .col-md-3 .card:nth-of-type(2) {
-  background-color: var(--sidebar-timeoff-bg);
+  background: var(--sidebar-timeoff-bg);
+  border: none;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
 }
 
 .col-md-3 .card:nth-of-type(3) {
-  background-color: var(--sidebar-tickets-bg);
+  background: var(--sidebar-tickets-bg);
+  border: none;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
 }
 
 .col-md-3 .card:nth-of-type(4) {
-  background-color: var(--sidebar-links-bg);
+  background: var(--sidebar-links-bg);
+  border: none;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
 }
 
 /* Better contrast for active users and time off section */
@@ -560,29 +569,45 @@ body {
 }
 
 .active-user-entry, .time-off-entry {
-  background-color: rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.active-user-entry::before, .time-off-entry::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, #4f46e5, #6366f1);
+  border-radius: 4px 0 0 4px;
 }
 
 .active-user-entry .username, .time-off-entry .username {
   font-weight: 600;
   color: var(--dark-text);
   font-size: 1.05rem;
+  letter-spacing: 0.3px;
 }
 
 .active-user-entry .location, .time-off-entry .date-range {
-  margin-top: 5px;
+  margin-top: 6px;
   color: var(--dark-text-secondary);
+  font-size: 0.9rem;
 }
 
 .active-user-entry:hover, .time-off-entry:hover {
-  background-color: rgba(255, 255, 255, 0.12);
-  transform: translateY(-2px);
-  transition: all 0.2s ease;
+  background-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Calendar styling */

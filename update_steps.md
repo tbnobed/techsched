@@ -73,10 +73,18 @@ curl http://localhost:5000/health
 ### New Features and Improvements
 - **Added favicon and Apple touch icon support**: Implemented browser tab icon support for both desktop and mobile devices.
 - **Improved browser compatibility**: Added support for iOS and mobile browser icon requests.
+- **Comprehensive documentation updates**: Completely revised user guide with detailed mobile feature documentation.
+- **Enhanced technician quick start guide**: Updated with mobile-specific instructions and screenshots.
+- **Deployment preparation tool**: Added script to automate packaging files for server deployment.
 
 ### Bug Fixes
 - Fixed 404 errors for favicon.ico and Apple touch icon requests.
 - Fixed mobile browser tab icon display issues.
+
+### Documentation
+- Added detailed backup checklist for administrators.
+- Created step-by-step update instructions for server deployments.
+- Enhanced mobile section in user guide with detailed navigation instructions.
 
 ## Troubleshooting
 

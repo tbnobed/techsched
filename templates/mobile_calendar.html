@@ -63,7 +63,7 @@
                     {% if schedule.start_time.date() == current_date.date() %}
                         {% set has_schedules = true %}
                         <div class="mobile-schedule-card" 
-                             style="border-left: 4px solid {{ schedule.technician.color }};"
+                             style="--tech-color: {{ schedule.technician.color }};"
                              data-bs-toggle="modal" 
                              data-bs-target="#scheduleModal"
                              data-schedule-id="{{ schedule.id }}"
@@ -116,10 +116,15 @@
     align-items: center;
     justify-content: space-between;
     background: linear-gradient(135deg, var(--accent-color-1), var(--accent-color-2));
-    color: white;
+    color: #ffffff !important; /* Ensuring text is always white regardless of theme */
     padding: 10px;
     border-radius: 8px;
     margin-bottom: 15px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4); /* Adding text shadow for better readability */
+}
+
+.mobile-title span, .mobile-title button, .mobile-title i {
+    color: #ffffff !important;
 }
 
 .mobile-controls {
@@ -132,11 +137,22 @@
     border-radius: 4px;
     margin: 0 2px;
     font-size: 0.9rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-light);
+    color: var(--text-color);
+    transition: all 0.2s ease;
+}
+
+.day-selector .nav-link:hover {
+    background-color: var(--bg-hover);
+    transform: translateY(-2px);
 }
 
 .day-selector .nav-link.active {
     background: linear-gradient(135deg, var(--accent-color-1), var(--accent-color-2));
-    color: white;
+    color: white !important;
+    border-color: var(--accent-color-1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .day-number {
@@ -156,6 +172,13 @@
     color: var(--text-color);
     padding: 10px;
     text-align: center;
+    font-weight: bold;
+}
+
+.day-header h4 {
+    margin: 0;
+    font-weight: bold;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.1);
 }
 
 .day-schedules {
@@ -171,12 +194,26 @@
     margin-bottom: 10px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.mobile-schedule-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background-color: var(--tech-color, var(--primary));
 }
 
 .mobile-schedule-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    border-color: var(--tech-color, var(--primary));
 }
 
 .schedule-time {

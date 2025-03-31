@@ -789,11 +789,26 @@ def update_status(ticket_id):
         if comment:
             details += f" - Comment: {comment}"
             
-        ticket.log_history(current_user, "status_changed", details)
-        
-        # Save the changes
+        # Save the status change first
         db.session.commit()
         app.logger.debug("Committed status change")
+        
+        # Create history entry directly instead of using log_history method
+        try:
+            history = TicketHistory(
+                ticket_id=ticket.id,
+                user_id=current_user.id,
+                action="status_changed",
+                details=details,
+                created_at=datetime.now(pytz.UTC)
+            )
+            db.session.add(history)
+            db.session.commit()
+            app.logger.debug("Added history entry")
+        except Exception as e:
+            app.logger.error(f"Error creating history entry: {str(e)}")
+            # Continue anyway since status was updated successfully
+            pass
         
         # Mark as successfully updated
         status_updated = True
@@ -892,9 +907,22 @@ def mobile_update_status(ticket_id):
         if comment:
             details += f" - Comment: {comment}"
         
-        ticket.log_history(current_user, "status_changed", details)
-        db.session.commit()
-        app.logger.debug("Added history entry")
+        try:
+            # Directly create history entry instead of using log_history
+            history = TicketHistory(
+                ticket_id=ticket.id,
+                user_id=current_user.id,
+                action="status_changed",
+                details=details,
+                created_at=datetime.now(pytz.UTC)
+            )
+            db.session.add(history)
+            db.session.commit()
+            app.logger.debug("Added history entry")
+        except Exception as e:
+            app.logger.error(f"Error creating history entry: {str(e)}")
+            # Continue anyway since status was updated successfully
+            pass
         
         # Mark as successfully updated - this is the key to showing the success message
         status_updated = True
@@ -986,11 +1014,27 @@ def assign_ticket(ticket_id):
         if note:
             details += f" - Note: {note}"
         
-        app.logger.info(f"Updating ticket #{ticket.id} assigned_to: {ticket.assigned_to}")    
-        ticket.log_history(current_user, "assigned", details)
+        app.logger.info(f"Updating ticket #{ticket.id} assigned_to: {ticket.assigned_to}")
         
-        # Commit the assignment to the database
+        # Save the ticket assignment first
         db.session.commit()
+        
+        # Create history entry directly instead of using log_history method
+        try:
+            history = TicketHistory(
+                ticket_id=ticket.id,
+                user_id=current_user.id,
+                action="assigned",
+                details=details,
+                created_at=datetime.now(pytz.UTC)
+            )
+            db.session.add(history)
+            db.session.commit()
+            app.logger.debug("Added assignment history entry")
+        except Exception as e:
+            app.logger.error(f"Error creating assignment history entry: {str(e)}")
+            # Continue anyway since ticket was assigned successfully
+            pass
         app.logger.info(f"Committed ticket assignment to database")
         
         # Send notification email to the assigned technician
@@ -1033,9 +1077,25 @@ def assign_ticket(ticket_id):
     else:
         # Unassigning ticket
         ticket.assigned_to = None
-        ticket.log_history(current_user, "unassigned")
         app.logger.info(f"Unassigned ticket #{ticket.id}")
         db.session.commit()
+        
+        # Create history entry directly
+        try:
+            history = TicketHistory(
+                ticket_id=ticket.id,
+                user_id=current_user.id,
+                action="unassigned",
+                details="Ticket was unassigned",
+                created_at=datetime.now(pytz.UTC)
+            )
+            db.session.add(history)
+            db.session.commit()
+            app.logger.debug("Added unassignment history entry")
+        except Exception as e:
+            app.logger.error(f"Error creating unassignment history entry: {str(e)}")
+            # Continue anyway since ticket was unassigned successfully
+            pass
     
     flash('Ticket assigned successfully', 'success')
     return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
@@ -1118,11 +1178,26 @@ def edit_ticket(ticket_id):
         # Always mark the ticket as modified to ensure due date changes are saved
         db.session.add(ticket)
         
-        if changes:
-            ticket.log_history(current_user, "edited", ", ".join(changes))
-            
-        # Always commit changes
+        # Always commit ticket changes first
         db.session.commit()
+        
+        # Create history entry directly if there are changes
+        if changes:
+            try:
+                history = TicketHistory(
+                    ticket_id=ticket.id,
+                    user_id=current_user.id,
+                    action="edited",
+                    details=", ".join(changes),
+                    created_at=datetime.now(pytz.UTC)
+                )
+                db.session.add(history)
+                db.session.commit()
+                app.logger.debug("Added edit history entry")
+            except Exception as e:
+                app.logger.error(f"Error creating edit history entry: {str(e)}")
+                # Continue anyway since ticket edit was saved successfully
+                pass
         
         if changes:
             flash('Ticket updated successfully', 'success')
@@ -1176,18 +1251,31 @@ def delete_comment(comment_id):
         return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
         
     try:
-        # Add history entry before deleting the comment
+        # Get the ticket for the history entry
         ticket = Ticket.query.get(ticket_id)
-        if ticket:
-            ticket.log_history(
-                current_user,
-                "deleted_comment",
-                f"Comment by {comment.user.username} deleted"
-            )
-            
-        # Delete the comment
+        comment_user_username = comment.user.username if comment.user else "unknown user"
+        
+        # Delete the comment first
         db.session.delete(comment)
         db.session.commit()
+        
+        # Add history entry after deleting the comment
+        if ticket:
+            try:
+                history = TicketHistory(
+                    ticket_id=ticket.id,
+                    user_id=current_user.id,
+                    action="deleted_comment",
+                    details=f"Comment by {comment_user_username} deleted",
+                    created_at=datetime.now(pytz.UTC)
+                )
+                db.session.add(history)
+                db.session.commit()
+                app.logger.debug("Added comment deletion history entry")
+            except Exception as e:
+                app.logger.error(f"Error creating comment deletion history entry: {str(e)}")
+                # Continue anyway since comment was deleted successfully
+                pass
         
         flash('Comment deleted successfully', 'success')
     except Exception as e:

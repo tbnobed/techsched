@@ -256,7 +256,7 @@
 
 <!-- Include modals -->
 {% include 'tickets/modals/assign_ticket.html' %}
-{% include 'tickets/modals/update_status.html' %}
+{% include 'tickets/modals/mobile_update_status.html' %}
 {% include 'tickets/modals/edit_ticket.html' %}
 
 <script>
@@ -282,7 +282,7 @@
         // Create a form for submission
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = "{{ url_for('tickets.update_status', ticket_id=ticket['id']) }}";
+        form.action = "{{ url_for('tickets.mobile_update_status', ticket_id=ticket['id']) }}";
         
         // Add CSRF token
         const csrfInput = document.createElement('input');

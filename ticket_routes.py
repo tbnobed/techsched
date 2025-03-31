@@ -756,7 +756,12 @@ def add_comment(ticket_id):
 @tickets.route('/tickets/<int:ticket_id>/status', methods=['POST'])
 @login_required
 def update_status(ticket_id):
-    """Update ticket status"""
+    """Update ticket status (desktop version)"""
+    # Check for mobile-specific redirect
+    if is_mobile_device():
+        app.logger.debug("Mobile device detected, redirecting to mobile status update handler")
+        return redirect(url_for('tickets.mobile_update_status', ticket_id=ticket_id))
+        
     ticket = Ticket.query.get_or_404(ticket_id)
     new_status = request.form.get('status')
     comment = request.form.get('comment', '')
@@ -764,73 +769,156 @@ def update_status(ticket_id):
     app.logger.debug(f"Updating ticket #{ticket_id} status from '{ticket.status}' to '{new_status}'")
     app.logger.debug(f"Requested by user: {current_user.id} (admin: {current_user.is_admin})")
     
-    # Allow any authenticated user to update status
-    # This is needed for mobile functionality
+    # Allow any authenticated user to update status regardless of ownership
     
     if new_status not in vars(TicketStatus).values():
         flash('Invalid ticket status', 'error')
         return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
     
-    old_status = ticket.status
-    ticket.status = new_status
-    
-    # Add status change to history
-    details = f"Status changed from {old_status} to {new_status}"
-    if comment:
-        details += f" - Comment: {comment}"
-        
-    ticket.log_history(current_user, "status_changed", details)
-    
-    # Force the status change by marking it as modified
-    db.session.add(ticket)
-    
     try:
-        # Commit the status change first
+        old_status = ticket.status
+        ticket.status = new_status
+        
+        # Add status change to history
+        details = f"Status changed from {old_status} to {new_status}"
+        if comment:
+            details += f" - Comment: {comment}"
+            
+        ticket.log_history(current_user, "status_changed", details)
+        
+        # Save the changes
         db.session.commit()
         
-        # If a comment was provided, also add it as a separate comment
-        # This is done as a separate transaction to avoid ID conflicts
+        # If a comment was provided, add it as a separate comment
         if comment:
-            ticket.add_comment(current_user, comment)
+            # Create a new comment manually instead of using add_comment
+            new_comment = TicketComment(
+                ticket_id=ticket.id,
+                user_id=current_user.id,
+                content=comment,
+                created_at=datetime.now(pytz.UTC),
+                updated_at=datetime.now(pytz.UTC)
+            )
+            db.session.add(new_comment)
             db.session.commit()
+            
+        app.logger.debug(f"Successfully updated ticket #{ticket_id} status to '{new_status}'")
+        flash('Ticket status updated successfully', 'success')
+        
+        # Send notification email if the ticket is assigned to someone
+        if ticket.assigned_to and ticket.assigned_to != current_user.id:
+            try:
+                app.logger.info(f"Sending status update notification for ticket #{ticket.id}")
+                
+                # The email function will create an app context if needed
+                result = send_ticket_status_notification(
+                    ticket=ticket,
+                    old_status=old_status,
+                    new_status=new_status,
+                    updated_by=current_user,
+                    comment=comment if comment else None
+                )
+                
+                app.logger.info(f"Status notification result: {result}")
+            except Exception as e:
+                app.logger.error(f"Failed to send status update notification: {str(e)}")
+                import traceback
+                app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+        
     except Exception as e:
         db.session.rollback()
         app.logger.error(f"Error updating ticket status: {str(e)}")
+        import traceback
+        app.logger.error(f"Exception traceback: {traceback.format_exc()}")
         flash('Error updating ticket status', 'error')
+        
+    return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
+
+@tickets.route('/tickets/<int:ticket_id>/mobile_status', methods=['POST'])
+@login_required
+def mobile_update_status(ticket_id):
+    """Update ticket status (mobile version)"""
+    app.logger.debug(f"Mobile status update for ticket #{ticket_id}")
+    
+    ticket = Ticket.query.get_or_404(ticket_id)
+    new_status = request.form.get('status')
+    comment = request.form.get('comment', '')
+    
+    app.logger.debug(f"Mobile updating ticket #{ticket_id} status from '{ticket.status}' to '{new_status}'")
+    app.logger.debug(f"Mobile requested by user: {current_user.id} (admin: {current_user.is_admin})")
+    app.logger.debug(f"Form data: {request.form}")
+    
+    # Validate new status
+    if new_status not in vars(TicketStatus).values():
+        flash('Invalid ticket status', 'error')
         return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
     
-    # Log success of the update
-    app.logger.debug(f"Successfully updated ticket #{ticket_id} status to '{new_status}'")
-    # Verify the update took effect
-    db.session.refresh(ticket)
-    app.logger.debug(f"After commit, ticket status is now '{ticket.status}'")
-    
-    # Send notification email if the ticket is assigned to someone
-    if ticket.assigned_to and ticket.assigned_to != current_user.id:
-        try:
-            app.logger.info(f"Sending status update notification for ticket #{ticket.id}")
-            
-            # The email function will create an app context if needed
-            result = send_ticket_status_notification(
-                ticket=ticket,
-                old_status=old_status,
-                new_status=new_status,
-                updated_by=current_user,
-                comment=comment if comment else None
+    try:
+        # Store old status for history
+        old_status = ticket.status
+        
+        # Update the status
+        ticket.status = new_status
+        app.logger.debug(f"Changed status to: {ticket.status}")
+        
+        # Commit the status change
+        db.session.add(ticket)
+        db.session.commit()
+        app.logger.debug("Committed status change")
+        
+        # Add the history entry
+        details = f"Status changed from {old_status} to {new_status}"
+        if comment:
+            details += f" - Comment: {comment}"
+        
+        ticket.log_history(current_user, "status_changed", details)
+        db.session.commit()
+        app.logger.debug("Added history entry")
+        
+        # Add comment if provided
+        if comment and comment.strip():
+            new_comment = TicketComment(
+                ticket_id=ticket.id,
+                user_id=current_user.id,
+                content=comment,
+                created_at=datetime.now(pytz.UTC),
+                updated_at=datetime.now(pytz.UTC)
             )
-            
-            app.logger.info(f"Status notification result: {result}")
-            if not result:
-                app.logger.error("Ticket status notification failed!")
-            else:
-                app.logger.info("Ticket status notification sent successfully!")
+            db.session.add(new_comment)
+            db.session.commit()
+            app.logger.debug("Added comment")
+        
+        flash('Ticket status updated successfully', 'success')
+        app.logger.info(f"Mobile status update successful for ticket #{ticket_id}")
+        
+        # Send notification email
+        if ticket.assigned_to and ticket.assigned_to != current_user.id:
+            try:
+                app.logger.info(f"Sending status update notification for ticket #{ticket.id}")
                 
-        except Exception as e:
-            app.logger.error(f"Failed to send status update notification: {str(e)}")
-            import traceback
-            app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+                # The email function will create an app context if needed
+                result = send_ticket_status_notification(
+                    ticket=ticket,
+                    old_status=old_status,
+                    new_status=new_status,
+                    updated_by=current_user,
+                    comment=comment if comment else None
+                )
+                
+                app.logger.info(f"Status notification result: {result}")
+            except Exception as e:
+                app.logger.error(f"Failed to send status update notification: {str(e)}")
+                import traceback
+                app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+                # Don't let email issues affect the user experience
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error updating ticket status in mobile view: {str(e)}")
+        import traceback
+        app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+        flash('Error updating ticket status', 'error')
     
-    flash('Ticket status updated successfully', 'success')
     return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
 
 @tickets.route('/tickets/<int:ticket_id>/assign', methods=['POST'])

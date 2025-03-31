@@ -46,11 +46,11 @@
                 <h4>{{ current_date.strftime('%A, %B %d, %Y') }}</h4>
             </div>
             <div class="day-schedules">
-                {% set has_schedules = false %}
+                {% set ns = namespace(has_schedules = false) %}
                 
                 {% for schedule in schedules %}
                     {% if schedule.start_time.year == current_date.year and schedule.start_time.month == current_date.month and schedule.start_time.day == current_date.day %}
-                        {% set has_schedules = true %}
+                        {% set ns.has_schedules = true %}
                         <div class="mobile-schedule-card {% if schedule.time_off %}time-off-card{% endif %}" 
                              style="--tech-color: {{ schedule.technician.color }};"
                              data-bs-toggle="modal" 
@@ -82,7 +82,7 @@
                     {% endif %}
                 {% endfor %}
                 
-                {% if not has_schedules %}
+                {% if not ns.has_schedules %}
                     <div class="empty-day-message">
                         <p>No schedules for this day.</p>
                         <button class="btn btn-sm btn-outline-primary" 

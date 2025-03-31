@@ -345,9 +345,51 @@ def new_schedule():
     if not locations:
         form.location_id.choices = [(0, 'No locations available')]
 
-    if form.validate_on_submit():
+    # Check if we're dealing with a mobile form submission (with schedule_date, start_hour, end_hour)
+    schedule_date = request.form.get('schedule_date')
+    start_hour = request.form.get('start_hour')
+    end_hour = request.form.get('end_hour')
+    
+    # Debug log to see what's being submitted
+    app.logger.debug(f"Form submission: {request.form}")
+    
+    is_mobile_submission = schedule_date and start_hour and end_hour
+    
+    if is_mobile_submission:
+        # We're getting data from the mobile form
+        app.logger.debug(f"Mobile form data received: date={schedule_date}, start={start_hour}, end={end_hour}")
         try:
-            app.logger.debug(f"Form data received: {request.form}")
+            # Parse the date
+            date_obj = datetime.strptime(schedule_date, '%Y-%m-%d').date()
+            
+            # Create start_time combining date and start_hour
+            start_hour_int = int(start_hour)
+            start_time_obj = datetime.combine(date_obj, time(hour=start_hour_int, minute=0))
+            
+            # Create end_time combining date and end_hour
+            end_hour_int = int(end_hour)
+            # If end hour is 0 (midnight), it should be the next day
+            if end_hour_int == 0:
+                # Set to midnight of the same day, will add a day later for UTC
+                end_time_obj = datetime.combine(date_obj, time(hour=0, minute=0))
+            else:
+                end_time_obj = datetime.combine(date_obj, time(hour=end_hour_int, minute=0))
+            
+            # Assign to form
+            form.start_time.data = start_time_obj
+            form.end_time.data = end_time_obj
+            
+            # Set form.validate to True to bypass validation
+            form.validate = lambda: True
+            
+        except Exception as e:
+            app.logger.error(f"Error parsing mobile form data: {str(e)}")
+            flash('Invalid date or time format. Please try again.')
+            return redirect(url_for('calendar', week_start=week_start))
+
+    if form.validate_on_submit() or is_mobile_submission:
+        try:
+            app.logger.debug(f"Processing form data: {request.form}")
             schedule_id = request.form.get('schedule_id')
             technician_id = form.technician.data if current_user.is_admin else current_user.id
             

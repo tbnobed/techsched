@@ -47,6 +47,15 @@
                     <h5>Filter Tickets</h5>
                     <form id="filter-form" method="GET" autocomplete="off" novalidate>
                         <div class="mb-3">
+                            <label class="form-label">Search</label>
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" placeholder="Keywords in title/description" value="{{ filter_info.search }}">
+                                <button type="submit" class="btn btn-sm btn-secondary">
+                                    <i data-feather="search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label">Status</label>
                             <select name="status" id="status-filter" class="form-select">
                                 <option value="all" {% if filter_info and filter_info.status == 'all' %}selected{% endif %}>All</option>
@@ -235,6 +244,7 @@
             category: '{{ filter_info.category }}',
             priority: '{{ filter_info.priority }}',
             technician: '{{ filter_info.technician }}',
+            search: '{{ filter_info.search }}',
             timestamp: '{{ timestamp }}'
         });
     });

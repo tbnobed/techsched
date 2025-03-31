@@ -10,25 +10,47 @@
         </div>
     </div>
 
-    <div class="mb-3 d-flex justify-content-between align-items-center">
-        <a href="{{ url_for('tickets.create_ticket') }}" class="btn btn-primary btn-sm">
-            <i data-feather="plus" class="feather-small"></i> New Ticket
-        </a>
+    <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <a href="{{ url_for('tickets.create_ticket') }}" class="btn btn-primary btn-sm">
+                <i data-feather="plus" class="feather-small"></i> New Ticket
+            </a>
+            
+            <form method="GET" action="{{ url_for('tickets.tickets_dashboard') }}" class="d-flex gap-2">
+                <div>
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="">All Statuses</option>
+                        <option value="open" {% if filter_status == 'open' %}selected{% endif %}>Open</option>
+                        <option value="in_progress" {% if filter_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                        <option value="pending" {% if filter_status == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="resolved" {% if filter_status == 'resolved' %}selected{% endif %}>Resolved</option>
+                        <option value="closed" {% if filter_status == 'closed' %}selected{% endif %}>Closed</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-sm btn-secondary">
+                    <i data-feather="filter" class="feather-small"></i>
+                </button>
+            </form>
+        </div>
         
-        <form method="GET" action="{{ url_for('tickets.tickets_dashboard') }}" class="d-flex gap-2">
-            <div>
-                <select name="status" class="form-select form-select-sm">
-                    <option value="">All Statuses</option>
-                    <option value="open" {% if filter_status == 'open' %}selected{% endif %}>Open</option>
-                    <option value="in_progress" {% if filter_status == 'in_progress' %}selected{% endif %}>In Progress</option>
-                    <option value="pending" {% if filter_status == 'pending' %}selected{% endif %}>Pending</option>
-                    <option value="resolved" {% if filter_status == 'resolved' %}selected{% endif %}>Resolved</option>
-                    <option value="closed" {% if filter_status == 'closed' %}selected{% endif %}>Closed</option>
-                </select>
+        <!-- Search Form -->
+        <form method="GET" action="{{ url_for('tickets.tickets_dashboard') }}" class="mb-2">
+            <div class="input-group">
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search tickets..." value="{{ filter_info.search }}">
+                <button type="submit" class="btn btn-sm btn-secondary">
+                    <i data-feather="search" class="feather-small"></i>
+                </button>
             </div>
-            <button type="submit" class="btn btn-sm btn-secondary">
-                <i data-feather="filter" class="feather-small"></i>
-            </button>
+            <!-- Keep any existing filters when searching -->
+            {% if filter_status and filter_status != 'all' %}
+            <input type="hidden" name="status" value="{{ filter_status }}">
+            {% endif %}
+            {% if filter_assigned_to %}
+            <input type="hidden" name="assigned_to" value="{{ filter_assigned_to }}">
+            {% endif %}
+            {% if filter_created_by %}
+            <input type="hidden" name="created_by" value="{{ filter_created_by }}">
+            {% endif %}
         </form>
     </div>
 

@@ -164,8 +164,9 @@ def tickets_dashboard():
     raw_technician_filter = request.args.get('technician')
     raw_assigned_to = request.args.get('assigned_to')
     raw_created_by = request.args.get('created_by')
+    raw_search_query = request.args.get('search')
     
-    app.logger.debug(f"Raw filter values from request - status: {raw_status_filter}, category: {raw_category_filter}, priority: {raw_priority_filter}, technician: {raw_technician_filter}, assigned_to: {raw_assigned_to}, created_by: {raw_created_by}")
+    app.logger.debug(f"Raw filter values from request - status: {raw_status_filter}, category: {raw_category_filter}, priority: {raw_priority_filter}, technician: {raw_technician_filter}, assigned_to: {raw_assigned_to}, created_by: {raw_created_by}, search: {raw_search_query}")
     
     # Determine final filter values
     if not request.args or has_only_cache_params:
@@ -176,6 +177,7 @@ def tickets_dashboard():
         technician_filter = 'all'
         assigned_to_filter = 'all'
         created_by_filter = 'all'
+        search_query = ''
     else:
         # Use 'all' as default if not provided
         status_filter = raw_status_filter if raw_status_filter not in (None, '') else 'all'
@@ -184,6 +186,7 @@ def tickets_dashboard():
         technician_filter = raw_technician_filter if raw_technician_filter not in (None, '') else 'all'
         assigned_to_filter = raw_assigned_to if raw_assigned_to not in (None, '') else 'all'
         created_by_filter = raw_created_by if raw_created_by not in (None, '') else 'all'
+        search_query = raw_search_query if raw_search_query not in (None, '') else ''
         
         # Log explicit parameter requests for debugging
         app.logger.debug(f"Explicit filter request - status:{status_filter}, category:{category_filter}, priority:{priority_filter}, technician:{technician_filter}")
@@ -283,6 +286,18 @@ def tickets_dashboard():
             app.logger.debug(f"After created_by filter ({created_by_filter}): {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
         except (ValueError, TypeError):
             app.logger.error(f"Invalid created_by filter value: {created_by_filter}")
+            
+    # Handle search query for keywords in title and description
+    if search_query:
+        app.logger.debug(f"Applying search query: {search_query}")
+        search_term = f"%{search_query}%"
+        query = query.filter(
+            db.or_(
+                Ticket.title.ilike(search_term),
+                Ticket.description.ilike(search_term)
+            )
+        )
+        app.logger.debug(f"After search query filter: {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
 
     # Show all tickets for all users, ordered by creation date (newest first)
     tickets = query.order_by(Ticket.created_at.desc()).all()
@@ -386,6 +401,7 @@ def tickets_dashboard():
         'category': category_filter,
         'priority': priority_filter,
         'technician': technician_filter,
+        'search': search_query,
         'timestamp': timestamp
     }
     

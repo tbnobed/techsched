@@ -47,8 +47,7 @@ def is_mobile_device():
     is_mobile = bool(re.search(pattern, user_agent))
     app.logger.debug(f"is_mobile_device detection result: {is_mobile}")
     
-    # For this project, we'll continue forcing mobile view for testing/development
-    return True
+    return is_mobile
 
 # Configuration
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "a secret key"

@@ -103,7 +103,18 @@
                 </div>
                 <div class="card-body">
                     <div id="active-users">
-                        Loading active users...
+                        <!-- Server-side rendering for better reliability -->
+                        {% if get_active_sidebar_tickets and active_sidebar_tickets %}
+                            <div class="list-group list-group-flush">
+                                {% for ticket in active_sidebar_tickets %}
+                                <div class="active-user-entry mb-2 p-2">
+                                    {{ ticket.title }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center mb-0">No active users</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>

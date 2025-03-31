@@ -49,13 +49,8 @@
                 {% set day = week_start + timedelta(days=i) %}
                 {% set day_name = day.strftime('%a') %}
                 {% set day_date = day.strftime('%b %d') %}
-                {% set day_schedules = [] %}
-                
-                {% for schedule in schedules %}
-                    {% if schedule.start_time.date() == day.date() %}
-                        {% do day_schedules.append(schedule) %}
-                    {% endif %}
-                {% endfor %}
+                <!-- Filter schedules for this day -->
+                {% set day_schedules = schedules|selectattr('start_time.date()', 'eq', day.date())|list %}
                 
                 <div class="day-container mb-3 {% if day.date() == today.date() %}bg-primary bg-opacity-10{% endif %}">
                     <div class="day-header d-flex justify-content-between align-items-center p-2 border-bottom">

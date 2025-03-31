@@ -887,14 +887,19 @@ def update_status(ticket_id):
             app.logger.error(f"Comment exception traceback: {traceback.format_exc()}")
             # Don't show error for comment failure - status was still updated
     
-    # Send notification email if the ticket is assigned to someone
-    if ticket.assigned_to and ticket.assigned_to != current_user.id:
-        try:
-            app.logger.info(f"Sending status update notification for ticket #{ticket.id}")
+    # Send notification email - but first get a fresh instance of the ticket
+    # since the previous session may have been closed
+    try:
+        # Create a fresh session for the email notification to avoid detached instance errors
+        fresh_session = db.create_scoped_session()
+        fresh_ticket = fresh_session.query(Ticket).get(ticket_id)
+        
+        if fresh_ticket and fresh_ticket.assigned_to and fresh_ticket.assigned_to != current_user.id:
+            app.logger.info(f"Sending status update notification for ticket #{fresh_ticket.id}")
             
             # The email function will create an app context if needed
             result = send_ticket_status_notification(
-                ticket=ticket,
+                ticket=fresh_ticket,
                 old_status=old_status,
                 new_status=new_status,
                 updated_by=current_user,
@@ -902,11 +907,12 @@ def update_status(ticket_id):
             )
             
             app.logger.info(f"Status notification result: {result}")
-        except Exception as e:
-            app.logger.error(f"Failed to send status update notification: {str(e)}")
-            import traceback
-            app.logger.error(f"Exception traceback: {traceback.format_exc()}")
-            # Don't let email issues affect the user experience
+        fresh_session.close()  # Close this session when done
+    except Exception as e:
+        app.logger.error(f"Failed to send status update notification: {str(e)}")
+        import traceback
+        app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+        # Don't let email issues affect the user experience
     
     # Show success message since we successfully updated the status
     app.logger.debug(f"Successfully updated ticket #{ticket_id} status to '{new_status}'")
@@ -1013,14 +1019,19 @@ def mobile_update_status(ticket_id):
             app.logger.error(f"Comment exception traceback: {traceback.format_exc()}")
             # Don't show error for comment failure - status was still updated
     
-    # Send notification email
-    if ticket.assigned_to and ticket.assigned_to != current_user.id:
-        try:
-            app.logger.info(f"Sending status update notification for ticket #{ticket.id}")
+    # Send notification email - but first get a fresh instance of the ticket
+    # since the previous session may have been closed
+    try:
+        # Create a fresh session for the email notification to avoid detached instance errors
+        fresh_session = db.create_scoped_session()
+        fresh_ticket = fresh_session.query(Ticket).get(ticket_id)
+        
+        if fresh_ticket and fresh_ticket.assigned_to and fresh_ticket.assigned_to != current_user.id:
+            app.logger.info(f"Sending status update notification for ticket #{fresh_ticket.id}")
             
             # The email function will create an app context if needed
             result = send_ticket_status_notification(
-                ticket=ticket,
+                ticket=fresh_ticket,
                 old_status=old_status,
                 new_status=new_status,
                 updated_by=current_user,
@@ -1028,11 +1039,12 @@ def mobile_update_status(ticket_id):
             )
             
             app.logger.info(f"Status notification result: {result}")
-        except Exception as e:
-            app.logger.error(f"Failed to send status update notification: {str(e)}")
-            import traceback
-            app.logger.error(f"Exception traceback: {traceback.format_exc()}")
-            # Don't let email issues affect the user experience
+        fresh_session.close()  # Close this session when done
+    except Exception as e:
+        app.logger.error(f"Failed to send status update notification: {str(e)}")
+        import traceback
+        app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+        # Don't let email issues affect the user experience
     
     # Show success message since we successfully updated the status
     flash('Ticket status updated successfully', 'success')
@@ -1097,36 +1109,46 @@ def assign_ticket(ticket_id):
         
         # Send notification email to the assigned technician
         try:
-            app.logger.info(f"Sending assignment notification for ticket #{ticket.id}")
+            # Create a fresh session for the email notification to avoid detached instance errors
+            fresh_session = db.create_scoped_session()
+            fresh_ticket = fresh_session.query(Ticket).get(ticket_id)
             
-            # Additional debug info
-            app.logger.info(f"Ticket assigned to user ID: {ticket.assigned_to}")
-            tech = User.query.get(ticket.assigned_to)
-            app.logger.info(f"Assigned technician: {tech.username}, Email: {tech.email}")
-            app.logger.info(f"Current user (assigner): {current_user.username}, Email: {current_user.email}")
-            
-            # Check email settings
-            from email_utils import get_email_settings
-            settings = get_email_settings()
-            app.logger.info(f"Email settings: Admin email = {settings.admin_email_group}")
-            
-            # Check if we're in an application context
-            from flask import has_app_context
-            app.logger.info(f"Before with clause: has_app_context = {has_app_context()}")
-            
-            # Instead of using nested app_context, use send_ticket_assigned_notification directly
-            app.logger.info("Calling send_ticket_assigned_notification directly")
-            from email_utils import send_ticket_assigned_notification
-            result = send_ticket_assigned_notification(
-                ticket=ticket,
-                assigned_by=current_user
-            )
-            
-            app.logger.info(f"Assignment notification result: {result}")
-            if not result:
-                app.logger.error("Ticket assignment notification failed!")
+            if fresh_ticket:
+                app.logger.info(f"Sending assignment notification for ticket #{fresh_ticket.id}")
+                
+                # Additional debug info
+                app.logger.info(f"Ticket assigned to user ID: {fresh_ticket.assigned_to}")
+                tech = User.query.get(fresh_ticket.assigned_to)
+                app.logger.info(f"Assigned technician: {tech.username}, Email: {tech.email}")
+                app.logger.info(f"Current user (assigner): {current_user.username}, Email: {current_user.email}")
+                
+                # Check email settings
+                from email_utils import get_email_settings
+                settings = get_email_settings()
+                app.logger.info(f"Email settings: Admin email = {settings.admin_email_group}")
+                
+                # Check if we're in an application context
+                from flask import has_app_context
+                app.logger.info(f"Before with clause: has_app_context = {has_app_context()}")
+                
+                # Use the fresh ticket instance to avoid detached instance errors
+                app.logger.info("Calling send_ticket_assigned_notification with fresh ticket instance")
+                from email_utils import send_ticket_assigned_notification
+                result = send_ticket_assigned_notification(
+                    ticket=fresh_ticket,
+                    assigned_by=current_user
+                )
+                
+                app.logger.info(f"Assignment notification result: {result}")
+                if not result:
+                    app.logger.error("Ticket assignment notification failed!")
+                else:
+                    app.logger.info("Ticket assignment notification sent successfully!")
+                
+                # Close the fresh session when done
+                fresh_session.close()
             else:
-                app.logger.info("Ticket assignment notification sent successfully!")
+                app.logger.error(f"Could not find ticket #{ticket_id} in fresh session for notification")
         except Exception as e:
             app.logger.error(f"Failed to send assignment notification: {str(e)}")
             # Print full exception traceback for debugging

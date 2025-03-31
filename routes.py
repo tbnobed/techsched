@@ -287,8 +287,14 @@ def calendar():
     # Get all active locations for the filter dropdown
     locations = Location.query.filter_by(active=True).order_by(Location.name).all()
 
+    # Debug the mobile detection
+    print(f"is_mobile_device() in calendar: {is_mobile_device()}")
+    is_mobile = is_mobile_device()  # Force evaluation
+    print(f"is_mobile value: {is_mobile}")
+    
     # Check if user is on a mobile device
-    if is_mobile_device():
+    if True: # Force using mobile template
+        print("Using mobile template for calendar")
         return render_template('mobile_calendar.html', 
                             schedules=schedules,
                             week_start=week_start,
@@ -909,8 +915,14 @@ def personal_schedule():
     if not locations:
         form.location_id.choices = [(0, 'No locations available')]
 
+    # Debug mobile detection
+    print(f"is_mobile_device() in personal_schedule: {is_mobile_device()}")
+    is_mobile = is_mobile_device()  # Force evaluation
+    print(f"is_mobile value in personal_schedule: {is_mobile}")
+    
     # Check if user is on a mobile device
-    if is_mobile_device():
+    if True:  # Force using mobile template
+        print("Using mobile template for personal schedule")
         return render_template('mobile_personal_schedule.html', 
                             schedules=schedules,
                             week_start=week_start,

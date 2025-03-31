@@ -624,14 +624,26 @@ def view_ticket(ticket_id):
         Ticket.created_at.desc()
     ).limit(5).all()
     
-    return render_template('tickets/view.html', 
-                         ticket=ticket,
-                         comment_form=comment_form,
-                         form=form,
-                         categories=categories,
-                         technicians=technicians,
-                         active_sidebar_tickets=active_sidebar_tickets,
-                         TicketStatus=TicketStatus)
+    # Check if user is on a mobile device
+    from app import is_mobile_device
+    if is_mobile_device():
+        return render_template('tickets/mobile_view_ticket.html', 
+                             ticket=ticket,
+                             comment_form=comment_form,
+                             form=form,
+                             categories=categories,
+                             technicians=technicians,
+                             active_sidebar_tickets=active_sidebar_tickets,
+                             TicketStatus=TicketStatus)
+    else:
+        return render_template('tickets/view.html', 
+                             ticket=ticket,
+                             comment_form=comment_form,
+                             form=form,
+                             categories=categories,
+                             technicians=technicians,
+                             active_sidebar_tickets=active_sidebar_tickets,
+                             TicketStatus=TicketStatus)
 
 @tickets.route('/tickets/<int:ticket_id>/comment', methods=['POST'])
 @login_required

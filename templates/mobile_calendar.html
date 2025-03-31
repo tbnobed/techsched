@@ -51,7 +51,7 @@
                 {% for schedule in schedules %}
                     {% if schedule.start_time.date() == current_date.date() %}
                         {% set has_schedules = true %}
-                        <div class="mobile-schedule-card" 
+                        <div class="mobile-schedule-card {% if schedule.time_off %}time-off-card{% endif %}" 
                              style="--tech-color: {{ schedule.technician.color }};"
                              data-bs-toggle="modal" 
                              data-bs-target="#scheduleModal"
@@ -60,6 +60,9 @@
                              data-end-time="{{ schedule.end_time }}"
                              data-time-off="{{ 'true' if schedule.time_off else 'false' }}">
                             <div class="schedule-time">
+                                {% if schedule.time_off %}
+                                <span class="time-off-badge">Time Off</span>
+                                {% endif %}
                                 {{ schedule.start_time.strftime('%I:%M %p') }} - {{ schedule.end_time.strftime('%I:%M %p') }}
                             </div>
                             <div class="schedule-tech">
@@ -318,6 +321,28 @@
 .feather-small {
     width: 14px;
     height: 14px;
+}
+
+.time-off-card {
+    background-color: #f8f9fa !important;
+    border-color: #dee2e6 !important;
+}
+
+.time-off-card::before {
+    background-color: var(--tech-color, #6c757d) !important;
+    width: 5px !important;
+    opacity: 0.7;
+}
+
+.time-off-badge {
+    background-color: #6c757d;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 5px;
+    display: inline-block;
+    vertical-align: middle;
 }
 </style>
 

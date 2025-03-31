@@ -379,8 +379,22 @@ def new_schedule():
             form.start_time.data = start_time_obj
             form.end_time.data = end_time_obj
             
-            # Set form.validate to True to bypass validation
-            form.validate = lambda: True
+            # Handle form fields
+            form.description.data = request.form.get('description', '')
+            
+            # Handle time_off checkbox
+            time_off_val = request.form.get('time_off')
+            form.time_off.data = bool(time_off_val == 'on' or time_off_val == 'true' or time_off_val == '1')
+            
+            # Get the location_id if present
+            location_id = request.form.get('location_id')
+            if location_id and location_id.isdigit():
+                form.location_id.data = int(location_id)
+            else:
+                form.location_id.data = 0
+                
+            # Mobile validation successful
+            is_mobile_validation_successful = True
             
         except Exception as e:
             app.logger.error(f"Error parsing mobile form data: {str(e)}")

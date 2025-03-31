@@ -729,27 +729,60 @@ def add_comment(ticket_id):
     form = TicketCommentForm()
     
     if form.validate_on_submit():
-        # Add comment to the ticket
-        comment = ticket.add_comment(current_user, form.content.data)
-        ticket.log_history(current_user, "commented")
-        db.session.commit()
-        
-        # Send notification email if the ticket is assigned to someone
-        if ticket.assigned_to and ticket.assigned_to != current_user.id:
+        try:
+            # Create a new comment directly with explicit autoincrement
+            comment = TicketComment(
+                ticket_id=ticket.id,
+                user_id=current_user.id,
+                content=form.content.data,
+                created_at=datetime.now(pytz.UTC),
+                updated_at=datetime.now(pytz.UTC)
+            )
+            db.session.add(comment)
+            db.session.commit()
+            app.logger.debug(f"Added comment to ticket #{ticket.id}")
+            
+            # Create history entry directly
             try:
-                app.logger.debug(f"Sending comment notification for ticket #{ticket.id}")
-                # The email function will create an app context if needed
-                send_ticket_comment_notification(
-                    ticket=ticket,
-                    comment=comment,
-                    commented_by=current_user
+                history = TicketHistory(
+                    ticket_id=ticket.id,
+                    user_id=current_user.id,
+                    action="commented",
+                    details=f"Comment added by {current_user.username}",
+                    created_at=datetime.now(pytz.UTC)
                 )
+                db.session.add(history)
+                db.session.commit()
+                app.logger.debug("Added comment history entry")
             except Exception as e:
-                app.logger.error(f"Failed to send comment notification: {str(e)}")
-                import traceback
-                app.logger.error(f"Exception traceback: {traceback.format_exc()}")
-        
-        flash('Comment added successfully', 'success')
+                app.logger.error(f"Error creating comment history entry: {str(e)}")
+                # Continue anyway since comment was added successfully
+                pass
+            
+            # Send notification email if the ticket is assigned to someone
+            if ticket.assigned_to and ticket.assigned_to != current_user.id:
+                try:
+                    app.logger.debug(f"Sending comment notification for ticket #{ticket.id}")
+                    
+                    # The email function will create an app context if needed
+                    send_ticket_comment_notification(
+                        ticket=ticket,
+                        comment=comment,
+                        commented_by=current_user
+                    )
+                except Exception as e:
+                    app.logger.error(f"Failed to send comment notification: {str(e)}")
+                    import traceback
+                    app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+                    # Continue anyway - the comment was saved
+            
+            flash('Comment added successfully', 'success')
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Error adding comment: {str(e)}")
+            import traceback
+            app.logger.error(f"Comment exception traceback: {traceback.format_exc()}")
+            flash('Error adding comment', 'error')
     
     return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
 
@@ -825,21 +858,33 @@ def update_status(ticket_id):
     # Now handle non-critical operations
     
     # If a comment was provided, add it as a separate comment
-    if comment:
+    if comment and comment.strip():
         try:
-            # Create a new comment manually instead of using add_comment
-            new_comment = TicketComment(
-                ticket_id=ticket.id,
-                user_id=current_user.id,
-                content=comment,
-                created_at=datetime.now(pytz.UTC),
-                updated_at=datetime.now(pytz.UTC)
-            )
-            db.session.add(new_comment)
-            db.session.commit()
-            app.logger.debug("Added comment")
+            # Create a fresh session for the comment to avoid any conflicts with previous operations
+            db.session.close()
+            db.session = db.create_scoped_session()
+            
+            # Reload the ticket to ensure we have a fresh instance
+            fresh_ticket = Ticket.query.get(ticket_id)
+            if fresh_ticket:
+                # Create a new comment with explicit autoincrement
+                new_comment = TicketComment(
+                    ticket_id=fresh_ticket.id,
+                    user_id=current_user.id,
+                    content=comment,
+                    created_at=datetime.now(pytz.UTC),
+                    updated_at=datetime.now(pytz.UTC)
+                )
+                db.session.add(new_comment)
+                db.session.commit()
+                app.logger.debug("Added comment successfully")
+            else:
+                app.logger.error(f"Could not find ticket #{ticket_id} when trying to add comment")
         except Exception as e:
+            db.session.rollback()
             app.logger.error(f"Error adding comment: {str(e)}")
+            import traceback
+            app.logger.error(f"Comment exception traceback: {traceback.format_exc()}")
             # Don't show error for comment failure - status was still updated
     
     # Send notification email if the ticket is assigned to someone
@@ -941,18 +986,31 @@ def mobile_update_status(ticket_id):
     # Add comment if provided
     if comment and comment.strip():
         try:
-            new_comment = TicketComment(
-                ticket_id=ticket.id,
-                user_id=current_user.id,
-                content=comment,
-                created_at=datetime.now(pytz.UTC),
-                updated_at=datetime.now(pytz.UTC)
-            )
-            db.session.add(new_comment)
-            db.session.commit()
-            app.logger.debug("Added comment")
+            # Create a fresh session for the comment to avoid any conflicts with previous operations
+            db.session.close()
+            db.session = db.create_scoped_session()
+            
+            # Reload the ticket to ensure we have a fresh instance
+            fresh_ticket = Ticket.query.get(ticket_id)
+            if fresh_ticket:
+                # Create a new comment with explicit autoincrement
+                new_comment = TicketComment(
+                    ticket_id=fresh_ticket.id,
+                    user_id=current_user.id,
+                    content=comment,
+                    created_at=datetime.now(pytz.UTC),
+                    updated_at=datetime.now(pytz.UTC)
+                )
+                db.session.add(new_comment)
+                db.session.commit()
+                app.logger.debug("Added comment successfully")
+            else:
+                app.logger.error(f"Could not find ticket #{ticket_id} when trying to add comment")
         except Exception as e:
+            db.session.rollback()
             app.logger.error(f"Error adding comment: {str(e)}")
+            import traceback
+            app.logger.error(f"Comment exception traceback: {traceback.format_exc()}")
             # Don't show error for comment failure - status was still updated
     
     # Send notification email

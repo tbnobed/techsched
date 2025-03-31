@@ -231,7 +231,8 @@ class Ticket(db.Model):
         }
 
 class TicketComment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    # Use autoincrement to ensure unique IDs
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)

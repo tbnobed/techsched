@@ -775,9 +775,14 @@ def update_status(ticket_id):
         flash('Invalid ticket status', 'error')
         return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
     
+    # Store old status for history and flag for tracking success
+    old_status = ticket.status
+    status_updated = False
+    
     try:
-        old_status = ticket.status
+        # Critical operation: Update the status
         ticket.status = new_status
+        app.logger.debug(f"Changed status to: {ticket.status}")
         
         # Add status change to history
         details = f"Status changed from {old_status} to {new_status}"
@@ -788,9 +793,25 @@ def update_status(ticket_id):
         
         # Save the changes
         db.session.commit()
+        app.logger.debug("Committed status change")
         
-        # If a comment was provided, add it as a separate comment
-        if comment:
+        # Mark as successfully updated
+        status_updated = True
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error updating ticket status: {str(e)}")
+        import traceback
+        app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+        flash('Error updating ticket status', 'error')
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
+    
+    # If we get here, the ticket status was updated successfully
+    # Now handle non-critical operations
+    
+    # If a comment was provided, add it as a separate comment
+    if comment:
+        try:
             # Create a new comment manually instead of using add_comment
             new_comment = TicketComment(
                 ticket_id=ticket.id,
@@ -801,36 +822,35 @@ def update_status(ticket_id):
             )
             db.session.add(new_comment)
             db.session.commit()
+            app.logger.debug("Added comment")
+        except Exception as e:
+            app.logger.error(f"Error adding comment: {str(e)}")
+            # Don't show error for comment failure - status was still updated
+    
+    # Send notification email if the ticket is assigned to someone
+    if ticket.assigned_to and ticket.assigned_to != current_user.id:
+        try:
+            app.logger.info(f"Sending status update notification for ticket #{ticket.id}")
             
-        app.logger.debug(f"Successfully updated ticket #{ticket_id} status to '{new_status}'")
-        flash('Ticket status updated successfully', 'success')
-        
-        # Send notification email if the ticket is assigned to someone
-        if ticket.assigned_to and ticket.assigned_to != current_user.id:
-            try:
-                app.logger.info(f"Sending status update notification for ticket #{ticket.id}")
-                
-                # The email function will create an app context if needed
-                result = send_ticket_status_notification(
-                    ticket=ticket,
-                    old_status=old_status,
-                    new_status=new_status,
-                    updated_by=current_user,
-                    comment=comment if comment else None
-                )
-                
-                app.logger.info(f"Status notification result: {result}")
-            except Exception as e:
-                app.logger.error(f"Failed to send status update notification: {str(e)}")
-                import traceback
-                app.logger.error(f"Exception traceback: {traceback.format_exc()}")
-        
-    except Exception as e:
-        db.session.rollback()
-        app.logger.error(f"Error updating ticket status: {str(e)}")
-        import traceback
-        app.logger.error(f"Exception traceback: {traceback.format_exc()}")
-        flash('Error updating ticket status', 'error')
+            # The email function will create an app context if needed
+            result = send_ticket_status_notification(
+                ticket=ticket,
+                old_status=old_status,
+                new_status=new_status,
+                updated_by=current_user,
+                comment=comment if comment else None
+            )
+            
+            app.logger.info(f"Status notification result: {result}")
+        except Exception as e:
+            app.logger.error(f"Failed to send status update notification: {str(e)}")
+            import traceback
+            app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+            # Don't let email issues affect the user experience
+    
+    # Show success message since we successfully updated the status
+    app.logger.debug(f"Successfully updated ticket #{ticket_id} status to '{new_status}'")
+    flash('Ticket status updated successfully', 'success')
         
     return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
 
@@ -853,11 +873,12 @@ def mobile_update_status(ticket_id):
         flash('Invalid ticket status', 'error')
         return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
     
+    # Store old status for history
+    old_status = ticket.status
+    status_updated = False
+    
     try:
-        # Store old status for history
-        old_status = ticket.status
-        
-        # Update the status
+        # Critical operation: Update the status
         ticket.status = new_status
         app.logger.debug(f"Changed status to: {ticket.status}")
         
@@ -866,7 +887,7 @@ def mobile_update_status(ticket_id):
         db.session.commit()
         app.logger.debug("Committed status change")
         
-        # Add the history entry
+        # Critical operation: Add the history entry
         details = f"Status changed from {old_status} to {new_status}"
         if comment:
             details += f" - Comment: {comment}"
@@ -875,8 +896,23 @@ def mobile_update_status(ticket_id):
         db.session.commit()
         app.logger.debug("Added history entry")
         
-        # Add comment if provided
-        if comment and comment.strip():
+        # Mark as successfully updated - this is the key to showing the success message
+        status_updated = True
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error updating ticket status in mobile view: {str(e)}")
+        import traceback
+        app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+        flash('Error updating ticket status', 'error')
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
+    
+    # If we get here, the status was updated successfully
+    # Now handle non-critical operations separately
+    
+    # Add comment if provided
+    if comment and comment.strip():
+        try:
             new_comment = TicketComment(
                 ticket_id=ticket.id,
                 user_id=current_user.id,
@@ -887,37 +923,34 @@ def mobile_update_status(ticket_id):
             db.session.add(new_comment)
             db.session.commit()
             app.logger.debug("Added comment")
-        
-        flash('Ticket status updated successfully', 'success')
-        app.logger.info(f"Mobile status update successful for ticket #{ticket_id}")
-        
-        # Send notification email
-        if ticket.assigned_to and ticket.assigned_to != current_user.id:
-            try:
-                app.logger.info(f"Sending status update notification for ticket #{ticket.id}")
-                
-                # The email function will create an app context if needed
-                result = send_ticket_status_notification(
-                    ticket=ticket,
-                    old_status=old_status,
-                    new_status=new_status,
-                    updated_by=current_user,
-                    comment=comment if comment else None
-                )
-                
-                app.logger.info(f"Status notification result: {result}")
-            except Exception as e:
-                app.logger.error(f"Failed to send status update notification: {str(e)}")
-                import traceback
-                app.logger.error(f"Exception traceback: {traceback.format_exc()}")
-                # Don't let email issues affect the user experience
-        
-    except Exception as e:
-        db.session.rollback()
-        app.logger.error(f"Error updating ticket status in mobile view: {str(e)}")
-        import traceback
-        app.logger.error(f"Exception traceback: {traceback.format_exc()}")
-        flash('Error updating ticket status', 'error')
+        except Exception as e:
+            app.logger.error(f"Error adding comment: {str(e)}")
+            # Don't show error for comment failure - status was still updated
+    
+    # Send notification email
+    if ticket.assigned_to and ticket.assigned_to != current_user.id:
+        try:
+            app.logger.info(f"Sending status update notification for ticket #{ticket.id}")
+            
+            # The email function will create an app context if needed
+            result = send_ticket_status_notification(
+                ticket=ticket,
+                old_status=old_status,
+                new_status=new_status,
+                updated_by=current_user,
+                comment=comment if comment else None
+            )
+            
+            app.logger.info(f"Status notification result: {result}")
+        except Exception as e:
+            app.logger.error(f"Failed to send status update notification: {str(e)}")
+            import traceback
+            app.logger.error(f"Exception traceback: {traceback.format_exc()}")
+            # Don't let email issues affect the user experience
+    
+    # Show success message since we successfully updated the status
+    flash('Ticket status updated successfully', 'success')
+    app.logger.info(f"Mobile status update successful for ticket #{ticket_id}")
     
     return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
 

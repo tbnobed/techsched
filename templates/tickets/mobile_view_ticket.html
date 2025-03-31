@@ -7,14 +7,6 @@
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">Ticket #{{ ticket['id'] }}</h5>
-            <div class="theme-toggle">
-                <form method="POST" action="{{ url_for('toggle_theme') }}" class="mb-0">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-sm btn-link p-0 text-decoration-none">
-                        <i data-feather="{% if current_user.theme_preference == 'light' %}moon{% else %}sun{% endif %}" style="width: 16px; height: 16px;"></i>
-                    </button>
-                </form>
-            </div>
         </div>
     </div>
     

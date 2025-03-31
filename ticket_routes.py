@@ -762,6 +762,10 @@ def update_status(ticket_id):
     comment = request.form.get('comment', '')
     
     app.logger.debug(f"Updating ticket #{ticket_id} status from '{ticket.status}' to '{new_status}'")
+    app.logger.debug(f"Requested by user: {current_user.id} (admin: {current_user.is_admin})")
+    
+    # Allow any authenticated user to update status
+    # This is needed for mobile functionality
     
     if new_status not in vars(TicketStatus).values():
         flash('Invalid ticket status', 'error')

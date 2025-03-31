@@ -92,8 +92,7 @@
                 </span>
             </div>
             
-            <!-- Mobile Quick Action Buttons -->
-            {% if current_user.is_admin or current_user.id == ticket['assigned_to'] or current_user.id == ticket['created_by'] %}
+            <!-- Mobile Quick Action Buttons - Allow all users to see buttons -->
             <div class="mb-3">
                 <div class="d-flex flex-wrap gap-2 justify-content-between">
                     {% if ticket['status'] == 'open' %}
@@ -149,7 +148,6 @@
                     {% endif %}
                 </div>
             </div>
-            {% endif %}
             
             <p class="text-muted small mb-3">
                 <strong>Created by:</strong> {{ ticket['creator']['username'] }} on {{ ticket['created_at'].strftime('%Y-%m-%d %H:%M') }}

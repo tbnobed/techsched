@@ -732,6 +732,79 @@ body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
+/* Mobile schedule card styling for dark theme */
+.mobile-schedule-card {
+  background-color: var(--dark-card) !important;
+  color: var(--dark-text) !important;
+  border-color: var(--dark-border) !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+}
+
+.mobile-schedule-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.schedule-time, .schedule-tech, .schedule-location, .schedule-desc {
+  color: var(--dark-text) !important;
+}
+
+.day-container {
+  border-color: var(--dark-border) !important;
+  background-color: var(--dark-panel) !important;
+}
+
+.day-header {
+  background: linear-gradient(to bottom, #192338, #1c2840) !important;
+  color: var(--dark-text) !important;
+  border-bottom-color: var(--dark-border) !important;
+}
+
+.day-header h4 {
+  color: var(--dark-text) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.day-schedules {
+  background-color: var(--dark-panel) !important;
+}
+
+.empty-day-message {
+  color: var(--dark-muted) !important;
+}
+
+/* Day selector in mobile view for dark theme */
+.day-selector .nav-link {
+  background-color: var(--dark-panel) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
+}
+
+.day-selector .nav-link:hover {
+  background-color: var(--dark-hover) !important;
+}
+
+.day-selector .nav-link.active {
+  background: linear-gradient(135deg, var(--dark-accent), #3b5998) !important;
+  border-color: var(--dark-accent) !important;
+}
+
+/* Date selection in dark theme */
+.date-checkbox-label {
+  background-color: var(--dark-panel) !important;
+  color: var(--dark-text) !important;
+  border-color: var(--dark-border) !important;
+}
+
+.date-checkbox-label:hover {
+  background-color: var(--dark-hover) !important;
+}
+
+.date-checkbox-input:checked + .date-checkbox-label {
+  background-color: var(--dark-accent) !important;
+  color: white !important;
+  border-color: var(--dark-accent) !important;
+}
+
 /* Fix calendar text contrast issues */
 .fc .fc-col-header-cell-cushion {
   color: var(--dark-text);

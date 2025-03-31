@@ -299,7 +299,7 @@ def calendar():
         from ticket_routes import get_active_sidebar_tickets
         active_sidebar_tickets = get_active_sidebar_tickets()
         
-        return render_template('mobile_calendar_simplified.html', 
+        return render_template('mobile_calendar.html', 
                             schedules=schedules,
                             week_start=week_start,
                             week_end=week_start + timedelta(days=7),
@@ -932,7 +932,7 @@ def personal_schedule():
         from ticket_routes import get_active_sidebar_tickets
         active_sidebar_tickets = get_active_sidebar_tickets()
         
-        return render_template('mobile_personal_schedule_simplified.html', 
+        return render_template('mobile_personal_schedule.html', 
                             schedules=schedules,
                             week_start=week_start,
                             week_end=week_start + timedelta(days=7),
@@ -1384,12 +1384,12 @@ def get_upcoming_time_off(for_template=False):
                     'color': entry.get('color', '#3498db')
                 })
 
-        return jsonify(time_off=formatted_entries)
+        return jsonify(formatted_entries)
     except Exception as e:
         app.logger.error(f"Error in get_upcoming_time_off: {str(e)}")
         if for_template:
             return []
-        return jsonify(time_off=[])
+        return jsonify([])
 
 @app.route('/admin/backup')
 @login_required

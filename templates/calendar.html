@@ -391,6 +391,7 @@
 <script>
 // Initialize tooltips after the document is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
     tooltipTriggerList.forEach(function(tooltipTriggerEl) {
         new bootstrap.Tooltip(tooltipTriggerEl, {
@@ -398,6 +399,15 @@ document.addEventListener('DOMContentLoaded', function() {
             container: 'body',
             boundary: 'window'
         });
+    });
+    
+    // Auto-scroll to current date in calendar
+    document.querySelectorAll('.fc-day-today').forEach(function(element) {
+        if (element) {
+            setTimeout(function() {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 500); // Short delay to ensure calendar is fully rendered
+        }
     });
 });
 </script>

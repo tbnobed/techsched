@@ -698,6 +698,11 @@ def view_ticket(ticket_id):
     # Check if user is on a mobile device
     from app import is_mobile_device
     if is_mobile_device():
+        # Debug current user and ticket permissions
+        app.logger.debug(f"Rendering mobile ticket view for user: {current_user.id} (admin: {current_user.is_admin})")
+        app.logger.debug(f"Ticket assigned to: {ticket['assigned_to']}, created by: {ticket['created_by']}")
+        app.logger.debug(f"User can edit? {current_user.is_admin or current_user.id == ticket['assigned_to'] or current_user.id == ticket['created_by']}")
+        
         return render_template('tickets/mobile_view_ticket.html', 
                              ticket=ticket,
                              comment_form=comment_form,

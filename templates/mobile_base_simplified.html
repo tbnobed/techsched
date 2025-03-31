@@ -119,7 +119,12 @@
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Active Tickets</h5>
-                    <a href="{{ url_for('tickets.tickets_dashboard') }}" class="btn btn-sm btn-primary">View All</a>
+                    <div>
+                        <a href="{{ url_for('tickets.create_ticket') }}" class="btn btn-sm btn-primary me-2">
+                            <i data-feather="plus" class="feather-small"></i> New
+                        </a>
+                        <a href="{{ url_for('tickets.tickets_dashboard') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
                 </div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush">

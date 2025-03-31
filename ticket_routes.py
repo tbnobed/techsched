@@ -162,8 +162,10 @@ def tickets_dashboard():
     raw_category_filter = request.args.get('category')
     raw_priority_filter = request.args.get('priority')
     raw_technician_filter = request.args.get('technician')
+    raw_assigned_to = request.args.get('assigned_to')
+    raw_created_by = request.args.get('created_by')
     
-    app.logger.debug(f"Raw filter values from request - status: {raw_status_filter}, category: {raw_category_filter}, priority: {raw_priority_filter}, technician: {raw_technician_filter}")
+    app.logger.debug(f"Raw filter values from request - status: {raw_status_filter}, category: {raw_category_filter}, priority: {raw_priority_filter}, technician: {raw_technician_filter}, assigned_to: {raw_assigned_to}, created_by: {raw_created_by}")
     
     # Determine final filter values
     if not request.args or has_only_cache_params:
@@ -172,12 +174,16 @@ def tickets_dashboard():
         category_filter = 'all'
         priority_filter = 'all'
         technician_filter = 'all'
+        assigned_to_filter = 'all'
+        created_by_filter = 'all'
     else:
         # Use 'all' as default if not provided
         status_filter = raw_status_filter if raw_status_filter not in (None, '') else 'all'
         category_filter = raw_category_filter if raw_category_filter not in (None, '') else 'all'
         priority_filter = raw_priority_filter if raw_priority_filter not in (None, '') else 'all'
         technician_filter = raw_technician_filter if raw_technician_filter not in (None, '') else 'all'
+        assigned_to_filter = raw_assigned_to if raw_assigned_to not in (None, '') else 'all'
+        created_by_filter = raw_created_by if raw_created_by not in (None, '') else 'all'
         
         # Log explicit parameter requests for debugging
         app.logger.debug(f"Explicit filter request - status:{status_filter}, category:{category_filter}, priority:{priority_filter}, technician:{technician_filter}")
@@ -259,6 +265,24 @@ def tickets_dashboard():
             app.logger.debug(f"After technician filter ({technician_filter}): {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
         except (ValueError, TypeError):
             app.logger.error(f"Invalid technician filter value: {technician_filter}")
+            
+    # Handle assigned_to filter separately from technician_filter
+    if assigned_to_filter != 'all':
+        try:
+            assigned_id = int(assigned_to_filter)
+            query = query.filter(Ticket.assigned_to == assigned_id)
+            app.logger.debug(f"After assigned_to filter ({assigned_to_filter}): {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
+        except (ValueError, TypeError):
+            app.logger.error(f"Invalid assigned_to filter value: {assigned_to_filter}")
+            
+    # Handle created_by filter
+    if created_by_filter != 'all':
+        try:
+            creator_id = int(created_by_filter)
+            query = query.filter(Ticket.created_by == creator_id)
+            app.logger.debug(f"After created_by filter ({created_by_filter}): {str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
+        except (ValueError, TypeError):
+            app.logger.error(f"Invalid created_by filter value: {created_by_filter}")
 
     # Show all tickets for all users, ordered by creation date (newest first)
     tickets = query.order_by(Ticket.created_at.desc()).all()
@@ -379,6 +403,21 @@ def tickets_dashboard():
     # Check if user is on a mobile device
     from app import is_mobile_device
     if is_mobile_device():
+        # Convert string filters to integers for the template
+        assigned_to_int = None
+        if assigned_to_filter != 'all':
+            try:
+                assigned_to_int = int(assigned_to_filter)
+            except (ValueError, TypeError):
+                pass
+                
+        created_by_int = None
+        if created_by_filter != 'all':
+            try:
+                created_by_int = int(created_by_filter)
+            except (ValueError, TypeError):
+                pass
+        
         return render_template('tickets/mobile_dashboard.html', 
                              tickets=filtered_tickets,
                              categories=categories,
@@ -389,8 +428,8 @@ def tickets_dashboard():
                              timestamp=timestamp,
                              active_sidebar_tickets=active_sidebar_tickets,
                              filter_status=status_filter,
-                             filter_assigned_to=None if technician_filter == 'all' else int(technician_filter) if technician_filter.isdigit() else None,
-                             filter_created_by=None)
+                             filter_assigned_to=assigned_to_int,
+                             filter_created_by=created_by_int)
     else:
         return render_template('tickets/dashboard.html', 
                              tickets=filtered_tickets,

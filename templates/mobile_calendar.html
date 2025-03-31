@@ -324,8 +324,16 @@
 }
 
 .time-off-card {
-    background-color: #f8f9fa !important;
-    border-color: #dee2e6 !important;
+    background-color: var(--bs-gray-100, #f8f9fa) !important;
+    border-color: var(--bs-gray-500, #dee2e6) !important;
+    color: var(--bs-body-color, #000) !important;
+}
+
+.time-off-card .schedule-time,
+.time-off-card .schedule-tech,
+.time-off-card .schedule-location,
+.time-off-card .schedule-desc {
+    color: var(--bs-body-color, #000) !important;
 }
 
 .time-off-card::before {
@@ -335,7 +343,7 @@
 }
 
 .time-off-badge {
-    background-color: #6c757d;
+    background-color: #c32f37; /* Dark red */
     color: white;
     font-size: 0.7rem;
     padding: 2px 6px;
@@ -343,6 +351,24 @@
     margin-right: 5px;
     display: inline-block;
     vertical-align: middle;
+}
+
+/* Dark theme adjustments */
+[data-bs-theme="dark"] .time-off-card,
+.dark-theme .time-off-card {
+    background-color: #2d3035 !important;
+    border-color: #495057 !important;
+}
+
+[data-bs-theme="dark"] .time-off-card .schedule-time,
+[data-bs-theme="dark"] .time-off-card .schedule-tech,
+[data-bs-theme="dark"] .time-off-card .schedule-location,
+[data-bs-theme="dark"] .time-off-card .schedule-desc,
+.dark-theme .time-off-card .schedule-time,
+.dark-theme .time-off-card .schedule-tech,
+.dark-theme .time-off-card .schedule-location,
+.dark-theme .time-off-card .schedule-desc {
+    color: #e2e2e2 !important;
 }
 </style>
 

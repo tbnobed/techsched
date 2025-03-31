@@ -51,7 +51,7 @@
                 {% for schedule in schedules %}
                     {% if schedule.start_time.date() == current_date.date() %}
                         {% set has_schedules = true %}
-                        <div class="mobile-schedule-card" 
+                        <div class="mobile-schedule-card {% if schedule.time_off %}time-off-card{% endif %}" 
                              style="--tech-color: {{ current_user.color }};"
                              data-bs-toggle="modal" 
                              data-bs-target="#scheduleModal"
@@ -68,9 +68,7 @@
                             </div>
                             {% endif %}
                             {% if schedule.time_off %}
-                            <div class="time-off-badge">
-                                <span class="badge bg-warning">Time Off</span>
-                            </div>
+                            <span class="time-off-badge">Time Off</span>
                             {% endif %}
                             {% if schedule.description %}
                             <div class="schedule-desc">
@@ -350,8 +348,46 @@
     word-break: break-word;
 }
 
+/* Time off styling */
+.time-off-card {
+    background-color: #fff7f7; /* Light red background */
+}
+
+.time-off-card .schedule-time,
+.time-off-card .schedule-tech,
+.time-off-card .schedule-location,
+.time-off-card .schedule-desc {
+    color: #d32f2f; /* Darker red text */
+}
+
+.time-off-card::before {
+    background-color: #d32f2f !important; /* Dark red sidebar */
+}
+
+/* Dark theme time off styling */
+[data-bs-theme="dark"] .time-off-card,
+.dark-theme .time-off-card {
+    background-color: #32202b; /* Dark red-tinted background */
+}
+
+[data-bs-theme="dark"] .time-off-card .schedule-time,
+[data-bs-theme="dark"] .time-off-card .schedule-tech,
+[data-bs-theme="dark"] .time-off-card .schedule-location,
+[data-bs-theme="dark"] .time-off-card .schedule-desc,
+.dark-theme .time-off-card .schedule-time,
+.dark-theme .time-off-card .schedule-tech,
+.dark-theme .time-off-card .schedule-location,
+.dark-theme .time-off-card .schedule-desc {
+    color: #ff8a80; /* Lighter red text for dark theme */
+}
+
 .time-off-badge {
-    margin-top: 5px;
+    background-color: #c32f37; /* Dark red */
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 5px;
 }
 
 .empty-day-message {

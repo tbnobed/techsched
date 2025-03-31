@@ -4,6 +4,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize Bootstrap modal
     const scheduleModal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+    
+    // Initialize AJAX-based calendar navigation
+    const calendarContainer = document.querySelector('.calendar-container');
+    if (calendarContainer) {
+        const isPersonalView = calendarContainer.dataset.personalView === 'true';
+        
+        // Set up navigation buttons
+        document.querySelectorAll('.nav-week').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const weekStart = this.dataset.weekStart;
+                loadCalendarData(weekStart, isPersonalView);
+            });
+        });
+        
+        // Set up month navigation buttons
+        document.querySelectorAll('.nav-month').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const weekStart = this.dataset.weekStart;
+                loadCalendarData(weekStart, isPersonalView);
+            });
+        });
+    }
 
     // Calculate schedule positions and handle overlaps
     function positionSchedules() {
@@ -262,9 +286,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (isMobileDevice()) {
                     updateMobileScheduleDisplay(data.days);
                 } else {
-                    // Desktop view schedule update would go here
-                    // This would require a more complex update mechanism for the full calendar view
-                    console.log('Desktop calendar data loaded, but requires page refresh for now');
+                    // Update desktop calendar view
+                    updateDesktopScheduleDisplay(data.schedules, data.days);
                 }
                 
                 // Remove loading overlay
@@ -394,6 +417,158 @@ document.addEventListener('DOMContentLoaded', function() {
     function isMobileDevice() {
         return window.innerWidth < 768 || 
                /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+    
+    // Function to update desktop schedule display
+    function updateDesktopScheduleDisplay(schedules, days) {
+        // Clear existing schedule cards
+        document.querySelectorAll('.schedule-card').forEach(card => {
+            card.remove();
+        });
+        
+        // Create updated schedule cards
+        schedules.forEach(schedule => {
+            createScheduleCard(schedule);
+        });
+        
+        // Update day headers with new dates
+        if (days && days.length > 0) {
+            const dayHeaders = document.querySelectorAll('.day-header');
+            days.forEach((day, index) => {
+                if (dayHeaders[index]) {
+                    dayHeaders[index].innerHTML = day.display_date;
+                    
+                    // Add today class to current day
+                    if (day.is_today) {
+                        dayHeaders[index].closest('.day-column').classList.add('today');
+                    } else {
+                        dayHeaders[index].closest('.day-column').classList.remove('today');
+                    }
+                }
+            });
+        }
+        
+        // Re-run positioning
+        positionSchedules();
+        
+        // Reinitialize feather icons if present
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+    
+    // Function to create a schedule card for the desktop view
+    function createScheduleCard(schedule) {
+        const scheduleDate = new Date(schedule.start_time_raw);
+        const dayOfWeek = scheduleDate.getDay();
+        
+        // Find the appropriate day column
+        const dayColumn = document.querySelector(`.day-column[data-day="${dayOfWeek}"]`);
+        if (!dayColumn) return;
+        
+        // Create the schedule card
+        const card = document.createElement('div');
+        card.className = 'schedule-card';
+        card.setAttribute('data-schedule-id', schedule.id);
+        card.setAttribute('data-start-time', schedule.start_time_raw);
+        card.setAttribute('data-end-time', schedule.end_time_raw);
+        card.setAttribute('data-time-off', schedule.time_off);
+        
+        // Calculate card position and height
+        const startHour = new Date(schedule.start_time_raw).getHours();
+        const endHour = new Date(schedule.end_time_raw).getHours() || 24; // Treat 0 as 24 (midnight)
+        const startMinutes = new Date(schedule.start_time_raw).getMinutes();
+        const endMinutes = new Date(schedule.end_time_raw).getMinutes();
+        
+        const topPosition = (startHour + startMinutes / 60) * 60;
+        const height = (endHour + endMinutes / 60 - startHour - startMinutes / 60) * 60;
+        
+        card.style.top = topPosition + 'px';
+        card.style.height = height + 'px';
+        card.style.borderLeftColor = schedule.color;
+        
+        // Create the card content
+        card.innerHTML = `
+            <div class="card-title">${schedule.username}</div>
+            <div class="card-time">${schedule.start_time} - ${schedule.end_time}</div>
+            ${schedule.location_name ? `<div class="card-location"><i data-feather="map-pin"></i> ${schedule.location_name}</div>` : ''}
+            ${schedule.description ? `<div class="card-description">${schedule.description}</div>` : ''}
+        `;
+        
+        // Add click handler to open modal
+        card.addEventListener('click', function() {
+            // Get modal elements
+            const scheduleModal = document.getElementById('scheduleModal');
+            const scheduleId = document.getElementById('schedule_id');
+            const scheduleDate = document.getElementById('schedule_date');
+            const startHour = document.getElementById('start_hour');
+            const endHour = document.getElementById('end_hour');
+            const description = document.getElementById('description');
+            const locationId = document.getElementById('location_id');
+            const timeOff = document.getElementById('time_off');
+            const modalTitle = document.querySelector('#scheduleModal .modal-title');
+            const deleteButton = document.getElementById('delete_button');
+            const submitButton = document.querySelector('#scheduleModal .btn-primary');
+            
+            // Populate modal with schedule data
+            scheduleId.value = schedule.id;
+            
+            // Format date for input
+            const dateObj = new Date(schedule.start_time_raw);
+            const formattedDate = dateObj.toISOString().split('T')[0];
+            scheduleDate.value = formattedDate;
+            
+            // Set hours
+            if (startHour) {
+                startHour.value = String(dateObj.getHours()).padStart(2, '0');
+            }
+            
+            if (endHour) {
+                const endDateObj = new Date(schedule.end_time_raw);
+                const displayEndHour = endDateObj.getHours() === 0 ? '00' : String(endDateObj.getHours()).padStart(2, '0');
+                endHour.value = displayEndHour;
+            }
+            
+            // Set description
+            description.value = schedule.description || '';
+            
+            // Set location if exists
+            if (locationId && schedule.location_id) {
+                locationId.value = schedule.location_id;
+            } else if (locationId) {
+                locationId.value = '';
+            }
+            
+            // Set time off
+            if (timeOff) {
+                timeOff.checked = schedule.time_off === 'true' || schedule.time_off === true;
+                
+                // Toggle related UI if needed
+                if (typeof toggleRepeatDaysSelection === 'function') {
+                    toggleRepeatDaysSelection();
+                }
+            }
+            
+            // Update modal title and buttons
+            modalTitle.textContent = 'Edit Schedule';
+            deleteButton.style.display = 'block';
+            submitButton.textContent = 'Save Changes';
+            
+            // Set up delete button
+            deleteButton.onclick = function() {
+                if (confirm('Are you sure you want to delete this schedule?')) {
+                    const weekStart = new URLSearchParams(window.location.search).get('week_start') || '';
+                    window.location.href = `/schedule/delete/${schedule.id}?week_start=${weekStart}`;
+                }
+            };
+            
+            // Open modal
+            const modal = new bootstrap.Modal(scheduleModal);
+            modal.show();
+        });
+        
+        // Add to day column
+        dayColumn.appendChild(card);
     }
     
     // Mini-calendar for repeat days selection

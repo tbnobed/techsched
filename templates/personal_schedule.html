@@ -1,29 +1,30 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="calendar-container">
+<div class="calendar-container" data-personal-view="true">
     <div class="calendar-header d-flex justify-content-between align-items-center mb-4">
         <div class="d-flex align-items-center">
             <h2>My Schedule - {{ week_start.strftime('%B %Y') }}</h2>
+            <span id="current-date-range" class="ms-3 text-muted">{{ week_start.strftime('%b %d') }} - {{ (week_start + timedelta(days=6)).strftime('%b %d, %Y') }}</span>
         </div>
         <div class="calendar-controls">
-            <a href="{{ url_for('personal_schedule', week_start=(week_start - timedelta(days=28)).strftime('%Y-%m-%d')) }}" 
+            <a href="#" onclick="loadCalendarData('{{ (week_start - timedelta(days=28)).strftime('%Y-%m-%d') }}', true); return false;" 
                class="btn btn-outline-secondary me-2">
                 <i data-feather="chevrons-left"></i> Previous Month
             </a>
-            <a href="{{ url_for('personal_schedule', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}" 
+            <a href="#" onclick="loadCalendarData('{{ (week_start - timedelta(days=7)).strftime('%Y-%m-%d') }}', true); return false;" 
                class="btn btn-outline-primary me-2">
                 <i data-feather="chevron-left"></i> Previous Week
             </a>
-            <a href="{{ url_for('personal_schedule') }}" 
+            <a href="#" onclick="loadCalendarData('{{ today.strftime('%Y-%m-%d') }}', true); return false;" 
                class="btn btn-outline-primary me-2">
                 Current Week
             </a>
-            <a href="{{ url_for('personal_schedule', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}" 
+            <a href="#" onclick="loadCalendarData('{{ (week_start + timedelta(days=7)).strftime('%Y-%m-%d') }}', true); return false;" 
                class="btn btn-outline-primary me-2">
                 Next Week <i data-feather="chevron-right"></i>
             </a>
-            <a href="{{ url_for('personal_schedule', week_start=(week_start + timedelta(days=28)).strftime('%Y-%m-%d')) }}" 
+            <a href="#" onclick="loadCalendarData('{{ (week_start + timedelta(days=28)).strftime('%Y-%m-%d') }}', true); return false;" 
                class="btn btn-outline-secondary me-2">
                 Next Month <i data-feather="chevrons-right"></i>
             </a>
@@ -430,6 +431,166 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize AJAX loading functionality
+    window.loadCalendarData = function(weekStart, isPersonalView = true) {
+        // Create loading overlay
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.className = 'loading-overlay';
+        loadingOverlay.innerHTML = '<div class="spinner-border text-light" role="status"><span class="visually-hidden">Loading...</span></div>';
+        document.body.appendChild(loadingOverlay);
+        
+        // Build API URL
+        const apiUrl = `/api/calendar_data?week_start=${weekStart}&personal_view=${isPersonalView ? '1' : '0'}`;
+        
+        // Fetch calendar data
+        fetch(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Update date range display
+                const dateRangeElement = document.getElementById('current-date-range');
+                if (dateRangeElement) {
+                    dateRangeElement.textContent = `${data.date_range.week_start_display} - ${data.date_range.week_end_display}`;
+                }
+                
+                // Update URL to reflect current week without page refresh
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('week_start', weekStart);
+                window.history.pushState({}, '', currentUrl.toString());
+                
+                // Update the month and year in the header
+                const headerTitle = document.querySelector('.calendar-header h2');
+                if (headerTitle) {
+                    headerTitle.textContent = `My Schedule - ${data.date_range.month_year}`;
+                }
+                
+                // Update the week view with new schedule data
+                updateWeekView(data.schedules, data.days);
+                
+                // Remove loading overlay
+                document.body.removeChild(loadingOverlay);
+            })
+            .catch(error => {
+                console.error('Error fetching calendar data:', error);
+                // Remove loading overlay
+                document.body.removeChild(loadingOverlay);
+                // Fallback to traditional page navigation
+                window.location.href = `/personal_schedule?week_start=${weekStart}`;
+            });
+    };
+    
+    // Function to update the week view with new schedule data
+    function updateWeekView(schedules, days) {
+        // Update each day column with the correct date and schedules
+        const dayColumns = document.querySelectorAll('.day-column');
+        
+        days.forEach((day, index) => {
+            if (index < dayColumns.length) {
+                const dayColumn = dayColumns[index];
+                const dayHeader = dayColumn.querySelector('.day-header');
+                const daySlots = dayColumn.querySelector('.day-slots');
+                
+                // Update day header
+                dayHeader.textContent = day.display_date;
+                dayHeader.dataset.date = day.date;
+                
+                // Clear existing schedules
+                daySlots.querySelectorAll('.schedule-event').forEach(el => el.remove());
+                
+                // Update date attribute
+                daySlots.dataset.date = day.date;
+                
+                // Update today class
+                if (day.is_today) {
+                    dayColumn.classList.add('today');
+                    dayHeader.classList.add('today');
+                } else {
+                    dayColumn.classList.remove('today');
+                    dayHeader.classList.remove('today');
+                }
+                
+                // Update time slots
+                daySlots.querySelectorAll('.time-slot').forEach(slot => {
+                    slot.dataset.date = day.date;
+                });
+            }
+        });
+        
+        // Add schedule events to the appropriate day slots
+        schedules.forEach(schedule => {
+            const startDate = new Date(schedule.start_time_raw);
+            const dayDateStr = startDate.toISOString().split('T')[0];
+            const daySlots = document.querySelector(`.day-slots[data-date="${dayDateStr}"]`);
+            
+            if (daySlots) {
+                // Create schedule event element
+                const scheduleEvent = document.createElement('div');
+                scheduleEvent.className = 'schedule-event';
+                scheduleEvent.style.backgroundColor = schedule.time_off ? '#6a6d6c' : schedule.technician_color;
+                
+                // Add data attributes
+                scheduleEvent.dataset.scheduleId = schedule.id;
+                scheduleEvent.dataset.technicianId = schedule.technician_id;
+                scheduleEvent.dataset.startTime = schedule.start_time_raw;
+                scheduleEvent.dataset.endTime = schedule.end_time_raw;
+                scheduleEvent.dataset.timeOff = schedule.time_off.toString();
+                scheduleEvent.dataset.locationId = schedule.location_id || '';
+                
+                // Add Bootstrap attributes
+                scheduleEvent.setAttribute('data-bs-toggle', 'modal');
+                scheduleEvent.setAttribute('data-bs-target', '#scheduleModal');
+                
+                // Add tooltip attributes
+                scheduleEvent.setAttribute('data-toggle', 'tooltip');
+                scheduleEvent.setAttribute('data-html', 'true');
+                
+                // Set tooltip content
+                const tooltipContent = `<div class='hover-content'><strong>${schedule.technician_name}</strong> <span class='text-muted'>${schedule.date_display}</span><br>${schedule.time_display} (${schedule.duration}h)${schedule.location_name ? '<br><i data-feather=\'map-pin\'></i> ' + schedule.location_name : ''}${schedule.description ? '<br>' + schedule.description : ''}</div>`;
+                scheduleEvent.setAttribute('title', tooltipContent);
+                
+                // Inner content
+                scheduleEvent.innerHTML = `
+                    <div class="schedule-time">${schedule.time_display}</div>
+                    <div class="schedule-tech">${schedule.technician_name}</div>
+                    ${schedule.location_name ? `<div class="schedule-location"><i data-feather="map-pin" class="feather-small"></i> ${schedule.location_name}</div>` : ''}
+                    ${schedule.description ? `<div class="schedule-desc">${schedule.description}</div>` : ''}
+                `;
+                
+                // Position the event based on time
+                const startHour = startDate.getHours();
+                const startMinute = startDate.getMinutes();
+                const endDate = new Date(schedule.end_time_raw);
+                const endHour = endDate.getHours();
+                const endMinute = endDate.getMinutes();
+                
+                const top = (startHour * 60 + startMinute) / 60 * 60;
+                const height = ((endHour * 60 + endMinute) - (startHour * 60 + startMinute)) / 60 * 60;
+                
+                scheduleEvent.style.top = `${top}px`;
+                scheduleEvent.style.height = `${height}px`;
+                
+                // Add to the day column
+                daySlots.appendChild(scheduleEvent);
+                
+                // Initialize tooltip
+                new bootstrap.Tooltip(scheduleEvent, {
+                    html: true,
+                    container: 'body',
+                    boundary: 'window'
+                });
+            }
+        });
+        
+        // Reinitialize feather icons
+        if (window.feather) {
+            window.feather.replace({ class: 'feather-small' });
+        }
+    }
+    
     // Function to toggle repeat days selection
 window.toggleRepeatDaysSelection = function() {
     const container = document.getElementById('repeat_days_container');

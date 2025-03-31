@@ -149,6 +149,20 @@ def get_active_users():
 def profile():
     form = EditUserForm(obj=current_user)
     password_form = ChangePasswordForm()
+    
+    # For debugging
+    print(f"is_mobile_device() in profile: {is_mobile_device()}")
+    is_mobile = is_mobile_device()  # Force evaluation
+    print(f"is_mobile value in profile: {is_mobile}")
+    
+    if is_mobile_device():
+        # Use mobile template with timezone list
+        return render_template('mobile_profile.html', 
+                             form=form, 
+                             password_form=password_form,
+                             timezones=pytz.common_timezones)
+    
+    # Use desktop template
     return render_template('profile.html', form=form, password_form=password_form)
 
 @app.route('/profile/update', methods=['POST'])

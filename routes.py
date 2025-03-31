@@ -298,8 +298,34 @@ def calendar():
         # Get active tickets for the sidebar
         from ticket_routes import get_active_sidebar_tickets
         active_sidebar_tickets = get_active_sidebar_tickets()
-        # Get upcoming time off with server-side rendering
-        upcoming_time_off = get_upcoming_time_off(for_template=True)
+        
+        # Get server-side data for mobile view components
+        try:
+            # Get currently active users for server-side rendering
+            active_users = []
+            current_time = datetime.now(pytz.UTC)
+            active_schedules = db.session.query(User, Schedule, Location) \
+                .join(Schedule, User.id == Schedule.technician_id) \
+                .outerjoin(Location, Schedule.location_id == Location.id) \
+                .filter(
+                    Schedule.start_time <= current_time,
+                    Schedule.end_time > current_time,
+                    Schedule.time_off == False
+                ).all()
+                
+            for user, schedule, location in active_schedules:
+                active_users.append({
+                    'username': user.username,
+                    'color': user.color,
+                    'location': location.name if location else None
+                })
+                
+            # Get upcoming time off with server-side rendering
+            upcoming_time_off = get_upcoming_time_off(for_template=True)
+        except Exception as e:
+            app.logger.error(f"Error getting sidebar data for mobile view: {str(e)}")
+            active_users = []
+            upcoming_time_off = []
         
         return render_template('mobile_calendar.html', 
                             schedules=schedules,
@@ -312,6 +338,7 @@ def calendar():
                             datetime=datetime,
                             timedelta=timedelta,
                             active_sidebar_tickets=active_sidebar_tickets,
+                            active_users=active_users,
                             upcoming_time_off=upcoming_time_off)
     else:
         return render_template('calendar.html', 
@@ -1316,11 +1343,16 @@ def get_upcoming_time_off(for_template=False):
             for entry in time_off_entries:
                 user = User.query.get(entry.technician_id)
                 if user:
+                    # Convert to user's timezone
+                    user_tz = current_user.get_timezone()
+                    start_time = entry.start_time.astimezone(user_tz)
+                    end_time = entry.end_time.astimezone(user_tz)
+                    
                     template_entries.append({
                         'username': user.username,
                         'color': user.color,
-                        'start_time': entry.start_time.strftime('%b %d, %I:%M %p'),
-                        'end_time': entry.end_time.strftime('%b %d, %I:%M %p'),
+                        'start_time': start_time.strftime('%b %d, %I:%M %p'),
+                        'end_time': end_time.strftime('%b %d, %I:%M %p'),
                         'description': entry.description
                     })
             return template_entries

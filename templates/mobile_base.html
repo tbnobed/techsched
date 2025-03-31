@@ -103,9 +103,10 @@
                 </div>
                 <div class="card-body">
                     <div id="active-users">
-                        {% if upcoming_time_off %}
+                        {% set active_users = active_users|default([]) %}
+                        {% if active_users %}
                             <div class="list-group list-group-flush">
-                                {% for user in upcoming_time_off %}
+                                {% for user in active_users %}
                                 <div class="active-user-entry mb-2 p-2" style="border-left: 3px solid {{ user.color|default('#3498db') }};">
                                     <h6 class="mb-1">{{ user.username }}</h6>
                                     <div class="small text-muted">
@@ -136,7 +137,7 @@
                                     <h6 class="mb-1">{{ entry.username }}</h6>
                                     <div class="small">
                                         <i data-feather="calendar" class="feather-small"></i> 
-                                        {{ entry.start_time|default('') }} - {{ entry.end_time|default('') }}
+                                        {{ entry.start_time }} - {{ entry.end_time }}
                                     </div>
                                     {% if entry.description %}
                                     <div class="small mt-1">{{ entry.description }}</div>

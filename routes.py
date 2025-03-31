@@ -295,6 +295,12 @@ def calendar():
     # Check if user is on a mobile device
     if is_mobile_device():
         print("Using mobile template for calendar")
+        # Get active tickets for the sidebar
+        from ticket_routes import get_active_sidebar_tickets
+        active_sidebar_tickets = get_active_sidebar_tickets()
+        # Get upcoming time off
+        upcoming_time_off = get_upcoming_time_off()
+        
         return render_template('mobile_calendar.html', 
                             schedules=schedules,
                             week_start=week_start,
@@ -304,7 +310,9 @@ def calendar():
                             selected_location=location_filter,
                             today=datetime.now(current_user.get_timezone()),
                             datetime=datetime,
-                            timedelta=timedelta)
+                            timedelta=timedelta,
+                            active_sidebar_tickets=active_sidebar_tickets,
+                            upcoming_time_off=upcoming_time_off)
     else:
         return render_template('calendar.html', 
                             schedules=schedules,
@@ -923,6 +931,12 @@ def personal_schedule():
     # Check if user is on a mobile device
     if is_mobile_device():
         print("Using mobile template for personal schedule")
+        # Get active tickets for the sidebar
+        from ticket_routes import get_active_sidebar_tickets
+        active_sidebar_tickets = get_active_sidebar_tickets()
+        # Get upcoming time off
+        upcoming_time_off = get_upcoming_time_off()
+        
         return render_template('mobile_personal_schedule.html', 
                             schedules=schedules,
                             week_start=week_start,
@@ -931,7 +945,9 @@ def personal_schedule():
                             today=datetime.now(current_user.get_timezone()),
                             datetime=datetime,
                             timedelta=timedelta,
-                            personal_view=True)
+                            personal_view=True,
+                            active_sidebar_tickets=active_sidebar_tickets,
+                            upcoming_time_off=upcoming_time_off)
     else:
         return render_template('personal_schedule.html', 
                             schedules=schedules,

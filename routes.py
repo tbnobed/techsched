@@ -6,7 +6,7 @@ from forms import (
     LoginForm, RegistrationForm, ScheduleForm, AdminUserForm, EditUserForm, 
     ChangePasswordForm, QuickLinkForm, LocationForm, EmailSettingsForm
 )
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import pytz
 import csv
 import random

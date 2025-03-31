@@ -1288,7 +1288,7 @@ def get_upcoming_time_off():
         user_entries = {}
         formatted_entries = []
         user_tz = pytz.timezone('America/Los_Angeles')  # Default timezone
-
+        
         for username, start_time, end_time, description in time_off_entries:
             if username not in user_entries:
                 user_entries[username] = []
@@ -1306,33 +1306,141 @@ def get_upcoming_time_off():
         for username, entries in user_entries.items():
             entries.sort(key=lambda x: x['start_date'])
             consolidated = []
-            current_entry = entries[0]
+            current_entry = entries[0] if entries else None
 
-            for entry in entries[1:]:
-                if (entry['start_date'] - current_entry['end_date']).days <= 1:                    # Consecutive days, extend the current entry
-                    current_entry['end_date'] = max(current_entry['end_date'], entry['end_date'])
-                else:
-                    # Non-consecutive, add current entry and start a new one
-                    consolidated.append(current_entry)
-                    current_entry = entry
+            if current_entry:
+                for entry in entries[1:]:
+                    if (entry['start_date'] - current_entry['end_date']).days <= 1:
+                        # Consecutive days, extend the current entry
+                        current_entry['end_date'] = max(current_entry['end_date'], entry['end_date'])
+                    else:
+                        # Non-consecutive, add current entry and start a new one
+                        consolidated.append(current_entry)
+                        current_entry = entry
 
-            consolidated.append(current_entry)
+                consolidated.append(current_entry)
 
-            # Format consolidated entries
-            for entry in consolidated:
-                duration = (entry['end_date'] - entry['start_date']).days + 1
-                formatted_entries.append({
-                    'username': username,
-                    'start_date': entry['start_date'].strftime('%b %d'),
-                    'end_date': entry['end_date'].strftime('%b %d'),
-                    'duration': f"{duration} day{'s' if duration != 1 else ''}",
-                    'description': entry.get('description') or 'Time Off'
-                })
+                # Format consolidated entries
+                for entry in consolidated:
+                    duration = (entry['end_date'] - entry['start_date']).days + 1
+                    formatted_entries.append({
+                        'username': username,
+                        'start_date': entry['start_date'].strftime('%b %d'),
+                        'end_date': entry['end_date'].strftime('%b %d'),
+                        'duration': f"{duration} day{'s' if duration != 1 else ''}",
+                        'description': entry.get('description') or 'Time Off'
+                    })
 
         return jsonify(formatted_entries)
     except Exception as e:
         app.logger.error(f"Error in get_upcoming_time_off: {str(e)}")
         return jsonify([])
+        
+@app.route('/api/calendar_data')
+@login_required
+def get_calendar_data():
+    """Get calendar data for AJAX loading"""
+    week_start = request.args.get('week_start')
+    location_filter = request.args.get('location_id', type=int)
+    personal_view = request.args.get('personal_view', '0') == '1'
+    
+    try:
+        if week_start:
+            week_start = datetime.strptime(week_start, '%Y-%m-%d')
+            week_start = current_user.get_timezone().localize(
+                week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+            )
+        else:
+            week_start = datetime.now(current_user.get_timezone())
+            week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+            week_start -= timedelta(days=week_start.weekday())
+
+        # Convert to UTC for database query
+        week_start_utc = week_start.astimezone(pytz.UTC)
+        week_end_utc = (week_start + timedelta(days=7)).astimezone(pytz.UTC)
+
+        # Query schedules in UTC with optional location filter
+        query = Schedule.query
+        
+        if personal_view:
+            query = query.filter(Schedule.technician_id == current_user.id)
+            
+        query = query.filter(
+            Schedule.start_time >= week_start_utc,
+            Schedule.start_time < week_end_utc
+        )
+
+        if location_filter:
+            query = query.filter(Schedule.location_id == location_filter)
+
+        schedules = query.all()
+
+        # Format the schedules
+        formatted_schedules = []
+        user_tz = current_user.get_timezone()
+        
+        for schedule in schedules:
+            # Convert to user's timezone
+            if schedule.start_time.tzinfo is None:
+                schedule.start_time = pytz.UTC.localize(schedule.start_time)
+            if schedule.end_time.tzinfo is None:
+                schedule.end_time = pytz.UTC.localize(schedule.end_time)
+                
+            start_time = schedule.start_time.astimezone(user_tz)
+            end_time = schedule.end_time.astimezone(user_tz)
+            
+            # Get location name if applicable
+            location_name = schedule.location.name if schedule.location else None
+            
+            formatted_schedules.append({
+                'id': schedule.id,
+                'user_id': schedule.technician_id,
+                'username': schedule.technician.username,
+                'color': schedule.technician.color,
+                'start_date': start_time.strftime('%Y-%m-%d'),
+                'end_date': end_time.strftime('%Y-%m-%d'),
+                'start_time': start_time.strftime('%H:%M'),
+                'end_time': end_time.strftime('%H:%M'),
+                'description': schedule.description,
+                'location_id': schedule.location_id,
+                'location_name': location_name,
+                'time_off': schedule.time_off
+            })
+        
+        # Format the week dates for display
+        date_range = {
+            'week_start': week_start.strftime('%Y-%m-%d'),
+            'week_end': (week_start + timedelta(days=6)).strftime('%Y-%m-%d'),
+            'week_start_display': week_start.strftime('%b %d'),
+            'week_end_display': (week_start + timedelta(days=6)).strftime('%b %d, %Y'),
+            'prev_week': (week_start - timedelta(days=7)).strftime('%Y-%m-%d'),
+            'next_week': (week_start + timedelta(days=7)).strftime('%Y-%m-%d'),
+            'prev_month': (week_start - timedelta(days=28)).strftime('%Y-%m-%d'),
+            'next_month': (week_start + timedelta(days=28)).strftime('%Y-%m-%d'),
+        }
+        
+        # Create an array of day data for mobile view
+        days = []
+        for i in range(7):
+            day_date = week_start + timedelta(days=i)
+            day_schedules = [s for s in formatted_schedules 
+                            if datetime.strptime(s['start_date'], '%Y-%m-%d').date() == day_date.date()]
+            
+            days.append({
+                'date': day_date.strftime('%Y-%m-%d'),
+                'display_date': day_date.strftime('%a, %b %d'),
+                'is_today': day_date.date() == datetime.now(current_user.get_timezone()).date(),
+                'schedules': day_schedules
+            })
+        
+        return jsonify({
+            'schedules': formatted_schedules,
+            'date_range': date_range,
+            'days': days
+        })
+    except Exception as e:
+        app.logger.error(f"Error getting calendar data: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/admin/backup')
 @login_required

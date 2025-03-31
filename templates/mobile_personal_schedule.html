@@ -22,15 +22,15 @@
 
     <div class="mobile-controls mb-3">
         <div class="d-flex justify-content-between align-items-center">
-            <a href="{{ url_for('personal_schedule', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
+            <button onclick="previousWeek()" class="btn btn-outline-secondary btn-sm">
                 <i data-feather="arrow-left"></i> Previous Week
-            </a>
+            </button>
             <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#scheduleModal">
                 <i data-feather="plus"></i> Add Schedule
             </button>
-            <a href="{{ url_for('personal_schedule', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
+            <button onclick="nextWeek()" class="btn btn-outline-secondary btn-sm">
                 Next Week <i data-feather="arrow-right"></i>
-            </a>
+            </button>
         </div>
     </div>
 
@@ -424,12 +424,38 @@ function showDay(dayIndex) {
     document.querySelector(`.day-selector .nav-link[data-day="${dayIndex}"]`).classList.add('active');
 }
 
+// AJAX-based navigation functions will be defined in calendar.js
+// These are fallback implementations in case the main JS fails
 function previousWeek() {
-    window.location.href = "{{ url_for('personal_schedule', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}";
+    try {
+        // Try to use the AJAX-based function first
+        if (typeof window.loadCalendarData === 'function') {
+            window.loadCalendarData('{{ (week_start - timedelta(days=7)).strftime('%Y-%m-%d') }}', true);
+        } else {
+            // Fall back to page refresh if AJAX not available
+            window.location.href = "{{ url_for('personal_schedule', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}";
+        }
+    } catch (error) {
+        console.error('Error using AJAX navigation:', error);
+        // Fall back to page refresh
+        window.location.href = "{{ url_for('personal_schedule', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}";
+    }
 }
 
 function nextWeek() {
-    window.location.href = "{{ url_for('personal_schedule', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}";
+    try {
+        // Try to use the AJAX-based function first
+        if (typeof window.loadCalendarData === 'function') {
+            window.loadCalendarData('{{ (week_start + timedelta(days=7)).strftime('%Y-%m-%d') }}', true);
+        } else {
+            // Fall back to page refresh if AJAX not available
+            window.location.href = "{{ url_for('personal_schedule', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}";
+        }
+    } catch (error) {
+        console.error('Error using AJAX navigation:', error);
+        // Fall back to page refresh
+        window.location.href = "{{ url_for('personal_schedule', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}";
+    }
 }
 
 function toggleRepeatDaysSelection() {

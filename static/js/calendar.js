@@ -220,6 +220,182 @@ document.addEventListener('DOMContentLoaded', function() {
         startHourSelect.removeAttribute('onchange');
     }
 
+    // AJAX-based navigation for calendar
+    window.loadCalendarData = function(weekStart, isPersonalView) {
+        // Show a loading indicator
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.className = 'loading-overlay';
+        loadingOverlay.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+        document.body.appendChild(loadingOverlay);
+        
+        // Build the query parameters
+        let params = new URLSearchParams();
+        if (weekStart) {
+            params.append('week_start', weekStart);
+        }
+        
+        const locationFilter = document.getElementById('location-filter');
+        if (locationFilter && locationFilter.value) {
+            params.append('location_id', locationFilter.value);
+        }
+        
+        if (isPersonalView) {
+            params.append('personal_view', '1');
+        }
+        
+        // Make the AJAX request
+        fetch('/api/calendar_data?' + params.toString())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Update date range display
+                updateDateRangeDisplay(data.date_range);
+                
+                // Update navigation links
+                updateNavigationLinks(data.date_range, isPersonalView);
+                
+                // Update the schedule display
+                if (isMobileDevice()) {
+                    updateMobileScheduleDisplay(data.days);
+                } else {
+                    // Desktop view schedule update would go here
+                    // This would require a more complex update mechanism for the full calendar view
+                    console.log('Desktop calendar data loaded, but requires page refresh for now');
+                }
+                
+                // Remove loading overlay
+                document.body.removeChild(loadingOverlay);
+            })
+            .catch(error => {
+                console.error('Error fetching calendar data:', error);
+                // Remove loading overlay
+                document.body.removeChild(loadingOverlay);
+                // Show error message
+                alert('Failed to load calendar data. Please try again.');
+            });
+    };
+    
+    // Function to update date range display
+    function updateDateRangeDisplay(dateRange) {
+        const dateRangeElement = document.getElementById('current-date-range');
+        if (dateRangeElement) {
+            dateRangeElement.textContent = `${dateRange.week_start_display} - ${dateRange.week_end_display}`;
+        }
+    }
+    
+    // Function to update navigation links
+    function updateNavigationLinks(dateRange, isPersonalView) {
+        // Update next/previous week buttons for mobile view
+        window.previousWeek = function() {
+            loadCalendarData(dateRange.prev_week, isPersonalView);
+        };
+        
+        window.nextWeek = function() {
+            loadCalendarData(dateRange.next_week, isPersonalView);
+        };
+    }
+    
+    // Function to update mobile schedule display
+    function updateMobileScheduleDisplay(days) {
+        const dayContainer = document.querySelector('.mobile-day-container');
+        if (!dayContainer) return;
+        
+        // Update day tabs
+        const dayTabs = document.querySelector('.day-selector');
+        if (dayTabs) {
+            // Clear existing tabs
+            dayTabs.innerHTML = '';
+            
+            // Create new tabs
+            days.forEach((day, index) => {
+                const isActive = day.is_today ? 'active' : '';
+                const tab = document.createElement('li');
+                tab.className = 'nav-item';
+                tab.innerHTML = `
+                    <a class="nav-link ${isActive}" id="day-${index}-tab" data-bs-toggle="tab" 
+                       href="#day-${index}" role="tab" aria-controls="day-${index}" 
+                       aria-selected="${day.is_today ? 'true' : 'false'}">
+                        ${day.display_date}
+                    </a>
+                `;
+                dayTabs.appendChild(tab);
+            });
+        }
+        
+        // Update day content
+        const dayContent = document.querySelector('.tab-content');
+        if (dayContent) {
+            // Clear existing content
+            dayContent.innerHTML = '';
+            
+            // Create new content
+            days.forEach((day, index) => {
+                const isActive = day.is_today ? 'show active' : '';
+                const dayDiv = document.createElement('div');
+                dayDiv.className = `tab-pane fade ${isActive}`;
+                dayDiv.id = `day-${index}`;
+                dayDiv.setAttribute('role', 'tabpanel');
+                dayDiv.setAttribute('aria-labelledby', `day-${index}-tab`);
+                
+                // Create day container
+                const dayContainer = document.createElement('div');
+                dayContainer.className = 'day-container';
+                
+                // Add day header
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'day-header';
+                dayHeader.innerHTML = `<h4>${day.display_date}</h4>`;
+                dayContainer.appendChild(dayHeader);
+                
+                // Add schedules for this day
+                const daySchedules = document.createElement('div');
+                daySchedules.className = 'day-schedules';
+                
+                if (day.schedules.length === 0) {
+                    daySchedules.innerHTML = '<p class="empty-day-message">No schedules for this day</p>';
+                } else {
+                    day.schedules.forEach(schedule => {
+                        const scheduleCard = document.createElement('div');
+                        scheduleCard.className = 'card mobile-schedule-card mb-2';
+                        scheduleCard.style.borderLeft = `5px solid ${schedule.color}`;
+                        
+                        scheduleCard.innerHTML = `
+                            <div class="card-body p-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="schedule-time">${schedule.start_time} - ${schedule.end_time}</div>
+                                    <div class="schedule-tech">${schedule.username}</div>
+                                </div>
+                                ${schedule.location_name ? `<div class="schedule-location"><i data-feather="map-pin"></i> ${schedule.location_name}</div>` : ''}
+                                ${schedule.description ? `<div class="schedule-desc">${schedule.description}</div>` : ''}
+                            </div>
+                        `;
+                        
+                        daySchedules.appendChild(scheduleCard);
+                    });
+                }
+                
+                dayContainer.appendChild(daySchedules);
+                dayDiv.appendChild(dayContainer);
+                dayContent.appendChild(dayDiv);
+            });
+            
+            // Reinitialize feather icons
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+        }
+    }
+    
+    // Function to detect mobile device
+    function isMobileDevice() {
+        return window.innerWidth < 768 || 
+               /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+    
     // Mini-calendar for repeat days selection
     let currentDate = new Date();
     let selectedDates = new Set(); // Use a Set to store selected dates

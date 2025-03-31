@@ -7,13 +7,13 @@
     <div class="row">
         <div class="col-12">
             <h2 class="mobile-title mb-3">
-                <button class="btn btn-sm prev-week-btn">
+                <button class="btn btn-sm" onclick="previousWeek()">
                     <i data-feather="chevron-left"></i>
                 </button>
                 <span id="current-date-range" style="white-space: nowrap; font-size: 1.2rem; color: #000;">
                     {{ week_start.strftime('%b %d') }} - {{ (week_start + timedelta(days=6)).strftime('%b %d, %Y') }}
                 </span>
-                <button class="btn btn-sm next-week-btn">
+                <button class="btn btn-sm" onclick="nextWeek()">
                     <i data-feather="chevron-right"></i>
                 </button>
             </h2>
@@ -22,20 +22,20 @@
 
     <div class="mobile-controls mb-3">
         <div class="d-flex justify-content-between align-items-center">
-            <button class="btn btn-outline-secondary btn-sm prev-week-btn">
+            <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
                 <i data-feather="arrow-left"></i> Previous Week
-            </button>
+            </a>
             <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#scheduleModal">
                 <i data-feather="plus"></i> Add Schedule
             </button>
-            <button class="btn btn-outline-secondary btn-sm next-week-btn">
+            <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
                 Next Week <i data-feather="arrow-right"></i>
-            </button>
+            </a>
         </div>
     </div>
 
     <!-- Mobile-friendly daily view (one day at a time) -->
-    <div class="mobile-calendar" data-personal-view="false">
+    <div class="mobile-calendar">
         <div class="day-selector mb-3">
             <ul class="nav nav-pills nav-fill">
                 {% for day in range(7) %}
@@ -267,46 +267,12 @@ function showDay(dayIndex) {
     document.querySelector(`.day-selector .nav-link[data-day="${dayIndex}"]`).classList.add('active');
 }
 
-// AJAX-based navigation functions will be defined in calendar.js
-// These are fallback implementations in case the main JS fails
 function previousWeek() {
-    console.log('previousWeek called in mobile calendar');
-    try {
-        // Try to use the AJAX-based function first
-        if (typeof window.loadCalendarData === 'function') {
-            // Explicitly set isPersonalView to false for main calendar
-            window.loadCalendarData('{{ (week_start - timedelta(days=7)).strftime('%Y-%m-%d') }}', false);
-            return false; // Prevent default behavior
-        } else {
-            // Fall back to page refresh if AJAX not available
-            window.location.href = "{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}";
-        }
-    } catch (error) {
-        console.error('Error using AJAX navigation:', error);
-        // Fall back to page refresh
-        window.location.href = "{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}";
-    }
-    return false; // Prevent default behavior
+    window.location.href = "{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}";
 }
 
 function nextWeek() {
-    console.log('nextWeek called in mobile calendar');
-    try {
-        // Try to use the AJAX-based function first
-        if (typeof window.loadCalendarData === 'function') {
-            // Explicitly set isPersonalView to false for main calendar
-            window.loadCalendarData('{{ (week_start + timedelta(days=7)).strftime('%Y-%m-%d') }}', false);
-            return false; // Prevent default behavior
-        } else {
-            // Fall back to page refresh if AJAX not available
-            window.location.href = "{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}";
-        }
-    } catch (error) {
-        console.error('Error using AJAX navigation:', error);
-        // Fall back to page refresh
-        window.location.href = "{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}";
-    }
-    return false; // Prevent default behavior
+    window.location.href = "{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}";
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -318,23 +284,6 @@ document.addEventListener('DOMContentLoaded', function() {
             'height': 16
         });
     }
-    
-    // Add event listeners to navigation buttons
-    document.querySelectorAll('.prev-week-btn').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            previousWeek();
-            return false;
-        });
-    });
-    
-    document.querySelectorAll('.next-week-btn').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            nextWeek();
-            return false;
-        });
-    });
     
     // Add event listeners to the schedule cards
     document.querySelectorAll('.mobile-schedule-card').forEach(card => {

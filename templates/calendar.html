@@ -1,11 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="calendar-container" data-personal-view="false">
+<div class="calendar-container">
     <div class="calendar-header d-flex justify-content-between align-items-center mb-4">
         <div class="d-flex align-items-center">
             <h2>{{ week_start.strftime('%B %Y') }}</h2>
-            <span id="current-date-range" class="ms-3 text-muted">{{ week_start.strftime('%b %d') }} - {{ (week_start + timedelta(days=6)).strftime('%b %d, %Y') }}</span>
             <div class="ms-4">
                 <select class="form-select" onchange="applyLocationFilter(this.value)">
                     <option value="">All Locations</option>
@@ -40,23 +39,23 @@
                 Next Month <i data-feather="chevrons-right"></i>
             </a>
             {% else %}
-            <a href="#" onclick="loadCalendarData('{{ (week_start - timedelta(days=28)).strftime('%Y-%m-%d') }}'); return false;" 
+            <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=28)).strftime('%Y-%m-%d'), location_id=selected_location) }}" 
                class="btn btn-outline-secondary me-2">
                 <i data-feather="chevrons-left"></i> Previous Month
             </a>
-            <a href="#" onclick="loadCalendarData('{{ (week_start - timedelta(days=7)).strftime('%Y-%m-%d') }}'); return false;" 
+            <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d'), location_id=selected_location) }}" 
                class="btn btn-outline-primary me-2">
                 <i data-feather="chevron-left"></i> Previous Week
             </a>
-            <a href="#" onclick="loadCalendarData('{{ today.strftime('%Y-%m-%d') }}'); return false;" 
+            <a href="{{ url_for('calendar', location_id=selected_location) }}" 
                class="btn btn-outline-primary me-2">
                 Current Week
             </a>
-            <a href="#" onclick="loadCalendarData('{{ (week_start + timedelta(days=7)).strftime('%Y-%m-%d') }}'); return false;"
+            <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d'), location_id=selected_location) }}"
                class="btn btn-outline-primary me-2">
                 Next Week <i data-feather="chevron-right"></i>
             </a>
-            <a href="#" onclick="loadCalendarData('{{ (week_start + timedelta(days=28)).strftime('%Y-%m-%d') }}'); return false;"
+            <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=28)).strftime('%Y-%m-%d'), location_id=selected_location) }}"
                class="btn btn-outline-secondary me-2">
                 Next Month <i data-feather="chevrons-right"></i>
             </a>
@@ -400,69 +399,6 @@ document.addEventListener('DOMContentLoaded', function() {
             boundary: 'window'
         });
     });
-    
-    // Initialize AJAX loading functionality
-    window.loadCalendarData = function(weekStart, isPersonalView = false) {
-        // Create loading overlay
-        const loadingOverlay = document.createElement('div');
-        loadingOverlay.className = 'loading-overlay';
-        loadingOverlay.innerHTML = '<div class="spinner-border text-light" role="status"><span class="visually-hidden">Loading...</span></div>';
-        document.body.appendChild(loadingOverlay);
-        
-        // Get location filter if present
-        const urlParams = new URLSearchParams(window.location.search);
-        const locationId = urlParams.get('location_id') || '';
-        
-        // Build API URL
-        const apiUrl = `/api/calendar_data?week_start=${weekStart}&location_id=${locationId}&personal_view=${isPersonalView ? '1' : '0'}`;
-        
-        // Fetch calendar data
-        fetch(apiUrl)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Update date range display
-                updateDateRangeDisplay(data.date_range);
-                
-                // Update URL to reflect current week without page refresh
-                const currentUrl = new URL(window.location.href);
-                currentUrl.searchParams.set('week_start', weekStart);
-                window.history.pushState({}, '', currentUrl.toString());
-                
-                // Update navigation links
-                updateNavigationLinks(data.date_range, isPersonalView);
-                
-                // Update the schedule display
-                if (isMobileDevice()) {
-                    updateMobileScheduleDisplay(data.days);
-                } else {
-                    // Update desktop calendar view
-                    updateDesktopScheduleDisplay(data.schedules, data.days);
-                }
-                
-                // Remove loading overlay
-                document.body.removeChild(loadingOverlay);
-            })
-            .catch(error => {
-                console.error('Error fetching calendar data:', error);
-                // Remove loading overlay
-                document.body.removeChild(loadingOverlay);
-                // Fallback to traditional page navigation
-                window.location.href = `?week_start=${weekStart}${locationId ? '&location_id=' + locationId : ''}`;
-            });
-    };
-    
-    // Update date range display in the header
-    function updateDateRangeDisplay(dateRange) {
-        const dateRangeElement = document.getElementById('current-date-range');
-        if (dateRangeElement) {
-            dateRangeElement.textContent = `${dateRange.week_start_display} - ${dateRange.week_end_display}`;
-        }
-    }
 });
 </script>
 {% endblock %}

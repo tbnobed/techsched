@@ -97,60 +97,7 @@
         <!-- Sidebar content (moved to bottom for mobile) -->
         {% if current_user.is_authenticated %}
         <div class="mt-4">
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Currently Active</h5>
-                </div>
-                <div class="card-body">
-                    <div id="active-users">
-                        {% set active_users = active_users|default([]) %}
-                        {% if active_users %}
-                            <div class="list-group list-group-flush">
-                                {% for user in active_users %}
-                                <div class="active-user-entry mb-2 p-2" style="border-left: 3px solid {{ user.color|default('#3498db') }};">
-                                    <h6 class="mb-1">{{ user.username }}</h6>
-                                    <div class="small text-muted">
-                                        {% if user.location %}
-                                            <i data-feather="map-pin" class="feather-small"></i> {{ user.location }}
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <p class="text-muted text-center mb-0">No active users</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Upcoming Time Off</h5>
-                </div>
-                <div class="card-body">
-                    <div id="upcoming-time-off">
-                        {% if upcoming_time_off %}
-                            <div class="list-group list-group-flush">
-                                {% for entry in upcoming_time_off %}
-                                <div class="time-off-entry mb-2 p-2" style="border-left: 3px solid {{ entry.color|default('#3498db') }};">
-                                    <h6 class="mb-1">{{ entry.username }}</h6>
-                                    <div class="small">
-                                        <i data-feather="calendar" class="feather-small"></i> 
-                                        {{ entry.start_time }} - {{ entry.end_time }}
-                                    </div>
-                                    {% if entry.description %}
-                                    <div class="small mt-1">{{ entry.description }}</div>
-                                    {% endif %}
-                                </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <p class="text-muted text-center mb-0">No upcoming time off</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
+            <!-- Currently Active and Upcoming Time Off sections removed for mobile -->
 
             <div class="card mb-3">
                 <div class="card-header">
@@ -199,11 +146,7 @@
             updateCurrentTime();
             setInterval(updateCurrentTime, 60000); // Update every minute
             
-            // Fetch active users on page load
-            fetchActiveUsers();
-            
-            // Fetch upcoming time off on page load
-            fetchUpcomingTimeOff();
+            // Active users and time off fetching removed for mobile
         });
         
         function updateCurrentTime() {

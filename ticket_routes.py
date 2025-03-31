@@ -1060,8 +1060,10 @@ def assign_ticket(ticket_id):
     ticket = Ticket.query.get_or_404(ticket_id)
     
     # Check if user has permission to assign this ticket
-    # Allow if user is admin or if they created the ticket
-    if not (current_user.is_admin or ticket.created_by == current_user.id):
+    # Allow if user is admin, created the ticket, or is currently assigned to the ticket
+    if not (current_user.is_admin or ticket.created_by == current_user.id or ticket.assigned_to == current_user.id):
+        app.logger.debug(f"Permission denied for user {current_user.id} to assign ticket #{ticket_id}")
+        app.logger.debug(f"Current user: admin={current_user.is_admin}, created={ticket.created_by == current_user.id}, assigned={ticket.assigned_to == current_user.id}")
         flash('You do not have permission to assign this ticket', 'error')
         return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
     

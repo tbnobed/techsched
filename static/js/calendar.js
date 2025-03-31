@@ -246,6 +246,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // AJAX-based navigation for calendar
     window.loadCalendarData = function(weekStart, isPersonalView) {
+        console.log('Loading calendar data:', weekStart, 'isPersonal:', isPersonalView, 'isMobile:', isMobileDevice());
+        
         // Show a loading indicator
         const loadingOverlay = document.createElement('div');
         loadingOverlay.className = 'loading-overlay';
@@ -276,17 +278,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
+                console.log('Calendar data received:', data);
+                
                 // Update date range display
                 updateDateRangeDisplay(data.date_range);
                 
                 // Update navigation links
                 updateNavigationLinks(data.date_range, isPersonalView);
                 
-                // Update the schedule display
-                if (isMobileDevice()) {
+                // Update the schedule display based on device type and UI container
+                const mobileCalendar = document.querySelector('.mobile-calendar');
+                if (mobileCalendar) {
+                    console.log('Mobile calendar found, updating mobile view');
                     updateMobileScheduleDisplay(data.days);
                 } else {
-                    // Update desktop calendar view
+                    console.log('Desktop calendar found, updating desktop view');
                     updateDesktopScheduleDisplay(data.schedules, data.days);
                 }
                 
@@ -329,6 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Get personal view setting
         const isPersonalView = mobileCalendar.dataset.personalView === 'true';
+        console.log('Mobile calendar personal view:', isPersonalView);
         
         // Update date range in header
         const dateRangeElem = document.getElementById('current-date-range');
@@ -365,11 +372,15 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
+        console.log('Updating mobile day containers, days:', days);
+        
         // Update day containers
         for (let i = 0; i < days.length; i++) {
             const day = days[i];
             const dayContainer = document.getElementById(`day-${i}`);
             if (dayContainer) {
+                console.log(`Processing day ${i}:`, day);
+                
                 // Update day header
                 const dayHeader = dayContainer.querySelector('.day-header h4');
                 if (dayHeader) {
@@ -390,7 +401,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Add schedules for this day
                     let hasSchedules = false;
-                    day.schedules.forEach(schedule => {
+                    
+                    // Ensure schedules is an array before iterating
+                    const schedules = day.schedules || [];
+                    console.log(`Day ${i} schedules:`, schedules);
+                    
+                    schedules.forEach(schedule => {
                         hasSchedules = true;
                         const scheduleCard = document.createElement('div');
                         scheduleCard.className = 'mobile-schedule-card';

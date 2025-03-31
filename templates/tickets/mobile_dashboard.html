@@ -1,0 +1,105 @@
+{% extends "mobile_base_simplified.html" %}
+
+{% block title %}The Plex Studios - Ticket Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Tickets</h5>
+            <div class="theme-toggle">
+                <form method="POST" action="{{ url_for('toggle_theme') }}" class="mb-0">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-link p-0 text-decoration-none">
+                        <i data-feather="{% if current_user.theme_preference == 'light' %}moon{% else %}sun{% endif %}" style="width: 16px; height: 16px;"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('tickets.create_ticket') }}" class="btn btn-primary btn-sm">
+            <i data-feather="plus" class="feather-small"></i> New Ticket
+        </a>
+        
+        <form method="GET" action="{{ url_for('tickets.tickets_dashboard') }}" class="d-flex gap-2">
+            <div>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    <option value="open" {% if filter_status == 'open' %}selected{% endif %}>Open</option>
+                    <option value="in_progress" {% if filter_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                    <option value="pending" {% if filter_status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="resolved" {% if filter_status == 'resolved' %}selected{% endif %}>Resolved</option>
+                    <option value="closed" {% if filter_status == 'closed' %}selected{% endif %}>Closed</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-sm btn-secondary">
+                <i data-feather="filter" class="feather-small"></i>
+            </button>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <a class="nav-link {% if not filter_assigned_to and not filter_created_by %}active{% endif %}" href="{{ url_for('tickets.tickets_dashboard') }}">All</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if filter_assigned_to == current_user.id %}active{% endif %}" href="{{ url_for('tickets.tickets_dashboard', assigned_to=current_user.id) }}">Assigned to Me</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if filter_created_by == current_user.id %}active{% endif %}" href="{{ url_for('tickets.tickets_dashboard', created_by=current_user.id) }}">Created by Me</a>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+                {% if tickets %}
+                    {% for ticket in tickets %}
+                        <a href="{{ url_for('tickets.view_ticket', ticket_id=ticket.id) }}" class="list-group-item list-group-item-action p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge {% if ticket.priority >= 3 %}bg-danger{% elif ticket.priority == 2 %}bg-warning{% elif ticket.priority == 1 %}bg-info{% else %}bg-secondary{% endif %} me-2">
+                                        {{ {0: 'Low', 1: 'Medium', 2: 'High', 3: 'Urgent'}.get(ticket.priority, 'Unknown') }}
+                                    </span>
+                                    <span class="badge bg-dark me-2">
+                                        #{{ ticket.id }}
+                                    </span>
+                                </div>
+                                <span class="badge 
+                                    {% if ticket.status == 'open' %}bg-success{% endif %}
+                                    {% if ticket.status == 'in_progress' %}bg-primary{% endif %}
+                                    {% if ticket.status == 'pending' %}bg-warning{% endif %}
+                                    {% if ticket.status == 'resolved' %}bg-info{% endif %}
+                                    {% if ticket.status == 'closed' %}bg-secondary{% endif %}">
+                                    {{ ticket.status|replace('_', ' ')|title }}
+                                </span>
+                            </div>
+                            <h6 class="mb-1">{{ ticket.title }}</h6>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="small text-muted">
+                                    {% if ticket.category %}
+                                    <span class="me-2">{{ ticket.category.name }}</span>
+                                    {% endif %}
+                                    {% if ticket.assigned_technician %}
+                                    <span class="me-2">Assigned: {{ ticket.assigned_technician.username }}</span>
+                                    {% else %}
+                                    <span class="me-2">Unassigned</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">{{ ticket.created_at.strftime('%b %d, %Y') }}</small>
+                            </div>
+                        </a>
+                    {% endfor %}
+                {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <p>No tickets found</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

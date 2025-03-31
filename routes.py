@@ -299,35 +299,7 @@ def calendar():
         from ticket_routes import get_active_sidebar_tickets
         active_sidebar_tickets = get_active_sidebar_tickets()
         
-        # Get server-side data for mobile view components
-        try:
-            # Get currently active users for server-side rendering
-            active_users = []
-            current_time = datetime.now(pytz.UTC)
-            active_schedules = db.session.query(User, Schedule, Location) \
-                .join(Schedule, User.id == Schedule.technician_id) \
-                .outerjoin(Location, Schedule.location_id == Location.id) \
-                .filter(
-                    Schedule.start_time <= current_time,
-                    Schedule.end_time > current_time,
-                    Schedule.time_off == False
-                ).all()
-                
-            for user, schedule, location in active_schedules:
-                active_users.append({
-                    'username': user.username,
-                    'color': user.color,
-                    'location': location.name if location else None
-                })
-                
-            # Get upcoming time off with server-side rendering
-            upcoming_time_off = get_upcoming_time_off(for_template=True)
-        except Exception as e:
-            app.logger.error(f"Error getting sidebar data for mobile view: {str(e)}")
-            active_users = []
-            upcoming_time_off = []
-        
-        return render_template('mobile_calendar.html', 
+        return render_template('mobile_calendar_simplified.html', 
                             schedules=schedules,
                             week_start=week_start,
                             week_end=week_start + timedelta(days=7),
@@ -337,9 +309,7 @@ def calendar():
                             today=datetime.now(current_user.get_timezone()),
                             datetime=datetime,
                             timedelta=timedelta,
-                            active_sidebar_tickets=active_sidebar_tickets,
-                            active_users=active_users,
-                            upcoming_time_off=upcoming_time_off)
+                            active_sidebar_tickets=active_sidebar_tickets)
     else:
         return render_template('calendar.html', 
                             schedules=schedules,
@@ -961,10 +931,8 @@ def personal_schedule():
         # Get active tickets for the sidebar
         from ticket_routes import get_active_sidebar_tickets
         active_sidebar_tickets = get_active_sidebar_tickets()
-        # Get upcoming time off with server-side rendering
-        upcoming_time_off = get_upcoming_time_off(for_template=True)
         
-        return render_template('mobile_personal_schedule.html', 
+        return render_template('mobile_personal_schedule_simplified.html', 
                             schedules=schedules,
                             week_start=week_start,
                             week_end=week_start + timedelta(days=7),
@@ -973,8 +941,7 @@ def personal_schedule():
                             datetime=datetime,
                             timedelta=timedelta,
                             personal_view=True,
-                            active_sidebar_tickets=active_sidebar_tickets,
-                            upcoming_time_off=upcoming_time_off)
+                            active_sidebar_tickets=active_sidebar_tickets)
     else:
         return render_template('personal_schedule.html', 
                             schedules=schedules,

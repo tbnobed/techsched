@@ -376,15 +376,31 @@ def tickets_dashboard():
     # Get all technicians for the technician filter dropdown
     technicians = User.query.all()
     
-    return render_template('tickets/dashboard.html', 
-                         tickets=filtered_tickets,
-                         categories=categories,
-                         ticket_statuses=ticket_statuses,
-                         technicians=technicians,
-                         ticket_count=len(filtered_tickets),
-                         filter_info=filter_info,
-                         timestamp=timestamp,
-                         active_sidebar_tickets=active_sidebar_tickets)
+    # Check if user is on a mobile device
+    from app import is_mobile_device
+    if is_mobile_device():
+        return render_template('tickets/mobile_dashboard.html', 
+                             tickets=filtered_tickets,
+                             categories=categories,
+                             ticket_statuses=ticket_statuses,
+                             technicians=technicians,
+                             ticket_count=len(filtered_tickets),
+                             filter_info=filter_info,
+                             timestamp=timestamp,
+                             active_sidebar_tickets=active_sidebar_tickets,
+                             filter_status=status_filter,
+                             filter_assigned_to=None if technician_filter == 'all' else int(technician_filter) if technician_filter.isdigit() else None,
+                             filter_created_by=None)
+    else:
+        return render_template('tickets/dashboard.html', 
+                             tickets=filtered_tickets,
+                             categories=categories,
+                             ticket_statuses=ticket_statuses,
+                             technicians=technicians,
+                             ticket_count=len(filtered_tickets),
+                             filter_info=filter_info,
+                             timestamp=timestamp,
+                             active_sidebar_tickets=active_sidebar_tickets)
 
 @tickets.route('/tickets/create', methods=['GET', 'POST'])
 @login_required

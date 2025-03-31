@@ -114,6 +114,18 @@ def unauthorized():
         return jsonify({'error': 'Authentication required'}), 401
     return redirect(url_for('login', next=request.url))
 
+# Favicon and Apple Touch Icon routes
+@app.route('/favicon.ico')
+def favicon():
+    return redirect(url_for('static', filename='images/plex_logo_small.png'))
+
+@app.route('/apple-touch-icon.png')
+@app.route('/apple-touch-icon-precomposed.png')
+@app.route('/apple-touch-icon-120x120.png')
+@app.route('/apple-touch-icon-120x120-precomposed.png')
+def apple_touch_icon():
+    return redirect(url_for('static', filename='images/plex_logo_small.png'))
+
 with app.app_context():
     import models
     db.create_all()

@@ -324,92 +324,165 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to update mobile schedule display
     function updateMobileScheduleDisplay(days) {
-        const dayContainer = document.querySelector('.mobile-day-container');
-        if (!dayContainer) return;
+        const mobileCalendar = document.querySelector('.mobile-calendar');
+        if (!mobileCalendar) return;
+        
+        // Get personal view setting
+        const isPersonalView = mobileCalendar.dataset.personalView === 'true';
+        
+        // Update date range in header
+        const dateRangeElem = document.getElementById('current-date-range');
+        if (dateRangeElem && days && days.length >= 7) {
+            const startDay = days[0];
+            const endDay = days[6];
+            if (startDay && endDay) {
+                dateRangeElem.textContent = `${startDay.date_str} - ${endDay.date_str}`;
+            }
+        }
         
         // Update day tabs
-        const dayTabs = document.querySelector('.day-selector');
-        if (dayTabs) {
+        const daySelector = document.querySelector('.day-selector ul');
+        if (daySelector && days) {
             // Clear existing tabs
-            dayTabs.innerHTML = '';
+            daySelector.innerHTML = '';
             
             // Create new tabs
             days.forEach((day, index) => {
-                const isActive = day.is_today ? 'active' : '';
+                const isToday = day.is_today || index === 0; // Default to first day if no today
+                const dayDate = new Date(day.date);
+                
                 const tab = document.createElement('li');
                 tab.className = 'nav-item';
                 tab.innerHTML = `
-                    <a class="nav-link ${isActive}" id="day-${index}-tab" data-bs-toggle="tab" 
-                       href="#day-${index}" role="tab" aria-controls="day-${index}" 
-                       aria-selected="${day.is_today ? 'true' : 'false'}">
-                        ${day.display_date}
-                    </a>
+                    <button class="nav-link ${isToday ? 'active' : ''}" 
+                            onclick="showDay(${index})"
+                            data-day="${index}">
+                        ${dayDate.toLocaleDateString('en-US', {weekday: 'short'})}<br>
+                        <span class="day-number">${dayDate.getDate()}</span>
+                    </button>
                 `;
-                dayTabs.appendChild(tab);
+                daySelector.appendChild(tab);
             });
         }
         
-        // Update day content
-        const dayContent = document.querySelector('.tab-content');
-        if (dayContent) {
-            // Clear existing content
-            dayContent.innerHTML = '';
-            
-            // Create new content
-            days.forEach((day, index) => {
-                const isActive = day.is_today ? 'show active' : '';
-                const dayDiv = document.createElement('div');
-                dayDiv.className = `tab-pane fade ${isActive}`;
-                dayDiv.id = `day-${index}`;
-                dayDiv.setAttribute('role', 'tabpanel');
-                dayDiv.setAttribute('aria-labelledby', `day-${index}-tab`);
-                
-                // Create day container
-                const dayContainer = document.createElement('div');
-                dayContainer.className = 'day-container';
-                
-                // Add day header
-                const dayHeader = document.createElement('div');
-                dayHeader.className = 'day-header';
-                dayHeader.innerHTML = `<h4>${day.display_date}</h4>`;
-                dayContainer.appendChild(dayHeader);
-                
-                // Add schedules for this day
-                const daySchedules = document.createElement('div');
-                daySchedules.className = 'day-schedules';
-                
-                if (day.schedules.length === 0) {
-                    daySchedules.innerHTML = '<p class="empty-day-message">No schedules for this day</p>';
-                } else {
-                    day.schedules.forEach(schedule => {
-                        const scheduleCard = document.createElement('div');
-                        scheduleCard.className = 'card mobile-schedule-card mb-2';
-                        scheduleCard.style.borderLeft = `5px solid ${schedule.color}`;
-                        
-                        scheduleCard.innerHTML = `
-                            <div class="card-body p-2">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="schedule-time">${schedule.start_time} - ${schedule.end_time}</div>
-                                    <div class="schedule-tech">${schedule.username}</div>
-                                </div>
-                                ${schedule.location_name ? `<div class="schedule-location"><i data-feather="map-pin"></i> ${schedule.location_name}</div>` : ''}
-                                ${schedule.description ? `<div class="schedule-desc">${schedule.description}</div>` : ''}
-                            </div>
-                        `;
-                        
-                        daySchedules.appendChild(scheduleCard);
+        // Update day containers
+        for (let i = 0; i < days.length; i++) {
+            const day = days[i];
+            const dayContainer = document.getElementById(`day-${i}`);
+            if (dayContainer) {
+                // Update day header
+                const dayHeader = dayContainer.querySelector('.day-header h4');
+                if (dayHeader) {
+                    const dayDate = new Date(day.date);
+                    dayHeader.textContent = dayDate.toLocaleDateString('en-US', {
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric'
                     });
                 }
                 
-                dayContainer.appendChild(daySchedules);
-                dayDiv.appendChild(dayContainer);
-                dayContent.appendChild(dayDiv);
-            });
-            
-            // Reinitialize feather icons
-            if (typeof feather !== 'undefined') {
-                feather.replace();
+                // Update schedules
+                const schedulesContainer = dayContainer.querySelector('.day-schedules');
+                if (schedulesContainer) {
+                    // Clear existing schedules
+                    schedulesContainer.innerHTML = '';
+                    
+                    // Add schedules for this day
+                    let hasSchedules = false;
+                    day.schedules.forEach(schedule => {
+                        hasSchedules = true;
+                        const scheduleCard = document.createElement('div');
+                        scheduleCard.className = 'mobile-schedule-card';
+                        scheduleCard.style.setProperty('--tech-color', schedule.color || '#3498db');
+                        scheduleCard.dataset.scheduleId = schedule.id;
+                        scheduleCard.dataset.startTime = schedule.start_time;
+                        scheduleCard.dataset.endTime = schedule.end_time;
+                        scheduleCard.dataset.timeOff = schedule.time_off ? 'true' : 'false';
+                        
+                        // Format times
+                        const startTime = new Date(schedule.start_time);
+                        const endTime = new Date(schedule.end_time);
+                        const timeFormatOptions = {hour: 'numeric', minute: '2-digit', hour12: true};
+                        
+                        // Build card content
+                        let cardContent = `
+                            <div class="schedule-time">
+                                ${startTime.toLocaleTimeString('en-US', timeFormatOptions)} - 
+                                ${endTime.toLocaleTimeString('en-US', timeFormatOptions)}
+                            </div>
+                        `;
+                        
+                        // Add technician name for non-personal view
+                        if (!isPersonalView) {
+                            cardContent += `
+                                <div class="schedule-tech">
+                                    ${schedule.technician_name}
+                                </div>
+                            `;
+                        }
+                        
+                        // Add location if available
+                        if (schedule.location) {
+                            cardContent += `
+                                <div class="schedule-location">
+                                    <i data-feather="map-pin" class="feather-small"></i> ${schedule.location}
+                                </div>
+                            `;
+                        }
+                        
+                        // Add time off badge if needed
+                        if (schedule.time_off) {
+                            cardContent += `
+                                <div class="time-off-badge">
+                                    <span class="badge bg-warning">Time Off</span>
+                                </div>
+                            `;
+                        }
+                        
+                        // Add description if available
+                        if (schedule.description) {
+                            cardContent += `
+                                <div class="schedule-desc">
+                                    ${schedule.description}
+                                </div>
+                            `;
+                        }
+                        
+                        scheduleCard.innerHTML = cardContent;
+                        scheduleCard.setAttribute('data-bs-toggle', 'modal');
+                        scheduleCard.setAttribute('data-bs-target', '#scheduleModal');
+                        
+                        schedulesContainer.appendChild(scheduleCard);
+                    });
+                    
+                    // Show empty message if no schedules
+                    if (!hasSchedules) {
+                        const dayDate = new Date(day.date);
+                        const emptyMessage = document.createElement('div');
+                        emptyMessage.className = 'empty-day-message';
+                        emptyMessage.innerHTML = `
+                            <p>No schedules for this day.</p>
+                            <button class="btn btn-sm btn-outline-primary" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#scheduleModal"
+                                    data-date="${day.date}">
+                                Add Schedule
+                            </button>
+                        `;
+                        schedulesContainer.appendChild(emptyMessage);
+                    }
+                }
             }
+        }
+        
+        // Initialize feather icons for the new content
+        if (typeof feather !== 'undefined') {
+            feather.replace({
+                'stroke-width': 1.5,
+                'width': 16,
+                'height': 16
+            });
         }
     }
     

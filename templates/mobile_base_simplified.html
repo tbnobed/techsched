@@ -111,7 +111,46 @@
         <!-- Main content -->
         {% block content %}{% endblock %}
         
-        <!-- Active Tickets section removed for mobile -->
+        <!-- Only show Active Tickets section if not on tickets page -->
+        {% if current_user.is_authenticated and '/tickets' not in request.path %}
+        <div class="mt-4">
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Active Tickets</h5>
+                    <div>
+                        <a href="{{ url_for('tickets.create_ticket') }}" class="btn btn-sm btn-primary me-2">
+                            <i data-feather="plus" class="feather-small"></i> New
+                        </a>
+                        <a href="{{ url_for('tickets.tickets_dashboard') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% if active_sidebar_tickets %}
+                            {% for ticket in active_sidebar_tickets[:5] %}  <!-- Limit to 5 for better mobile experience -->
+                                <a href="{{ url_for('tickets.view_ticket', ticket_id=ticket.id) }}" class="list-group-item list-group-item-action p-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span class="badge {% if ticket.priority >= 3 %}bg-danger{% elif ticket.priority == 2 %}bg-warning{% elif ticket.priority == 1 %}bg-info{% else %}bg-secondary{% endif %} me-1">
+                                                {{ {0: 'Low', 1: 'Medium', 2: 'High', 3: 'Urgent'}.get(ticket.priority, 'Unknown') }}
+                                            </span>
+                                            <small class="text-muted">#{{ ticket.id }}</small>
+                                        </div>
+                                        <small class="text-muted">{{ ticket.status }}</small>
+                                    </div>
+                                    <div class="mt-1">{{ ticket.title }}</div>
+                                </a>
+                            {% endfor %}
+                        {% else %}
+                            <div class="p-3 text-center text-muted">
+                                <p>No active tickets</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>

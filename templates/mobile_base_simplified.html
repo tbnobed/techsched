@@ -59,8 +59,9 @@
                 <ul class="navbar-nav">
                     {% if current_user.is_authenticated %}
                         <li class="nav-item dropdown">
-                            <a class="nav-link" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                                <i data-feather="user"></i>
+                            <a class="nav-link d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i data-feather="user" class="me-1"></i>
+                                <span>{{ current_user.username }}</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>

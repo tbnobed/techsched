@@ -22,9 +22,20 @@
                 <img src="{{ url_for('static', filename='images/plex_logo_small.png') }}" alt="Plex Engineering" class="me-2" width="36" height="36">
                 <span style="font-weight: 700; letter-spacing: 0.5px; color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#002744{% else %}#ffffff{% endif %};">PLEX</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            
+            <div class="d-flex align-items-center">
+                {% if current_user.is_authenticated %}
+                <form method="POST" action="{{ url_for('toggle_theme') }}" class="me-2">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-link p-0" style="color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#002744{% else %}#ffffff{% endif %};">
+                        <i data-feather="{% if current_user.theme_preference == 'light' %}moon{% else %}sun{% endif %}" style="width: 20px; height: 20px;"></i>
+                    </button>
+                </form>
+                {% endif %}
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     {% if current_user.is_authenticated %}

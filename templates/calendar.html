@@ -39,26 +39,21 @@
                 Next Month <i data-feather="chevrons-right"></i>
             </a>
             {% else %}
-            <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=28)).strftime('%Y-%m-%d'), location_id=selected_location) }}" 
-               class="btn btn-outline-secondary me-2">
+            <button type="button" class="btn btn-outline-secondary me-2" id="prev-month-btn">
                 <i data-feather="chevrons-left"></i> Previous Month
-            </a>
-            <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d'), location_id=selected_location) }}" 
-               class="btn btn-outline-primary me-2">
+            </button>
+            <button type="button" class="btn btn-outline-primary me-2" id="prev-week-btn">
                 <i data-feather="chevron-left"></i> Previous Week
-            </a>
-            <a href="{{ url_for('calendar', location_id=selected_location) }}" 
-               class="btn btn-outline-primary me-2">
+            </button>
+            <button type="button" class="btn btn-outline-primary me-2" id="current-week-btn">
                 Current Week
-            </a>
-            <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d'), location_id=selected_location) }}"
-               class="btn btn-outline-primary me-2">
+            </button>
+            <button type="button" class="btn btn-outline-primary me-2" id="next-week-btn">
                 Next Week <i data-feather="chevron-right"></i>
-            </a>
-            <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=28)).strftime('%Y-%m-%d'), location_id=selected_location) }}"
-               class="btn btn-outline-secondary me-2">
+            </button>
+            <button type="button" class="btn btn-outline-secondary me-2" id="next-month-btn">
                 Next Month <i data-feather="chevrons-right"></i>
-            </a>
+            </button>
             {% endif %}
             {% if current_user.is_admin %}
             <form method="POST" action="{{ url_for('copy_previous_week_schedules') }}" class="d-inline">
@@ -248,6 +243,7 @@
         </div>
     </div>
 </div>
+</div> <!-- Close calendar-container -->
 
 <style>
 /* Add custom tooltip styling */
@@ -389,6 +385,211 @@
 </style>
 
 <script>
+// Function to handle AJAX calendar navigation
+function setupCalendarNavigation() {
+    // AJAX calendar navigation
+    const prevMonthBtn = document.getElementById('prev-month-btn');
+    const prevWeekBtn = document.getElementById('prev-week-btn');
+    const currentWeekBtn = document.getElementById('current-week-btn');
+    const nextWeekBtn = document.getElementById('next-week-btn');
+    const nextMonthBtn = document.getElementById('next-month-btn');
+    
+    if (prevMonthBtn) {
+        prevMonthBtn.addEventListener('click', function() {
+            navigateCalendar(-28);
+        });
+    }
+    
+    if (prevWeekBtn) {
+        prevWeekBtn.addEventListener('click', function() {
+            navigateCalendar(-7);
+        });
+    }
+    
+    if (currentWeekBtn) {
+        currentWeekBtn.addEventListener('click', function() {
+            // Force loading the current week by setting current=true
+            const url = new URL(window.location.href);
+            url.searchParams.delete('week_start');
+            url.searchParams.set('current', 'true');
+            fetchCalendarData(url.toString());
+        });
+    }
+    
+    if (nextWeekBtn) {
+        nextWeekBtn.addEventListener('click', function() {
+            navigateCalendar(7);
+        });
+    }
+    
+    if (nextMonthBtn) {
+        nextMonthBtn.addEventListener('click', function() {
+            navigateCalendar(28);
+        });
+    }
+}
+
+// Function to navigate the calendar by a specified number of days
+function navigateCalendar(dayOffset) {
+    // Get current week start from page data
+    const currentWeekStart = "{{ week_start.strftime('%Y-%m-%d') }}";
+    
+    // Calculate new week start
+    const date = new Date(currentWeekStart);
+    date.setDate(date.getDate() + dayOffset);
+    const newWeekStart = date.toISOString().split('T')[0];
+    
+    // Build URL with the new week_start parameter
+    const url = new URL(window.location.href);
+    url.searchParams.set('week_start', newWeekStart);
+    
+    // Fetch the calendar data
+    fetchCalendarData(url.toString());
+}
+
+// Function to fetch calendar data via AJAX
+function fetchCalendarData(url) {
+    // Convert the full URL to just the parameters
+    const apiUrl = new URL('/api/calendar_data', window.location.origin);
+    const params = new URL(url).searchParams;
+    
+    // Copy over the parameters we need
+    if (params.has('week_start')) {
+        apiUrl.searchParams.set('week_start', params.get('week_start'));
+    }
+    if (params.has('location_id')) {
+        apiUrl.searchParams.set('location_id', params.get('location_id'));
+    }
+    if (params.has('current')) {
+        apiUrl.searchParams.set('current', params.get('current'));
+    }
+    
+    // Fetch the calendar data from the API endpoint
+    fetch(apiUrl.toString())
+        .then(response => response.json())
+        .then(data => {
+            // Update the week range display
+            const weekStart = new Date(data.week_start);
+            const weekEnd = new Date(data.week_end);
+            
+            // Format dates for display
+            const weekStartStr = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const weekEndStr = weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            // Update header if it exists
+            const header = document.querySelector('.calendar-header h2');
+            if (header) {
+                header.textContent = `${weekStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+            }
+            
+            // Clear all existing day columns
+            const dayColumns = document.querySelectorAll('.day-column');
+            const today = data.today;
+            
+            // Update each day column with the new dates
+            dayColumns.forEach((column, index) => {
+                const currentDate = new Date(weekStart);
+                currentDate.setDate(currentDate.getDate() + index);
+                const dateStr = currentDate.toISOString().split('T')[0];
+                
+                // Update date in column header
+                const header = column.querySelector('.day-header');
+                if (header) {
+                    header.textContent = currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'numeric', day: 'numeric' });
+                    
+                    // Check if this is today
+                    if (dateStr === today) {
+                        column.classList.add('today');
+                        header.classList.add('today');
+                    } else {
+                        column.classList.remove('today');
+                        header.classList.remove('today');
+                    }
+                }
+                
+                // Set the data attribute on day slots
+                const slots = column.querySelector('.day-slots');
+                if (slots) {
+                    slots.dataset.date = dateStr;
+                }
+                
+                // Clear existing schedules
+                const existingSchedules = column.querySelectorAll('.schedule-event');
+                existingSchedules.forEach(schedule => schedule.remove());
+            });
+            
+            // Add new schedules
+            data.schedules.forEach(schedule => {
+                const startDate = new Date(schedule.start_time);
+                const endDate = new Date(schedule.end_time);
+                const dateStr = startDate.toISOString().split('T')[0];
+                
+                // Find the corresponding day column
+                const daySlots = document.querySelector(`.day-slots[data-date="${dateStr}"]`);
+                if (daySlots) {
+                    // Create schedule element
+                    const scheduleEl = document.createElement('div');
+                    scheduleEl.className = 'schedule-event';
+                    scheduleEl.style.backgroundColor = schedule.time_off ? '#6a6d6c' : schedule.technician_color;
+                    scheduleEl.dataset.scheduleId = schedule.id;
+                    scheduleEl.dataset.technicianId = schedule.technician_id;
+                    scheduleEl.dataset.startTime = schedule.start_time;
+                    scheduleEl.dataset.endTime = schedule.end_time;
+                    scheduleEl.dataset.timeOff = schedule.time_off;
+                    scheduleEl.dataset.toggle = 'tooltip';
+                    scheduleEl.dataset.html = true;
+                    
+                    // Format time for display
+                    const startTimeStr = startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    const endTimeStr = endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    const dateStr = startDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' });
+                    const durationHours = Math.floor((endDate - startDate) / (1000 * 60 * 60));
+                    
+                    // Create tooltip content
+                    scheduleEl.title = `<div class='hover-content'><strong>${schedule.technician_name}</strong> <span class='text-muted'>${dateStr}</span><br>${startTimeStr}-${endTimeStr} (${durationHours}h)${schedule.location_name ? `<br><i data-feather='map-pin'></i> ${schedule.location_name}` : ''}${schedule.description ? '<br>' + schedule.description : ''}</div>`;
+                    
+                    // Create schedule content
+                    scheduleEl.innerHTML = `
+                        <div class="schedule-time">${startTimeStr} - ${endTimeStr}</div>
+                        <div class="schedule-tech">${schedule.technician_name}</div>
+                        ${schedule.location_name ? `<div class="schedule-location"><i data-feather="map-pin"></i> ${schedule.location_name}</div>` : ''}
+                        <div class="schedule-desc">${schedule.description || ''}</div>
+                    `;
+                    
+                    // Add to day column
+                    daySlots.appendChild(scheduleEl);
+                }
+            });
+            
+            // Re-initialize tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
+            tooltipTriggerList.forEach(function(tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl, {
+                    html: true,
+                    container: 'body',
+                    boundary: 'window'
+                });
+            });
+            
+            // Update URL without refreshing page
+            window.history.pushState({}, '', url);
+            
+            // Auto-scroll to today if it's visible
+            const todayColumns = document.querySelectorAll('.day-column.today');
+            if (todayColumns.length > 0) {
+                todayColumns[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            // Initialize Feather icons
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching calendar data:', error);
+        });
+}
+
 // Initialize tooltips after the document is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize tooltips
@@ -402,11 +603,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Auto-scroll to current date in calendar
-    document.querySelectorAll('.fc-day-today').forEach(function(element) {
-        if (element) {
-            setTimeout(function() {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 500); // Short delay to ensure calendar is fully rendered
+    const todayColumns = document.querySelectorAll('.day-column.today');
+    if (todayColumns.length > 0) {
+        setTimeout(function() {
+            todayColumns[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 500); // Short delay to ensure calendar is fully rendered
+    }
+    
+    // Setup AJAX navigation for calendar
+    setupCalendarNavigation();
+    
+    // Auto highlight today
+    const todayDate = new Date().toISOString().split('T')[0];
+    document.querySelectorAll('.day-column').forEach(column => {
+        const dateElement = column.querySelector('.day-slots');
+        if (dateElement && dateElement.dataset.date === todayDate) {
+            column.classList.add('today');
+            column.querySelector('.day-header').classList.add('today');
         }
     });
 });

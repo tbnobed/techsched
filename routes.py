@@ -237,16 +237,24 @@ def admin_locations():
 def calendar():
     week_start = request.args.get('week_start')
     location_filter = request.args.get('location_id', type=int)
-
-    if week_start:
-        week_start = datetime.strptime(week_start, '%Y-%m-%d')
-        week_start = current_user.get_timezone().localize(
-            week_start.replace(hour=0, minute=0, second=0, microsecond=0)
-        )
-    else:
+    force_current_week = request.args.get('current', type=bool)
+    
+    # Always default to current week if force_current_week is True
+    if force_current_week or not week_start:
         week_start = datetime.now(current_user.get_timezone())
         week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
         week_start -= timedelta(days=week_start.weekday())
+    else:
+        try:
+            week_start = datetime.strptime(week_start, '%Y-%m-%d')
+            week_start = current_user.get_timezone().localize(
+                week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+            )
+        except (ValueError, TypeError):
+            # If there's any error parsing the date, default to current week
+            week_start = datetime.now(current_user.get_timezone())
+            week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+            week_start -= timedelta(days=week_start.weekday())
 
     # Convert to UTC for database query
     week_start_utc = week_start.astimezone(pytz.UTC)
@@ -628,6 +636,81 @@ def update_timezone():
     else:
         flash('Invalid timezone')
     return redirect(request.referrer or url_for('calendar'))
+
+@app.route('/api/calendar_data')
+@login_required
+def calendar_api():
+    """API endpoint to get calendar data for AJAX updates"""
+    week_start = request.args.get('week_start')
+    location_filter = request.args.get('location_id', type=int)
+    force_current_week = request.args.get('current', type=bool)
+    
+    # Always default to current week if force_current_week is True
+    if force_current_week or not week_start:
+        week_start = datetime.now(current_user.get_timezone())
+        week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_start -= timedelta(days=week_start.weekday())
+    else:
+        try:
+            week_start = datetime.strptime(week_start, '%Y-%m-%d')
+            week_start = current_user.get_timezone().localize(
+                week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+            )
+        except (ValueError, TypeError):
+            # If there's any error parsing the date, default to current week
+            week_start = datetime.now(current_user.get_timezone())
+            week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+            week_start -= timedelta(days=week_start.weekday())
+    
+    # Convert to UTC for database query
+    week_start_utc = week_start.astimezone(pytz.UTC)
+    week_end_utc = (week_start + timedelta(days=7)).astimezone(pytz.UTC)
+    
+    # Query schedules
+    query = Schedule.query.filter(
+        Schedule.start_time >= week_start_utc,
+        Schedule.start_time < week_end_utc
+    )
+    
+    if location_filter:
+        query = query.filter(Schedule.location_id == location_filter)
+    
+    schedules = query.all()
+    
+    # Convert schedule times to user's timezone
+    user_tz = current_user.get_timezone()
+    schedule_data = []
+    
+    for schedule in schedules:
+        if schedule.start_time.tzinfo is None:
+            schedule.start_time = pytz.UTC.localize(schedule.start_time)
+        if schedule.end_time.tzinfo is None:
+            schedule.end_time = pytz.UTC.localize(schedule.end_time)
+        
+        schedule.start_time = schedule.start_time.astimezone(user_tz)
+        schedule.end_time = schedule.end_time.astimezone(user_tz)
+        
+        # Format schedule data for JSON
+        schedule_data.append({
+            'id': schedule.id,
+            'technician_id': schedule.technician_id,
+            'technician_name': schedule.technician.username,
+            'technician_color': schedule.technician.color,
+            'start_time': schedule.start_time.strftime('%Y-%m-%d %H:%M:%S'),
+            'end_time': schedule.end_time.strftime('%Y-%m-%d %H:%M:%S'),
+            'description': schedule.description,
+            'location_id': schedule.location_id,
+            'location_name': schedule.location.name if schedule.location else None,
+            'time_off': schedule.time_off
+        })
+    
+    # Return calendar data as JSON
+    return jsonify({
+        'week_start': week_start.strftime('%Y-%m-%d'),
+        'week_end': (week_start + timedelta(days=7)).strftime('%Y-%m-%d'),
+        'schedules': schedule_data,
+        'today': datetime.now(user_tz).strftime('%Y-%m-%d')
+    })
 
 @app.route('/admin/dashboard', methods=['GET', 'POST'])
 @login_required

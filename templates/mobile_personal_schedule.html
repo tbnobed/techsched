@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}My Schedule (Mobile) | The Plex Studios{% endblock %}
+{% block title %}My Schedule | The Plex Studios{% endblock %}
 
 {% block content %}
 <div class="container mt-4 mb-4">
@@ -57,42 +57,42 @@
                 <h4>{{ current_date.strftime('%A, %B %d, %Y') }}</h4>
             </div>
             <div class="day-schedules">
-                {% set day_schedules = [] %}
-                {% for schedule in schedules if schedule.start_time.date() == current_date.date() and schedule.technician_id == current_user.id %}
-                    {% do day_schedules.append(schedule) %}
+                {% set has_schedules = false %}
+                
+                {% for schedule in schedules %}
+                    {% if schedule.start_time.date() == current_date.date() %}
+                        {% set has_schedules = true %}
+                        <div class="mobile-schedule-card" 
+                             style="border-left: 4px solid {{ current_user.color }};"
+                             data-bs-toggle="modal" 
+                             data-bs-target="#scheduleModal"
+                             data-schedule-id="{{ schedule.id }}"
+                             data-start-time="{{ schedule.start_time }}"
+                             data-end-time="{{ schedule.end_time }}"
+                             data-time-off="{{ 'true' if schedule.time_off else 'false' }}">
+                            <div class="schedule-time">
+                                {{ schedule.start_time.strftime('%I:%M %p') }} - {{ schedule.end_time.strftime('%I:%M %p') }}
+                            </div>
+                            {% if schedule.location %}
+                            <div class="schedule-location">
+                                <i data-feather="map-pin" class="feather-small"></i> {{ schedule.location.name }}
+                            </div>
+                            {% endif %}
+                            {% if schedule.time_off %}
+                            <div class="time-off-badge">
+                                <span class="badge bg-warning">Time Off</span>
+                            </div>
+                            {% endif %}
+                            {% if schedule.description %}
+                            <div class="schedule-desc">
+                                {{ schedule.description }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                 {% endfor %}
                 
-                {% if day_schedules|length > 0 %}
-                    {% for schedule in day_schedules %}
-                    <div class="mobile-schedule-card" 
-                         style="border-left: 4px solid {{ current_user.color }};"
-                         data-bs-toggle="modal" 
-                         data-bs-target="#scheduleModal"
-                         data-schedule-id="{{ schedule.id }}"
-                         data-start-time="{{ schedule.start_time }}"
-                         data-end-time="{{ schedule.end_time }}"
-                         data-time-off="{{ 'true' if schedule.time_off else 'false' }}">
-                        <div class="schedule-time">
-                            {{ schedule.start_time.strftime('%I:%M %p') }} - {{ schedule.end_time.strftime('%I:%M %p') }}
-                        </div>
-                        {% if schedule.time_off %}
-                        <div class="schedule-time-off">
-                            <span class="badge bg-warning">Time Off</span>
-                        </div>
-                        {% endif %}
-                        {% if schedule.location %}
-                        <div class="schedule-location">
-                            <i data-feather="map-pin" class="feather-small"></i> {{ schedule.location.name }}
-                        </div>
-                        {% endif %}
-                        {% if schedule.description %}
-                        <div class="schedule-desc">
-                            {{ schedule.description }}
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                {% else %}
+                {% if not has_schedules %}
                     <div class="empty-day-message">
                         <p>No schedules for this day.</p>
                         <button class="btn btn-sm btn-outline-primary" 
@@ -110,7 +110,115 @@
 </div>
 
 <!-- Schedule Modal -->
-{{ super() }}
+<div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="scheduleModalLabel">Add New Schedule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('new_schedule') }}" id="scheduleForm">
+                    {{ form.hidden_tag() }}
+                    <input type="hidden" name="schedule_id" id="schedule_id" value="">
+                    <input type="hidden" name="return_to" value="personal_schedule">
+                    <input type="hidden" name="week_start" value="{{ week_start.strftime('%Y-%m-%d') }}">
+                    
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="schedule_date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="schedule_date" name="schedule_date" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-5">
+                            <label for="start_hour" class="form-label">Start Time</label>
+                            <div class="input-group">
+                                <select class="form-select" id="start_hour" name="start_hour" required>
+                                    {% for hour in range(24) %}
+                                    <option value="{{ '%02d'|format(hour) }}">{{ '%02d'|format(hour) }}:00</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <label for="end_hour" class="form-label">End Time</label>
+                            <div class="input-group">
+                                <select class="form-select" id="end_hour" name="end_hour" required>
+                                    {% for hour in range(24) %}
+                                    <option value="{{ '%02d'|format(hour) }}">{{ '%02d'|format(hour) }}:00</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="time_off" name="time_off" onchange="toggleRepeatDaysSelection()">
+                                <label class="form-check-label" for="time_off">Time Off Request</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3" id="location_section">
+                        <div class="col-md-12">
+                            <label for="location_id" class="form-label">Location</label>
+                            <select class="form-select" id="location_id" name="location_id">
+                                <option value="">-- Select Location --</option>
+                                {% for location in locations if location.active %}
+                                <option value="{{ location.id }}">{{ location.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3" id="repeat_days_section">
+                        <div class="col-md-12">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="enable_repeat_days" onchange="toggleRepeatDaysCalendar()">
+                                <label class="form-check-label" for="enable_repeat_days">Repeat on additional days</label>
+                            </div>
+                            <div id="repeat_days_calendar" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6>Select additional days:</h6>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearDateSelection()">Clear All</button>
+                                </div>
+                                <div class="repeat-days-grid">
+                                    {% for i in range(28) %}
+                                    {% set day_date = week_start + timedelta(days=i) %}
+                                    {% if day_date.date() != week_start.date() %}
+                                    <div class="date-checkbox">
+                                        <input type="checkbox" id="repeat_day_{{ i }}" name="repeat_days" value="{{ day_date.strftime('%Y-%m-%d') }}" class="date-checkbox-input">
+                                        <label for="repeat_day_{{ i }}" class="date-checkbox-label">
+                                            {{ day_date.strftime('%b %d') }}
+                                        </label>
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="delete_button" style="display: none; margin-right: auto;">Delete</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('scheduleForm').submit();">Add Schedule</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
 .mobile-title {
@@ -186,14 +294,19 @@
     font-size: 1rem;
 }
 
-.schedule-time-off {
-    margin: 5px 0;
+.schedule-tech {
+    color: var(--text-muted);
+    margin-bottom: 5px;
 }
 
 .schedule-location, .schedule-desc {
     font-size: 0.9rem;
     margin-top: 5px;
     color: var(--text-secondary);
+}
+
+.time-off-badge {
+    margin-top: 5px;
 }
 
 .empty-day-message {
@@ -205,6 +318,48 @@
 .feather-small {
     width: 14px;
     height: 14px;
+}
+
+.repeat-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.date-checkbox {
+    position: relative;
+}
+
+.date-checkbox-input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.date-checkbox-label {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 5px;
+    font-size: 0.8rem;
+    text-align: center;
+    cursor: pointer;
+    background-color: var(--bg-light);
+    transition: all 0.2s;
+    display: block;
+    margin: 0;
+}
+
+.date-checkbox-input:checked + .date-checkbox-label {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.date-checkbox-label:hover {
+    background-color: var(--bg-hover);
 }
 </style>
 
@@ -233,6 +388,45 @@ function nextWeek() {
     window.location.href = "{{ url_for('personal_schedule', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}";
 }
 
+function toggleRepeatDaysSelection() {
+    const timeOffCheckbox = document.getElementById('time_off');
+    const repeatDaysSection = document.getElementById('repeat_days_section');
+    const locationSection = document.getElementById('location_section');
+    
+    if (timeOffCheckbox.checked) {
+        // Hide repeat days if it's time off
+        repeatDaysSection.style.display = 'none';
+        // Clear any selected repeat days
+        document.querySelectorAll('input[name="repeat_days"]').forEach(cb => {
+            cb.checked = false;
+        });
+    } else {
+        // Show repeat days for regular shifts
+        repeatDaysSection.style.display = 'block';
+    }
+}
+
+function toggleRepeatDaysCalendar() {
+    const enableRepeatDays = document.getElementById('enable_repeat_days');
+    const repeatDaysCalendar = document.getElementById('repeat_days_calendar');
+    
+    if (enableRepeatDays.checked) {
+        repeatDaysCalendar.style.display = 'block';
+    } else {
+        repeatDaysCalendar.style.display = 'none';
+        // Clear any selected dates
+        document.querySelectorAll('input[name="repeat_days"]').forEach(cb => {
+            cb.checked = false;
+        });
+    }
+}
+
+function clearDateSelection() {
+    document.querySelectorAll('input[name="repeat_days"]').forEach(cb => {
+        cb.checked = false;
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Feather icons
     if (typeof feather !== 'undefined') {
@@ -242,6 +436,46 @@ document.addEventListener('DOMContentLoaded', function() {
             'height': 16
         });
     }
+    
+    // Set default values for new schedule entries
+    document.querySelectorAll('.empty-day-message button').forEach(button => {
+        button.addEventListener('click', function() {
+            const date = this.getAttribute('data-date');
+            if (date) {
+                document.getElementById('schedule_date').value = date;
+                document.getElementById('schedule_id').value = '';
+                document.getElementById('description').value = '';
+                document.getElementById('location_id').value = '';
+                document.getElementById('time_off').checked = false;
+                
+                // Default to 9 AM start time for new entries
+                const startHour = document.getElementById('start_hour');
+                if (startHour) {
+                    startHour.value = '09';
+                }
+                
+                // Default to 5 PM end time for new entries
+                const endHour = document.getElementById('end_hour');
+                if (endHour) {
+                    endHour.value = '17';
+                }
+                
+                // Update modal title and buttons
+                document.querySelector('#scheduleModal .modal-title').textContent = 'Add New Schedule';
+                document.getElementById('delete_button').style.display = 'none';
+                document.querySelector('#scheduleModal .btn-primary').textContent = 'Add Schedule';
+                
+                // Ensure repeat days and location sections are shown
+                document.getElementById('repeat_days_section').style.display = 'block';
+                document.getElementById('location_section').style.display = 'block';
+                
+                // Clear any repeat day selections
+                document.getElementById('enable_repeat_days').checked = false;
+                document.getElementById('repeat_days_calendar').style.display = 'none';
+                clearDateSelection();
+            }
+        });
+    });
     
     // Add event listeners to the schedule cards
     document.querySelectorAll('.mobile-schedule-card').forEach(card => {
@@ -267,47 +501,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 endHour.value = displayEndHour;
             }
             
-            // Set time off checkbox
+            // Set time off checkbox and handle associated visibility
             document.getElementById('time_off').checked = timeOff;
+            toggleRepeatDaysSelection();
             
             // Get description
             const descElement = this.querySelector('.schedule-desc');
             document.getElementById('description').value = descElement ? descElement.textContent.trim() : '';
+            
+            // Get location if present
+            const locationElement = this.querySelector('.schedule-location');
+            if (locationElement) {
+                // Try to find the location name in the dropdown
+                const locationName = locationElement.textContent.trim().replace('map-pin', '').trim();
+                const locationSelect = document.getElementById('location_id');
+                for (let i = 0; i < locationSelect.options.length; i++) {
+                    if (locationSelect.options[i].text === locationName) {
+                        locationSelect.value = locationSelect.options[i].value;
+                        break;
+                    }
+                }
+            } else {
+                document.getElementById('location_id').value = '';
+            }
             
             // Update modal title and buttons
             document.querySelector('#scheduleModal .modal-title').textContent = 'Edit Schedule';
             document.getElementById('delete_button').style.display = 'block';
             document.querySelector('#scheduleModal .btn-primary').textContent = 'Save Changes';
             
+            // Hide repeat days for existing records
+            document.getElementById('repeat_days_section').style.display = 'none';
+            
             // Set up delete button event
             document.getElementById('delete_button').onclick = function() {
                 if (confirm('Are you sure you want to delete this schedule?')) {
-                    window.location.href = `/schedule/delete/${scheduleId}?week_start={{ week_start.strftime('%Y-%m-%d') }}&personal_view=true`;
+                    window.location.href = `/schedule/delete/${scheduleId}?week_start={{ week_start.strftime('%Y-%m-%d') }}&return_to=personal_schedule`;
                 }
             };
         });
     });
     
-    // Handle clicking on empty days
-    document.querySelectorAll('.empty-day-message button').forEach(button => {
-        button.addEventListener('click', function() {
-            const date = this.getAttribute('data-date');
-            document.getElementById('schedule_date').value = date;
-            document.getElementById('schedule_id').value = '';
-            document.getElementById('description').value = '';
-            document.getElementById('time_off').checked = false;
-            document.querySelector('#scheduleModal .modal-title').textContent = 'Add New Schedule';
-            document.getElementById('delete_button').style.display = 'none';
-            document.querySelector('#scheduleModal .btn-primary').textContent = 'Add Schedule';
-            
-            // Set default times (9am - 5pm)
-            const startHour = document.getElementById('start_hour');
-            if (startHour) startHour.value = '09';
-            
-            const endHour = document.getElementById('end_hour');
-            if (endHour) endHour.value = '17';
-        });
-    });
+    // Initial setup for repeat days toggle
+    toggleRepeatDaysSelection();
 });
 </script>
 {% endblock %}

@@ -57,40 +57,40 @@
                 <h4>{{ current_date.strftime('%A, %B %d, %Y') }}</h4>
             </div>
             <div class="day-schedules">
-                {% set day_schedules = [] %}
-                {% for schedule in schedules if schedule.start_time.date() == current_date.date() %}
-                    {% do day_schedules.append(schedule) %}
+                {% set has_schedules = false %}
+                
+                {% for schedule in schedules %}
+                    {% if schedule.start_time.date() == current_date.date() %}
+                        {% set has_schedules = true %}
+                        <div class="mobile-schedule-card" 
+                             style="border-left: 4px solid {{ schedule.technician.color }};"
+                             data-bs-toggle="modal" 
+                             data-bs-target="#scheduleModal"
+                             data-schedule-id="{{ schedule.id }}"
+                             data-start-time="{{ schedule.start_time }}"
+                             data-end-time="{{ schedule.end_time }}"
+                             data-time-off="{{ 'true' if schedule.time_off else 'false' }}">
+                            <div class="schedule-time">
+                                {{ schedule.start_time.strftime('%I:%M %p') }} - {{ schedule.end_time.strftime('%I:%M %p') }}
+                            </div>
+                            <div class="schedule-tech">
+                                {{ schedule.technician.username }}
+                            </div>
+                            {% if schedule.location %}
+                            <div class="schedule-location">
+                                <i data-feather="map-pin" class="feather-small"></i> {{ schedule.location.name }}
+                            </div>
+                            {% endif %}
+                            {% if schedule.description %}
+                            <div class="schedule-desc">
+                                {{ schedule.description }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                 {% endfor %}
                 
-                {% if day_schedules|length > 0 %}
-                    {% for schedule in day_schedules %}
-                    <div class="mobile-schedule-card" 
-                         style="border-left: 4px solid {{ schedule.technician.color }};"
-                         data-bs-toggle="modal" 
-                         data-bs-target="#scheduleModal"
-                         data-schedule-id="{{ schedule.id }}"
-                         data-start-time="{{ schedule.start_time }}"
-                         data-end-time="{{ schedule.end_time }}"
-                         data-time-off="{{ 'true' if schedule.time_off else 'false' }}">
-                        <div class="schedule-time">
-                            {{ schedule.start_time.strftime('%I:%M %p') }} - {{ schedule.end_time.strftime('%I:%M %p') }}
-                        </div>
-                        <div class="schedule-tech">
-                            {{ schedule.technician.username }}
-                        </div>
-                        {% if schedule.location %}
-                        <div class="schedule-location">
-                            <i data-feather="map-pin" class="feather-small"></i> {{ schedule.location.name }}
-                        </div>
-                        {% endif %}
-                        {% if schedule.description %}
-                        <div class="schedule-desc">
-                            {{ schedule.description }}
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                {% else %}
+                {% if not has_schedules %}
                     <div class="empty-day-message">
                         <p>No schedules for this day.</p>
                         <button class="btn btn-sm btn-outline-primary" 
@@ -284,6 +284,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.location.href = `/schedule/delete/${scheduleId}?week_start={{ week_start.strftime('%Y-%m-%d') }}`;
                 }
             };
+        });
+    });
+    
+    // Handle empty day buttons
+    document.querySelectorAll('.empty-day-message button').forEach(button => {
+        button.addEventListener('click', function() {
+            const date = this.getAttribute('data-date');
+            if (date) {
+                document.getElementById('schedule_date').value = date;
+                document.getElementById('schedule_id').value = '';
+                document.getElementById('description').value = '';
+                document.getElementById('time_off').checked = false;
+                document.querySelector('#scheduleModal .modal-title').textContent = 'Add New Schedule';
+                document.getElementById('delete_button').style.display = 'none';
+                document.querySelector('#scheduleModal .btn-primary').textContent = 'Add Schedule';
+            }
         });
     });
 });

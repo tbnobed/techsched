@@ -112,7 +112,76 @@
 </div>
 
 <!-- Schedule Modal -->
-{{ super() }}
+<div class="modal fade" id="scheduleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Schedule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="schedule_form" method="POST" action="{{ url_for('new_schedule') }}">
+                    {{ form.hidden_tag() }}
+                    <input type="hidden" id="schedule_id" name="schedule_id">
+                    {% if request.args.get('week_start') %}
+                    <input type="hidden" name="week_start" value="{{ request.args.get('week_start') }}">
+                    {% endif %}
+                    
+                    {% if current_user.is_admin %}
+                    <div class="mb-3">
+                        {{ form.technician.label(class="form-label") }}
+                        {{ form.technician(class="form-control") }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", id="description", rows="3") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.location_id.label(class="form-label") }}
+                        {{ form.location_id(class="form-control") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" id="schedule_date" name="schedule_date" class="form-control">
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Start Time</label>
+                            <select class="form-control" id="start_hour" name="start_hour">
+                                {% for hour in range(24) %}
+                                <option value="{{ '%02d'|format(hour) }}">{{ '%02d'|format(hour) }}:00</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">End Time</label>
+                            <select class="form-control" id="end_hour" name="end_hour">
+                                {% for hour in range(24) %}
+                                <option value="{{ '%02d'|format(hour) }}">{{ '%02d'|format(hour) }}:00</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="time_off" name="time_off">
+                        <label class="form-check-label" for="time_off">{{ form.time_off.label.text }}</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="delete_button" class="btn btn-danger" style="display: none;">Delete</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('schedule_form').submit();">Add Schedule</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
 .mobile-title {

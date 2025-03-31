@@ -481,20 +481,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Find the current date and show that day
-    const today = new Date();
-    const weekStartDate = new Date('{{ week_start.strftime("%Y-%m-%d") }}');
-    
-    // Calculate the day of the week (0-6) for today
-    // If today is within our current week view, show that day
-    if (today >= weekStartDate && today < new Date(weekStartDate.getTime() + 7 * 24 * 60 * 60 * 1000)) {
-        // Calculate days since the start of the week (0-6)
-        const daysSinceWeekStart = Math.floor((today - weekStartDate) / (24 * 60 * 60 * 1000));
-        
-        // Show today's schedules (only if within the current week view)
-        showDay(daysSinceWeekStart);
-    }
-    
     // Set default values for new schedule entries
     document.querySelectorAll('.empty-day-message button').forEach(button => {
         button.addEventListener('click', function() {

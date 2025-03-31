@@ -22,18 +22,15 @@
 
     <div class="mobile-controls mb-3">
         <div class="d-flex justify-content-between align-items-center">
-            <button onclick="navigateWeek(-7)" class="btn btn-outline-secondary btn-sm">
+            <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
                 <i data-feather="arrow-left"></i> Previous Week
-            </button>
-            <button class="btn btn-outline-primary btn-sm" onclick="goToCurrentWeek()">
-                Today
-            </button>
+            </a>
             <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#scheduleModal">
-                <i data-feather="plus"></i> Add
+                <i data-feather="plus"></i> Add Schedule
             </button>
-            <button onclick="navigateWeek(7)" class="btn btn-outline-secondary btn-sm">
+            <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
                 Next Week <i data-feather="arrow-right"></i>
-            </button>
+            </a>
         </div>
     </div>
 
@@ -161,24 +158,6 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.day-selector .nav-link.today {
-    border: 2px solid #0d6efd;
-    font-weight: bold;
-    position: relative;
-}
-
-.day-selector .nav-link.today:after {
-    content: '';
-    position: absolute;
-    bottom: -4px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 6px;
-    height: 6px;
-    background-color: #0d6efd;
-    border-radius: 50%;
-}
-
 .day-number {
     font-size: 1rem;
     font-weight: bold;
@@ -288,99 +267,24 @@ function showDay(dayIndex) {
     document.querySelector(`.day-selector .nav-link[data-day="${dayIndex}"]`).classList.add('active');
 }
 
-function navigateWeek(dayOffset) {
-    // Get the current week start date
-    const weekStartDate = new Date('{{ week_start.strftime("%Y-%m-%d") }}');
-    
-    // Calculate the new week start date
-    const newDate = new Date(weekStartDate);
-    newDate.setDate(newDate.getDate() + dayOffset);
-    
-    // Format the date for the URL
-    const newDateStr = newDate.toISOString().split('T')[0]; // YYYY-MM-DD format
-    
-    // Update the URL without reloading the page
-    const url = '{{ url_for("calendar") }}?week_start=' + newDateStr;
-    
-    // Use fetch to load the new calendar data without a page refresh
-    loadCalendarView(url);
+function previousWeek() {
+    window.location.href = "{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}";
 }
 
-function goToCurrentWeek() {
-    // Use a direct URL with the today parameter to force today-centered view
-    const url = '{{ url_for("calendar") }}?current=true&today=true';
-    loadCalendarView(url);
+function nextWeek() {
+    window.location.href = "{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}";
 }
 
-function loadCalendarView(url) {
-    // Display a loading indicator
-    document.querySelector('.mobile-calendar').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><div class="mt-3">Loading calendar...</div></div>';
-    
-    // Fetch the new calendar page
-    fetch(url)
-        .then(response => response.text())
-        .then(html => {
-            // Parse the HTML
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            
-            // Extract just the calendar content
-            const newCalendar = doc.querySelector('.mobile-calendar');
-            const newTitle = doc.querySelector('.mobile-title span');
-            
-            if (newCalendar) {
-                document.querySelector('.mobile-calendar').outerHTML = newCalendar.outerHTML;
-            }
-            
-            if (newTitle) {
-                document.querySelector('.mobile-title span').innerHTML = newTitle.innerHTML;
-            }
-            
-            // Update the URL without refreshing the page
-            window.history.pushState({}, '', url);
-            
-            // Re-initialize any event handlers
-            initEventHandlers();
-            
-            // Re-initialize feather icons
-            if (typeof feather !== 'undefined') {
-                feather.replace({
-                    'stroke-width': 1.5,
-                    'width': 16,
-                    'height': 16
-                });
-            }
-            
-            // Auto-select today if it's visible in this week
-            highlightTodayIfVisible();
-        })
-        .catch(error => {
-            console.error('Error loading calendar:', error);
-            document.querySelector('.mobile-calendar').innerHTML = '<div class="alert alert-danger">Error loading calendar. Please try again.</div>';
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace({
+            'stroke-width': 1.5,
+            'width': 16,
+            'height': 16
         });
-}
-
-function highlightTodayIfVisible() {
-    const today = new Date();
-    const weekStartDate = new Date('{{ week_start.strftime("%Y-%m-%d") }}');
-    
-    // Check if today is within the current week view
-    if (today >= weekStartDate && today < new Date(weekStartDate.getTime() + 7 * 24 * 60 * 60 * 1000)) {
-        // Calculate days since the start of the week (0-6)
-        const daysSinceWeekStart = Math.floor((today - weekStartDate) / (24 * 60 * 60 * 1000));
-        
-        // Show today's schedules
-        showDay(daysSinceWeekStart);
-        
-        // Visually highlight today
-        const todayButton = document.querySelector(`.day-selector .nav-link[data-day="${daysSinceWeekStart}"]`);
-        if (todayButton) {
-            todayButton.classList.add('today');
-        }
     }
-}
-
-function initEventHandlers() {
+    
     // Add event listeners to the schedule cards
     document.querySelectorAll('.mobile-schedule-card').forEach(card => {
         card.addEventListener('click', function() {
@@ -441,23 +345,6 @@ function initEventHandlers() {
             }
         });
     });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Feather icons
-    if (typeof feather !== 'undefined') {
-        feather.replace({
-            'stroke-width': 1.5,
-            'width': 16,
-            'height': 16
-        });
-    }
-    
-    // Initialize event handlers
-    initEventHandlers();
-    
-    // Highlight today if it's visible
-    highlightTodayIfVisible();
 });
 </script>
 {% endblock %}

@@ -298,8 +298,8 @@ def calendar():
         # Get active tickets for the sidebar
         from ticket_routes import get_active_sidebar_tickets
         active_sidebar_tickets = get_active_sidebar_tickets()
-        # Get upcoming time off
-        upcoming_time_off = get_upcoming_time_off()
+        # Get upcoming time off with server-side rendering
+        upcoming_time_off = get_upcoming_time_off(for_template=True)
         
         return render_template('mobile_calendar.html', 
                             schedules=schedules,
@@ -934,8 +934,8 @@ def personal_schedule():
         # Get active tickets for the sidebar
         from ticket_routes import get_active_sidebar_tickets
         active_sidebar_tickets = get_active_sidebar_tickets()
-        # Get upcoming time off
-        upcoming_time_off = get_upcoming_time_off()
+        # Get upcoming time off with server-side rendering
+        upcoming_time_off = get_upcoming_time_off(for_template=True)
         
         return render_template('mobile_personal_schedule.html', 
                             schedules=schedules,
@@ -1288,10 +1288,14 @@ def inject_quick_links():
 
 @app.route('/api/upcoming_time_off')
 @login_required
-def get_upcoming_time_off():
-    """Get time off entries for the next 2 weeks"""
+def get_upcoming_time_off(for_template=False):
+    """
+    Get time off entries for the next 2 weeks
+    If for_template is True, returns data formatted for template rendering
+    Otherwise returns JSON response for API endpoint
+    """
     try:
-        # Get current time in UTC since our database stores times inUTC
+        # Get current time in UTC since our database stores times in UTC
         current_time = datetime.now(pytz.UTC)
         two_weeks_later = current_time + timedelta(days=14)
 
@@ -1303,41 +1307,64 @@ def get_upcoming_time_off():
                 Schedule.start_time <= two_weeks_later,
                 Schedule.time_off == True
             )
-            .with_entities(
-                User.username,
-                Schedule.start_time,
-                Schedule.end_time,
-                Schedule.description
-            )
             .order_by(Schedule.start_time)
             .all())
 
+        # Format data for template rendering with user color
+        if for_template:
+            template_entries = []
+            for entry in time_off_entries:
+                user = User.query.get(entry.technician_id)
+                if user:
+                    template_entries.append({
+                        'username': user.username,
+                        'color': user.color,
+                        'start_time': entry.start_time.strftime('%b %d, %I:%M %p'),
+                        'end_time': entry.end_time.strftime('%b %d, %I:%M %p'),
+                        'description': entry.description
+                    })
+            return template_entries
+        
+        # Original API response formatting
+        time_off_data = []
+        user_tz = pytz.timezone('America/Los_Angeles')  # Default timezone
+        
         # Group entries by username and consolidate consecutive dates
         user_entries = {}
         formatted_entries = []
-        user_tz = pytz.timezone('America/Los_Angeles')  # Default timezone
 
-        for username, start_time, end_time, description in time_off_entries:
+        for entry in time_off_entries:
+            user = User.query.get(entry.technician_id)
+            if not user:
+                continue
+                
+            username = user.username
+            
             if username not in user_entries:
                 user_entries[username] = []
 
-            start_local = start_time.astimezone(user_tz)
-            end_local = end_time.astimezone(user_tz)
+            start_local = entry.start_time.astimezone(user_tz)
+            end_local = entry.end_time.astimezone(user_tz)
 
             user_entries[username].append({
                 'start_date': start_local.date(),
                 'end_date': end_local.date(),
-                'description': description
+                'description': entry.description,
+                'color': user.color
             })
 
         # Consolidate consecutive dates for each user
         for username, entries in user_entries.items():
+            if not entries:
+                continue
+                
             entries.sort(key=lambda x: x['start_date'])
             consolidated = []
             current_entry = entries[0]
 
             for entry in entries[1:]:
-                if (entry['start_date'] - current_entry['end_date']).days <= 1:                    # Consecutive days, extend the current entry
+                if (entry['start_date'] - current_entry['end_date']).days <= 1:
+                    # Consecutive days, extend the current entry
                     current_entry['end_date'] = max(current_entry['end_date'], entry['end_date'])
                 else:
                     # Non-consecutive, add current entry and start a new one
@@ -1354,13 +1381,16 @@ def get_upcoming_time_off():
                     'start_date': entry['start_date'].strftime('%b %d'),
                     'end_date': entry['end_date'].strftime('%b %d'),
                     'duration': f"{duration} day{'s' if duration != 1 else ''}",
-                    'description': entry.get('description') or 'Time Off'
+                    'description': entry.get('description') or 'Time Off',
+                    'color': entry.get('color', '#3498db')
                 })
 
-        return jsonify(formatted_entries)
+        return jsonify(time_off=formatted_entries)
     except Exception as e:
         app.logger.error(f"Error in get_upcoming_time_off: {str(e)}")
-        return jsonify([])
+        if for_template:
+            return []
+        return jsonify(time_off=[])
 
 @app.route('/admin/backup')
 @login_required

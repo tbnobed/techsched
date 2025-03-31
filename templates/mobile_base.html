@@ -103,12 +103,16 @@
                 </div>
                 <div class="card-body">
                     <div id="active-users">
-                        <!-- Server-side rendering for better reliability -->
-                        {% if get_active_sidebar_tickets and active_sidebar_tickets %}
+                        {% if upcoming_time_off %}
                             <div class="list-group list-group-flush">
-                                {% for ticket in active_sidebar_tickets %}
-                                <div class="active-user-entry mb-2 p-2">
-                                    {{ ticket.title }}
+                                {% for user in upcoming_time_off %}
+                                <div class="active-user-entry mb-2 p-2" style="border-left: 3px solid {{ user.color|default('#3498db') }};">
+                                    <h6 class="mb-1">{{ user.username }}</h6>
+                                    <div class="small text-muted">
+                                        {% if user.location %}
+                                            <i data-feather="map-pin" class="feather-small"></i> {{ user.location }}
+                                        {% endif %}
+                                    </div>
                                 </div>
                                 {% endfor %}
                             </div>
@@ -125,7 +129,24 @@
                 </div>
                 <div class="card-body">
                     <div id="upcoming-time-off">
-                        Loading time off entries...
+                        {% if upcoming_time_off %}
+                            <div class="list-group list-group-flush">
+                                {% for entry in upcoming_time_off %}
+                                <div class="time-off-entry mb-2 p-2" style="border-left: 3px solid {{ entry.color|default('#3498db') }};">
+                                    <h6 class="mb-1">{{ entry.username }}</h6>
+                                    <div class="small">
+                                        <i data-feather="calendar" class="feather-small"></i> 
+                                        {{ entry.start_time|default('') }} - {{ entry.end_time|default('') }}
+                                    </div>
+                                    {% if entry.description %}
+                                    <div class="small mt-1">{{ entry.description }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center mb-0">No upcoming time off</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>

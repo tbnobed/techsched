@@ -5,7 +5,7 @@ from models import db, Ticket, TicketCategory, TicketComment, TicketHistory, Use
 from datetime import datetime
 import pytz
 from sqlalchemy import text, or_
-from app import app  # Import app for logging
+from app import app, is_mobile_device  # Import app for logging and mobile detection
 from email_utils import send_ticket_assigned_notification, send_ticket_comment_notification, send_ticket_status_notification
 
 # Update Blueprint to use the correct template directory
@@ -513,15 +513,31 @@ def create_ticket():
             db.session.rollback()
             app.logger.error(f"Validation error in ticket creation: {str(ve)}")
             flash('Error validating ticket data. Please try again.', 'error')
-            return render_template('tickets/create.html', form=form, active_sidebar_tickets=active_sidebar_tickets)
+            
+            # Choose template based on device type
+            if is_mobile_device():
+                return render_template('tickets/mobile_create.html', form=form)
+            else:
+                return render_template('tickets/create.html', form=form, active_sidebar_tickets=active_sidebar_tickets)
 
         except Exception as e:
             db.session.rollback()
             app.logger.error(f"Error creating ticket: {str(e)}")
             flash('Error creating ticket. Please try again.', 'error')
-            return render_template('tickets/create.html', form=form, active_sidebar_tickets=active_sidebar_tickets)
+            
+            # Choose template based on device type
+            if is_mobile_device():
+                return render_template('tickets/mobile_create.html', form=form)
+            else:
+                return render_template('tickets/create.html', form=form, active_sidebar_tickets=active_sidebar_tickets)
 
-    return render_template('tickets/create.html', form=form, active_sidebar_tickets=active_sidebar_tickets)
+    # Choose template based on device type
+    if is_mobile_device():
+        app.logger.debug("Using mobile template for ticket creation")
+        return render_template('tickets/mobile_create.html', form=form)
+    else:
+        app.logger.debug("Using desktop template for ticket creation")
+        return render_template('tickets/create.html', form=form, active_sidebar_tickets=active_sidebar_tickets)
 
 @tickets.route('/tickets/<int:ticket_id>')
 @login_required

@@ -1,0 +1,108 @@
+{% extends "mobile_base_simplified.html" %}
+
+{% block title %}The Plex Studios - Create Ticket{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Create New Ticket</h5>
+            <div class="theme-toggle">
+                <form method="POST" action="{{ url_for('toggle_theme') }}" class="mb-0">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-link p-0 text-decoration-none">
+                        <i data-feather="{% if current_user.theme_preference == 'light' %}moon{% else %}sun{% endif %}" style="width: 16px; height: 16px;"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('tickets.create_ticket') }}">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title</label>
+                    {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                    {% for error in form.title.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows=5) }}
+                    {% for error in form.description.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="category_id" class="form-label">Category</label>
+                    {{ form.category_id(class="form-select" + (" is-invalid" if form.category_id.errors else "")) }}
+                    {% for error in form.category_id.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="priority" class="form-label">Priority</label>
+                    {{ form.priority(class="form-select" + (" is-invalid" if form.priority.errors else "")) }}
+                    {% for error in form.priority.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="assigned_to" class="form-label">Assign To</label>
+                    {{ form.assigned_to(class="form-select" + (" is-invalid" if form.assigned_to.errors else "")) }}
+                    {% for error in form.assigned_to.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="due_date" class="form-label">Due Date (optional)</label>
+                    {{ form.due_date(class="form-control" + (" is-invalid" if form.due_date.errors else ""), type="date") }}
+                    {% for error in form.due_date.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('tickets.tickets_dashboard') }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Create Ticket</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Mobile optimization for form elements */
+.form-control, .form-select {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+    padding: 0.5rem;
+}
+
+textarea.form-control {
+    min-height: 120px;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Feather icons
+        if (typeof feather !== 'undefined') {
+            feather.replace({
+                'width': 18,
+                'height': 18
+            });
+        }
+    });
+</script>
+{% endblock %}

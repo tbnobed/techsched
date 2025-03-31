@@ -293,7 +293,7 @@ def calendar():
     print(f"is_mobile value: {is_mobile}")
     
     # Check if user is on a mobile device
-    if True: # Force using mobile template
+    if is_mobile_device():
         print("Using mobile template for calendar")
         return render_template('mobile_calendar.html', 
                             schedules=schedules,
@@ -921,7 +921,7 @@ def personal_schedule():
     print(f"is_mobile value in personal_schedule: {is_mobile}")
     
     # Check if user is on a mobile device
-    if True:  # Force using mobile template
+    if is_mobile_device():
         print("Using mobile template for personal schedule")
         return render_template('mobile_personal_schedule.html', 
                             schedules=schedules,

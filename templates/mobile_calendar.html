@@ -3,7 +3,8 @@
 {% block title %}Mobile Calendar | The Plex Studios{% endblock %}
 
 {% block content %}
-<div class="container mt-4 mb-4">
+<div class="container mt-2 mb-4">
+    <!-- Date selector at the top of the screen -->
     <div class="row">
         <div class="col-12">
             <h2 class="mobile-title mb-3">
@@ -20,22 +21,8 @@
         </div>
     </div>
 
-    <div class="mobile-controls mb-3">
-        <div class="d-flex justify-content-between align-items-center">
-            <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
-                <i data-feather="arrow-left"></i> Previous Week
-            </a>
-            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#scheduleModal">
-                <i data-feather="plus"></i> Add Schedule
-            </button>
-            <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
-                Next Week <i data-feather="arrow-right"></i>
-            </a>
-        </div>
-    </div>
-
-    <!-- Mobile-friendly daily view (one day at a time) -->
-    <div class="mobile-calendar">
+    <!-- Mobile-friendly daily view (one day at a time) - Moved to top of page -->
+    <div class="mobile-calendar mb-3">
         <div class="day-selector mb-3">
             <ul class="nav nav-pills nav-fill">
                 {% for day in range(7) %}
@@ -106,6 +93,21 @@
             </div>
         </div>
         {% endfor %}
+    </div>
+
+    <!-- Controls moved below the calendar -->
+    <div class="mobile-controls mt-1 mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
+                <i data-feather="arrow-left"></i> Previous Week
+            </a>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#scheduleModal">
+                <i data-feather="plus"></i> Add Schedule
+            </button>
+            <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
+                Next Week <i data-feather="arrow-right"></i>
+            </a>
+        </div>
     </div>
 </div>
 

@@ -781,23 +781,29 @@ def update_status(ticket_id):
         
     ticket.log_history(current_user, "status_changed", details)
     
-    # If a comment was provided, also add it as a separate comment
-    if comment:
-        ticket.add_comment(current_user, comment)
-    
     # Force the status change by marking it as modified
     db.session.add(ticket)
     
     try:
+        # Commit the status change first
         db.session.commit()
-        app.logger.debug(f"Successfully updated ticket #{ticket_id} status to '{new_status}'")
-        # Verify the update took effect
-        db.session.refresh(ticket)
-        app.logger.debug(f"After commit, ticket status is now '{ticket.status}'")
+        
+        # If a comment was provided, also add it as a separate comment
+        # This is done as a separate transaction to avoid ID conflicts
+        if comment:
+            ticket.add_comment(current_user, comment)
+            db.session.commit()
     except Exception as e:
         db.session.rollback()
         app.logger.error(f"Error updating ticket status: {str(e)}")
         flash('Error updating ticket status', 'error')
+        return redirect(url_for('tickets.view_ticket', ticket_id=ticket_id))
+    
+    # Log success of the update
+    app.logger.debug(f"Successfully updated ticket #{ticket_id} status to '{new_status}'")
+    # Verify the update took effect
+    db.session.refresh(ticket)
+    app.logger.debug(f"After commit, ticket status is now '{ticket.status}'")
     
     # Send notification email if the ticket is assigned to someone
     if ticket.assigned_to and ticket.assigned_to != current_user.id:

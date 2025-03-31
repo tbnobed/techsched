@@ -1,5 +1,15 @@
 # Release Notes - Technician Scheduler
 
+## Version 1.2.2 (March 31, 2025)
+
+### New Features and Improvements
+- **Added favicon and Apple touch icon support**: Implemented browser tab icon support for both desktop and mobile devices.
+- **Improved browser compatibility**: Added support for iOS and mobile browser icon requests.
+
+### Bug Fixes
+- Fixed 404 errors for favicon.ico and Apple touch icon requests.
+- Fixed mobile browser tab icon display issues.
+
 ## Version 1.2.1 (March 29, 2025)
 
 ### New Features and Improvements

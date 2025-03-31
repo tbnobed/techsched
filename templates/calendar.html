@@ -394,39 +394,62 @@ function setupCalendarNavigation() {
     const nextWeekBtn = document.getElementById('next-week-btn');
     const nextMonthBtn = document.getElementById('next-month-btn');
     
+    // Remove any existing event listeners to prevent duplicates
     if (prevMonthBtn) {
-        prevMonthBtn.addEventListener('click', function() {
-            navigateCalendar(-28);
-        });
+        prevMonthBtn.removeEventListener('click', prevMonthClickHandler);
+        prevMonthBtn.addEventListener('click', prevMonthClickHandler);
     }
     
     if (prevWeekBtn) {
-        prevWeekBtn.addEventListener('click', function() {
-            navigateCalendar(-7);
-        });
+        prevWeekBtn.removeEventListener('click', prevWeekClickHandler);
+        prevWeekBtn.addEventListener('click', prevWeekClickHandler);
     }
     
     if (currentWeekBtn) {
-        currentWeekBtn.addEventListener('click', function() {
-            // Force loading the current week by setting current=true
-            const url = new URL(window.location.href);
-            url.searchParams.delete('week_start');
-            url.searchParams.set('current', 'true');
-            fetchCalendarData(url.toString());
-        });
+        currentWeekBtn.removeEventListener('click', currentWeekClickHandler);
+        currentWeekBtn.addEventListener('click', currentWeekClickHandler);
     }
     
     if (nextWeekBtn) {
-        nextWeekBtn.addEventListener('click', function() {
-            navigateCalendar(7);
-        });
+        nextWeekBtn.removeEventListener('click', nextWeekClickHandler);
+        nextWeekBtn.addEventListener('click', nextWeekClickHandler);
     }
     
     if (nextMonthBtn) {
-        nextMonthBtn.addEventListener('click', function() {
-            navigateCalendar(28);
-        });
+        nextMonthBtn.removeEventListener('click', nextMonthClickHandler);
+        nextMonthBtn.addEventListener('click', nextMonthClickHandler);
     }
+}
+
+// Define click handlers as separate functions to allow proper event listener removal
+function prevMonthClickHandler(e) {
+    e.preventDefault();
+    navigateCalendar(-28);
+}
+
+function prevWeekClickHandler(e) {
+    e.preventDefault();
+    navigateCalendar(-7);
+}
+
+function currentWeekClickHandler(e) {
+    e.preventDefault();
+    // Force loading the current week by setting current=true and today=true
+    const url = new URL(window.location.href);
+    url.searchParams.delete('week_start');
+    url.searchParams.set('current', 'true');
+    url.searchParams.set('today', 'true');
+    fetchCalendarData(url.toString());
+}
+
+function nextWeekClickHandler(e) {
+    e.preventDefault();
+    navigateCalendar(7);
+}
+
+function nextMonthClickHandler(e) {
+    e.preventDefault();
+    navigateCalendar(28);
 }
 
 // Function to navigate the calendar by a specified number of days
@@ -462,6 +485,9 @@ function fetchCalendarData(url) {
     }
     if (params.has('current')) {
         apiUrl.searchParams.set('current', params.get('current'));
+    }
+    if (params.has('today')) {
+        apiUrl.searchParams.set('today', params.get('today'));
     }
     
     // Fetch the calendar data from the API endpoint

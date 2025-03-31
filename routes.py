@@ -238,23 +238,36 @@ def calendar():
     week_start = request.args.get('week_start')
     location_filter = request.args.get('location_id', type=int)
     force_current_week = request.args.get('current', type=bool)
+    show_today = request.args.get('today', type=bool, default=False)
     
-    # Always default to current week if force_current_week is True
+    # Get today's date for reference
+    today = datetime.now(current_user.get_timezone())
+    today_start = today.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Always default to current week
     if force_current_week or not week_start:
-        week_start = datetime.now(current_user.get_timezone())
-        week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
-        week_start -= timedelta(days=week_start.weekday())
+        # If today is explicitly requested or on first load, center around today
+        if show_today or not request.referrer:
+            # Start the week at the current day or up to 3 days before to show a reasonable view
+            days_to_beginning = min(3, today_start.weekday()) # 0-3 days before today
+            week_start = today_start - timedelta(days=days_to_beginning)
+            app.logger.debug(f"Centering around today. Today is {today_start}, week_start is {week_start}")
+        else:
+            # Otherwise use Monday as start day
+            week_start = today_start - timedelta(days=today_start.weekday())
+            app.logger.debug(f"Using Monday as week start. Today is {today_start}, week_start is {week_start}")
     else:
         try:
             week_start = datetime.strptime(week_start, '%Y-%m-%d')
             week_start = current_user.get_timezone().localize(
                 week_start.replace(hour=0, minute=0, second=0, microsecond=0)
             )
+            app.logger.debug(f"Using provided week_start: {week_start}")
         except (ValueError, TypeError):
-            # If there's any error parsing the date, default to current week
-            week_start = datetime.now(current_user.get_timezone())
-            week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
-            week_start -= timedelta(days=week_start.weekday())
+            # If there's any error parsing the date, default to current day centered view
+            days_to_beginning = min(3, today_start.weekday())
+            week_start = today_start - timedelta(days=days_to_beginning)
+            app.logger.debug(f"Error with date, using today centered: {week_start}")
 
     # Convert to UTC for database query
     week_start_utc = week_start.astimezone(pytz.UTC)
@@ -644,23 +657,36 @@ def calendar_api():
     week_start = request.args.get('week_start')
     location_filter = request.args.get('location_id', type=int)
     force_current_week = request.args.get('current', type=bool)
+    show_today = request.args.get('today', type=bool, default=False)
     
-    # Always default to current week if force_current_week is True
+    # Get today's date for reference
+    today = datetime.now(current_user.get_timezone())
+    today_start = today.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Always default to current week
     if force_current_week or not week_start:
-        week_start = datetime.now(current_user.get_timezone())
-        week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
-        week_start -= timedelta(days=week_start.weekday())
+        # If today is explicitly requested or on first load, center around today
+        if show_today or not request.referrer:
+            # Start the week at the current day or up to 3 days before to show a reasonable view
+            days_to_beginning = min(3, today_start.weekday()) # 0-3 days before today
+            week_start = today_start - timedelta(days=days_to_beginning)
+            app.logger.debug(f"API: Centering around today. Today is {today_start}, week_start is {week_start}")
+        else:
+            # Otherwise use Monday as start day
+            week_start = today_start - timedelta(days=today_start.weekday())
+            app.logger.debug(f"API: Using Monday as week start. Today is {today_start}, week_start is {week_start}")
     else:
         try:
             week_start = datetime.strptime(week_start, '%Y-%m-%d')
             week_start = current_user.get_timezone().localize(
                 week_start.replace(hour=0, minute=0, second=0, microsecond=0)
             )
+            app.logger.debug(f"API: Using provided week_start: {week_start}")
         except (ValueError, TypeError):
-            # If there's any error parsing the date, default to current week
-            week_start = datetime.now(current_user.get_timezone())
-            week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
-            week_start -= timedelta(days=week_start.weekday())
+            # If there's any error parsing the date, default to current day centered view
+            days_to_beginning = min(3, today_start.weekday())
+            week_start = today_start - timedelta(days=days_to_beginning)
+            app.logger.debug(f"API: Error with date, using today centered: {week_start}")
     
     # Convert to UTC for database query
     week_start_utc = week_start.astimezone(pytz.UTC)

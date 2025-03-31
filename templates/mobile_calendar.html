@@ -49,7 +49,7 @@
                 {% set has_schedules = false %}
                 
                 {% for schedule in schedules %}
-                    {% if schedule.start_time.date() == current_date.date() %}
+                    {% if schedule.start_time.year == current_date.year and schedule.start_time.month == current_date.month and schedule.start_time.day == current_date.day %}
                         {% set has_schedules = true %}
                         <div class="mobile-schedule-card {% if schedule.time_off %}time-off-card{% endif %}" 
                              style="--tech-color: {{ schedule.technician.color }};"

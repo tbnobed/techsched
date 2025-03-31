@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Update Steps</title>
+    <style>
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+h1, h2, h3, h4, h5, h6 {
+    color: #2c3e50;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+}
+h1 {
+    font-size: 28px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+h2 {
+    font-size: 24px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+h3 { font-size: 20px; }
+h4 { font-size: 18px; }
+h5 { font-size: 16px; }
+h6 { font-size: 14px; }
+code {
+    font-family: monospace;
+    background-color: #f5f5f5;
+    padding: 3px;
+    border-radius: 3px;
+}
+pre {
+    font-family: monospace;
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-radius: 5px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+}
+a { color: #3498db; }
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 20px 0;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+tr:nth-child(even) { background-color: #f9f9f9; }
+img {
+    max-width: 100%;
+    height: auto;
+}
+blockquote {
+    margin: 0;
+    padding-left: 15px;
+    border-left: 4px solid #ddd;
+    color: #666;
+}
+ul, ol {
+    padding-left: 30px;
+}
+hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 20px 0;
+}
+.cover {
+    text-align: center;
+    margin-bottom: 50px;
+}
+.cover h1 {
+    font-size: 36px;
+    border-bottom: none;
+}
+.footer {
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    text-align: center;
+    color: #777;
+    font-size: 12px;
+}
+    </style>
+</head>
+<body>
+    <div class="cover">
+        <h1>Update Steps</h1>
+        <p>Plex Engineering Documentation</p>
+        <p>Generated on March 31, 2025</p>
+    </div>
+    
+    <div class="content">
+        <h1>Update Guide for Plex Technician Scheduler</h1>
+
+<p>This document provides a step-by-step guide for updating your existing Plex Technician Scheduler installation on Ubuntu with the latest changes.</p>
+
+<h2>Update Steps (Version 1.2.2)</h2>
+
+<p>1. <strong>Backup your current installation and database</strong></p>
+
+<pre><code># Navigate to your installation directory
+cd /opt/technician-scheduler
+
+# Run backup script
+./backup.sh
+
+# Verify the backup was created
+ls -l /var/lib/technician-scheduler/backups
+</code></pre>
+
+<p>2. <strong>Pull the latest code</strong></p>
+
+<pre><code># If using Git
+cd /opt/technician-scheduler
+git pull
+
+# OR, if you're transferring files manually
+# First, on your local machine
+cd /path/to/local/project
+zip -r technician-scheduler.zip *
+
+# Transfer the zip file to your server
+scp technician-scheduler.zip user@your-server:/tmp
+
+# Then, on your server
+cd /opt/technician-scheduler
+unzip /tmp/technician-scheduler.zip -d /tmp/update
+cp -r /tmp/update/* .
+rm -rf /tmp/update
+rm /tmp/technician-scheduler.zip
+</code></pre>
+
+<p>3. <strong>Update database schema (if needed)</strong></p>
+
+<pre><code>cd /opt/technician-scheduler
+./update_database.sh
+</code></pre>
+
+<p>4. <strong>Restart the application</strong></p>
+
+<pre><code>cd /opt/technician-scheduler
+docker-compose down
+docker-compose up -d --build
+</code></pre>
+
+<p>5. <strong>Verify the application is running properly</strong></p>
+
+<pre><code># Check container status
+docker-compose ps
+
+# Check logs for any errors
+docker-compose logs -f
+
+# Test the health endpoint
+curl http://localhost:5000/health
+</code></pre>
+
+<h2>What's New in Version 1.2.2 (March 31, 2025)</h2>
+
+<h3>New Features and Improvements</h3>
+<ul>
+<li>**Added favicon and Apple touch icon support**: Implemented browser tab icon support for both desktop and mobile devices.</li>
+<li>**Improved browser compatibility**: Added support for iOS and mobile browser icon requests.</li>
+<li>**Comprehensive documentation updates**: Completely revised user guide with detailed mobile feature documentation.</li>
+<li>**Enhanced technician quick start guide**: Updated with mobile-specific instructions and screenshots.</li>
+<li>**Deployment preparation tool**: Added script to automate packaging files for server deployment.</li>
+</ul>
+
+<h3>Bug Fixes</h3>
+<ul>
+<li>Fixed 404 errors for favicon.ico and Apple touch icon requests.</li>
+<li>Fixed mobile browser tab icon display issues.</li>
+</ul>
+
+<h3>Documentation</h3>
+<ul>
+<li>Added detailed backup checklist for administrators.</li>
+<li>Created step-by-step update instructions for server deployments.</li>
+<li>Enhanced mobile section in user guide with detailed navigation instructions.</li>
+</ul>
+
+<h2>Troubleshooting</h2>
+
+<h3>If the browser tab icon is not displaying correctly:</h3>
+
+<p>1. <strong>Clear browser cache</strong></p>
+<ul>
+<li>On Chrome: Press Ctrl+Shift+Delete, select "Cached images and files", and click "Clear data"</li>
+<li>On Firefox: Press Ctrl+Shift+Delete, select "Cache", and click "Clear Now"</li>
+<li>On Safari: Press Command+Option+E</li>
+</ul>
+
+<p>2. <strong>Verify the image file exists</strong></p>
+<p>   <code></code>`bash</p>
+<p>   docker-compose exec web ls -l /app/static/images/plex<em>logo</em>small.png</p>
+<p>   <code></code>`</p>
+
+<p>3. <strong>Check logs for any 404 errors related to favicon or Apple touch icon</strong></p>
+<p>   <code></code>`bash</p>
+<p>   docker-compose logs web | grep -E "favicon|apple-touch-icon"</p>
+<p>   <code></code>`</p>
+
+<p>4. <strong>Manual fix if icon routes are missing</strong></p>
+
+<p>   If you see errors and the routes are missing, you can manually edit the app.py file:</p>
+
+<p>   <code></code>`bash</p>
+<p>   # Edit app.py file</p>
+<p>   nano app.py</p>
+<p>   <code></code>`</p>
+
+<p>   Add these routes before the <code>with app.app_context():</code> line:</p>
+
+<p>   <code></code>`python</p>
+<p>   # Favicon and Apple Touch Icon routes</p>
+<p>   @app.route('/favicon.ico')</p>
+<p>   def favicon():</p>
+<p>       return redirect(url<em>for('static', filename='images/plex</em>logo_small.png'))</p>
+
+<p>   @app.route('/apple-touch-icon.png')</p>
+<p>   @app.route('/apple-touch-icon-precomposed.png')</p>
+<p>   @app.route('/apple-touch-icon-120x120.png')</p>
+<p>   @app.route('/apple-touch-icon-120x120-precomposed.png')</p>
+<p>   def apple<em>touch</em>icon():</p>
+<p>       return redirect(url<em>for('static', filename='images/plex</em>logo_small.png'))</p>
+<p>   <code></code>`</p>
+
+<p>   Then restart the application:</p>
+
+<p>   <code></code>`bash</p>
+<p>   docker-compose restart web</p>
+<p>   <code></code>`</p>
+
+<p>For additional help with deployment or troubleshooting, refer to the full deployment guide in <code>deployment_steps.md</code>.</p>
+    </div>
+    
+    <div class="footer">
+        <p>© 2025 Plex Engineering - Documentation generated from markdown</p>
+    </div>
+</body>
+</html>

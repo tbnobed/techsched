@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Guide</title>
+    <style>
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+h1, h2, h3, h4, h5, h6 {
+    color: #2c3e50;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+}
+h1 {
+    font-size: 28px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+h2 {
+    font-size: 24px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+h3 { font-size: 20px; }
+h4 { font-size: 18px; }
+h5 { font-size: 16px; }
+h6 { font-size: 14px; }
+code {
+    font-family: monospace;
+    background-color: #f5f5f5;
+    padding: 3px;
+    border-radius: 3px;
+}
+pre {
+    font-family: monospace;
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-radius: 5px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+}
+a { color: #3498db; }
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 20px 0;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+tr:nth-child(even) { background-color: #f9f9f9; }
+img {
+    max-width: 100%;
+    height: auto;
+}
+blockquote {
+    margin: 0;
+    padding-left: 15px;
+    border-left: 4px solid #ddd;
+    color: #666;
+}
+ul, ol {
+    padding-left: 30px;
+}
+hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 20px 0;
+}
+.cover {
+    text-align: center;
+    margin-bottom: 50px;
+}
+.cover h1 {
+    font-size: 36px;
+    border-bottom: none;
+}
+.footer {
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    text-align: center;
+    color: #777;
+    font-size: 12px;
+}
+    </style>
+</head>
+<body>
+    <div class="cover">
+        <h1>Admin Guide</h1>
+        <p>Plex Engineering Documentation</p>
+        <p>Generated on March 31, 2025</p>
+    </div>
+    
+    <div class="content">
+        <h1>Technician Scheduler - Administrator Guide</h1>
+
+<p><em>Last Updated: March 28, 2025</em></p>
+
+<p>This guide focuses on administrator-specific functions and responsibilities in the Technician Scheduler system.</p>
+
+<h2>Contents</h2>
+<p>1. <a href="#administrator-access">Administrator Access</a></p>
+<p>2. <a href="#admin-dashboard">Admin Dashboard</a></p>
+<p>3. <a href="#user-management">User Management</a></p>
+<p>4. <a href="#location-management">Location Management</a></p>
+<p>5. <a href="#ticket-category-management">Ticket Category Management</a></p>
+<p>6. <a href="#email-configuration">Email Configuration</a></p>
+<p>7. <a href="#system-backup--restore">System Backup & Restore</a></p>
+<p>8. <a href="#quick-links-management">Quick Links Management</a></p>
+<p>9. <a href="#data-management-best-practices">Data Management Best Practices</a></p>
+<p>10. <a href="#troubleshooting-common-issues">Troubleshooting Common Issues</a></p>
+
+<h2>Administrator Access</h2>
+
+<h3>Setting Administrator Privileges</h3>
+
+<p>Only existing administrators can grant admin privileges to other users:</p>
+
+<p>1. Navigate to Admin > User Management.</p>
+<p>2. Edit the user you want to make an administrator.</p>
+<p>3. Check the "Is Admin" checkbox.</p>
+<p>4. Save the changes.</p>
+
+<h3>Admin Navigation</h3>
+
+<p>After logging in as an administrator, you'll see an "Admin" option in the navigation sidebar, providing access to all administrative functions.</p>
+
+<p>!<a href="attached<em>assets/image</em>1743183009623.png">Admin Dashboard</a></p>
+
+<h2>Admin Dashboard</h2>
+
+<p>The Admin Dashboard provides:</p>
+
+<p>1. System statistics:</p>
+<ul>
+<li>Total number of users, locations, and schedules</li>
+<li>Active vs. inactive locations</li>
+<li>Open vs. closed tickets</li>
+<li>System uptime and usage</li>
+</ul>
+
+<p>2. Quick access to all administrative functions:</p>
+<ul>
+<li>User Management</li>
+<li>Location Management</li>
+<li>Ticket Categories</li>
+<li>Email Settings</li>
+<li>Backup & Restore</li>
+<li>Quick Links Management</li>
+</ul>
+
+<h2>User Management</h2>
+
+<p>The User Management section allows you to create, edit, and manage all user accounts.</p>
+
+<p>!<a href="attached<em>assets/image</em>1743183107422.png">User Management</a></p>
+
+<h3>Creating Users</h3>
+
+<p>1. Click "Create User" in the User Management section.</p>
+<p>2. Fill in the following information:</p>
+<ul>
+<li>**Username**: Display name for the user</li>
+<li>**Email**: User's email address (must be unique)</li>
+<li>Email addresses are stored case-insensitively, so "user@example.com" and "User@Example.com" are treated as the same email.</li>
+<li>**Password**: Initial password (the user can change this later)</li>
+<li>**Color**: Assign a color for this user's calendar entries</li>
+<li>**Administrator**: Check if the user should have admin privileges</li>
+<li>**Timezone**: Set the user's local timezone</li>
+</ul>
+
+<p>3. Click "Create User" to add the account.</p>
+<p>4. The system will not automatically notify new users. You should communicate their credentials separately.</p>
+
+<h3>Editing Users</h3>
+
+<p>1. Click the "Edit" button next to a user's name.</p>
+<p>2. Update any user details as needed.</p>
+<p>3. To change a password, enter a new one in the password field.</p>
+<p>4. If left blank, the password remains unchanged.</p>
+<p>5. Click "Save Changes" to update the user's information.</p>
+
+<h3>Deleting Users</h3>
+
+<p>Before deleting a user, consider these points:</p>
+
+<p>1. Deletion will affect historical data related to the user.</p>
+<p>2. If you only need to disable access, consider keeping the account but changing the password.</p>
+<p>3. To delete a user:</p>
+<ul>
+<li>Click the "Delete" button next to the user's name.</li>
+<li>Confirm the deletion when prompted.</li>
+</ul>
+
+<p>> <strong>Important</strong>: When a user is deleted, any tickets they created or were assigned to will be maintained for historical integrity. Their username in these records will be shown as "[Deleted User]".</p>
+
+<h2>Location Management</h2>
+
+<p>Locations represent physical places where technicians are scheduled to work.</p>
+
+<p>!<a href="attached<em>assets/image</em>1743183302042.png">Location Management</a></p>
+
+<h3>Adding Locations</h3>
+
+<p>1. Click "Add Location" in the Location Management section.</p>
+<p>2. Enter the following information:</p>
+<ul>
+<li>**Name**: Location name (must be unique)</li>
+<li>**Description**: Optional details about the location</li>
+<li>**Active**: Whether the location is currently in use</li>
+</ul>
+
+<p>3. Click "Add Location" to create it.</p>
+
+<h3>Editing Locations</h3>
+
+<p>1. Click the "Edit" button next to a location name.</p>
+<p>2. Update the name, description, or active status.</p>
+<p>3. Click "Save Changes" to update.</p>
+
+<h3>Deactivating Locations</h3>
+
+<p>Rather than deleting locations, it's better to deactivate them:</p>
+
+<p>1. Edit the location.</p>
+<p>2. Uncheck the "Active" checkbox.</p>
+<p>3. Save changes.</p>
+
+<p>Inactive locations:</p>
+<ul>
+<li>Won't appear in dropdown menus for new schedules</li>
+<li>Will still appear in historical data and reports</li>
+<li>Can be reactivated later if needed</li>
+</ul>
+
+<h2>Ticket Category Management</h2>
+
+<p>Categories help organize and classify support tickets.</p>
+
+<p>!<a href="attached<em>assets/image</em>1743183459253.png">Category Management</a></p>
+
+<h3>Creating Categories</h3>
+
+<p>1. Click "Add Category" in the Ticket Categories section.</p>
+<p>2. Enter the following information:</p>
+<ul>
+<li>**Name**: Category name (must be unique)</li>
+<li>**Description**: Details about what this category represents</li>
+<li>**Default Priority**: The starting priority level for tickets in this category</li>
+</ul>
+
+<p>3. Click "Add Category" to create it.</p>
+
+<h3>Managing Categories</h3>
+
+<ul>
+<li>**Edit**: Click the "Edit" button to update a category's name, description, or default priority.</li>
+<li>**Delete**: Only delete categories that have never been used. For obsolete categories that have tickets assigned, consider creating a new category and moving tickets to it.</li>
+</ul>
+
+<h2>Email Configuration</h2>
+
+<p>Configure how and when the system sends email notifications.</p>
+
+<p>!<a href="attached<em>assets/image</em>1743183640305.png">Email Settings</a></p>
+
+<h3>Basic Settings</h3>
+
+<p>1. Navigate to Admin > Email Settings.</p>
+<p>2. Set the <strong>Admin Email Group</strong>: This email address receives all administrative notifications.</p>
+<p>3. Configure notification triggers:</p>
+<ul>
+<li>**New Schedules**: Notify when schedules are created</li>
+<li>**Schedule Updates**: Notify when schedules are modified</li>
+<li>**Schedule Deletions**: Notify when schedules are deleted</li>
+</ul>
+
+<h3>Testing Email Configuration</h3>
+
+<p>1. After saving email settings, you can test the configuration:</p>
+<p>2. Click "Test Email" if available, or</p>
+<p>3. Create a test schedule to trigger a notification.</p>
+<p>4. Check that the email is received correctly.</p>
+
+<h3>Troubleshooting Email Issues</h3>
+
+<p>If emails are not being delivered:</p>
+
+<p>1. Verify that the SendGrid API key is correctly set in the environment variables.</p>
+<p>2. Check that the sender email (alerts@obedtv.com) is verified in SendGrid.</p>
+<p>3. Review the SendGrid dashboard for any bounced or blocked emails.</p>
+<p>4. Check system logs for any email sending errors.</p>
+
+<h2>System Backup & Restore</h2>
+
+<p>Regular backups are essential for data safety. The system provides built-in backup and restore functionality.</p>
+
+<h3>Creating Backups</h3>
+
+<p>1. Navigate to Admin > Backup & Restore.</p>
+<p>2. Click "Create Backup".</p>
+<p>3. The system will generate a JSON file containing all system data.</p>
+<p>4. Click "Download Backup" to save the file to your computer.</p>
+<p>5. Store backups securely in multiple locations.</p>
+
+<h3>Automating Backups</h3>
+
+<p>For additional safety, set up automated backup scripts as described in the deployment guide:</p>
+
+<p>1. Use the provided backup.sh script to create regular database dumps.</p>
+<p>2. Schedule this script to run automatically using cron jobs.</p>
+<p>3. Store automated backups in a secure location separate from the server.</p>
+
+<h3>Restoring from Backup</h3>
+
+<p>> <strong>Warning</strong>: Restoring overwrites current data. Create a new backup before restoring.</p>
+
+<p>1. Navigate to Admin > Backup & Restore.</p>
+<p>2. In the Restore section, click "Choose File".</p>
+<p>3. Select your backup file.</p>
+<p>4. Click "Restore Backup".</p>
+<p>5. Confirm the restoration when prompted.</p>
+<p>6. The system will restore all data from the backup.</p>
+<p>7. Verify that the restoration completed successfully by checking key data.</p>
+
+<h2>Quick Links Management</h2>
+
+<p>Quick Links provide shortcuts to frequently used resources and can be customized for your organization.</p>
+
+<h3>Adding Quick Links</h3>
+
+<p>1. Navigate to Admin > Quick Links.</p>
+<p>2. Click "Add Quick Link".</p>
+<p>3. Enter the following information:</p>
+<ul>
+<li>**Title**: Display name for the link</li>
+<li>**URL**: Full URL including https://</li>
+<li>**Icon**: Name of a Feather icon (e.g., "link", "file", "tool")</li>
+<li>**Category**: Grouping for the link</li>
+<li>**Order**: Number to determine display order (lower numbers appear first)</li>
+</ul>
+
+<p>4. Click "Add Link" to create it.</p>
+
+<h3>Organizing Quick Links</h3>
+
+<p>1. Links are grouped by category.</p>
+<p>2. Within each category, links are sorted by their order value.</p>
+<p>3. To change the order, edit the link and update the order number.</p>
+<p>4. Create consistent categories to organize links effectively.</p>
+
+<h2>Data Management Best Practices</h2>
+
+<h3>Regular Maintenance Tasks</h3>
+
+<p>1. <strong>Weekly</strong>:</p>
+<ul>
+<li>Review and archive closed tickets older than 30 days.</li>
+<li>Check for unused or inactive locations and categories.</li>
+<li>Verify that all email notifications are functioning correctly.</li>
+</ul>
+
+<p>2. <strong>Monthly</strong>:</p>
+<ul>
+<li>Create and download a full system backup.</li>
+<li>Review user accounts for any that should be deactivated.</li>
+<li>Check system logs for any recurring errors or issues.</li>
+</ul>
+
+<p>3. <strong>Quarterly</strong>:</p>
+<ul>
+<li>Perform database optimization (VACUUM ANALYZE on PostgreSQL).</li>
+<li>Review and update Quick Links for relevance.</li>
+<li>Test backup restoration in a separate environment.</li>
+</ul>
+
+<h3>Archiving Old Tickets</h3>
+
+<p>To manage database growth and improve performance:</p>
+
+<p>1. Navigate to Admin > Ticket Management (or Archive Tickets).</p>
+<p>2. Set archiving criteria:</p>
+<ul>
+<li>Only archive tickets with Closed or Resolved status.</li>
+<li>Select a cutoff date (e.g., tickets closed more than 90 days ago).</li>
+</ul>
+
+<p>3. Click "Preview" to see which tickets will be archived.</p>
+<p>4. Review the list to ensure critical tickets aren't archived prematurely.</p>
+<p>5. Click "Archive Selected Tickets" to move them to the archive.</p>
+<p>6. Archived tickets remain accessible but don't appear in the main ticket view.</p>
+
+<h2>Troubleshooting Common Issues</h2>
+
+<h3>User Access Problems</h3>
+
+<p><strong>Issue</strong>: User cannot log in</p>
+<p><strong>Solution</strong>:</p>
+<p>1. Verify the user's email address is correct in the system.</p>
+<ul>
+<li>Remember that email addresses are case-insensitive (user@example.com and USER@example.com are treated as the same email).</li>
+</ul>
+<p>2. Reset their password through the User Management interface.</p>
+<p>3. Ensure the user is using the correct email/password combination (passwords remain case-sensitive).</p>
+<p>4. Check browser cookie settings if persistent login issues occur.</p>
+
+<h3>Schedule Display Issues</h3>
+
+<p><strong>Issue</strong>: Schedules appear at incorrect times</p>
+<p><strong>Solution</strong>:</p>
+<p>1. Verify that the user's timezone is set correctly in their profile.</p>
+<p>2. Check that schedule start and end times are correct in the database.</p>
+<p>3. Look for any browser caching issues by clearing cache or trying a different browser.</p>
+
+<h3>Email Notification Failures</h3>
+
+<p><strong>Issue</strong>: Email notifications aren't being delivered</p>
+<p><strong>Solution</strong>:</p>
+<p>1. Check the SendGrid API key is correct in the environment variables.</p>
+<p>2. Verify that the sending domain is verified in SendGrid.</p>
+<p>3. Check email delivery logs in the SendGrid dashboard.</p>
+<p>4. Ensure recipient email addresses are correct and not blocked.</p>
+
+<h3>Database Performance Issues</h3>
+
+<p><strong>Issue</strong>: System becomes slow over time</p>
+<p><strong>Solution</strong>:</p>
+<p>1. Archive old tickets to reduce database size.</p>
+<p>2. Perform database optimization with VACUUM ANALYZE.</p>
+<p>3. Check server resources (CPU, memory, disk space).</p>
+<p>4. Review database logs for slow queries and optimize if needed.</p>
+
+<h3>Backup and Restore Errors</h3>
+
+<p><strong>Issue</strong>: Backup or restore operations fail</p>
+<p><strong>Solution</strong>:</p>
+<p>1. Check disk space availability.</p>
+<p>2. Ensure the user has appropriate file permissions.</p>
+<p>3. For restore failures, verify the backup file format is correct.</p>
+<p>4. Check for any ongoing database transactions that might interfere.</p>
+
+<hr>
+
+<p>For technical deployment and server configuration details, please refer to the Deployment Guide. For any issues not covered in this guide, please contact the development team for assistance.</p>
+    </div>
+    
+    <div class="footer">
+        <p>© 2025 Plex Engineering - Documentation generated from markdown</p>
+    </div>
+</body>
+</html>

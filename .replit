@@ -1,4 +1,4 @@
-modules = ["python-3.11"]
+modules = ["python-3.10"]
 
 [nix]
 channel = "stable-24_05"
@@ -31,7 +31,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python main.py"
+args = "/mnt/nixmodules/nix/store/b03kwd9a5dm53k0z5vfzdhkvaa64c4g7-python3-3.10.13-env/bin/python3.10 main.py"
 waitForPort = 5000
 
 [[ports]]

@@ -472,7 +472,15 @@ def new_schedule():
                     return redirect(url_for('calendar', week_start=week_start))
 
             # Check if we have repeat days selected
-            repeat_days = form.repeat_days.data
+            # First check for direct repeat days list from our new direct selector
+            repeat_days_list = request.form.get('direct_repeat_days_list')
+            if repeat_days_list:
+                app.logger.debug(f"Using direct_repeat_days_list: {repeat_days_list}")
+                repeat_days = repeat_days_list
+            else:
+                # Fallback to the regular form field
+                app.logger.debug("No direct_repeat_days_list found, using form.repeat_days.data")
+                repeat_days = form.repeat_days.data
             
             if schedule_id:
                 # Editing an existing schedule - doesn't support multi-day editing

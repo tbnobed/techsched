@@ -471,16 +471,37 @@ def new_schedule():
                 else:
                     return redirect(url_for('calendar', week_start=week_start))
 
-            # Check if we have repeat days selected
-            # First check for direct repeat days list from our new direct selector
-            repeat_days_list = request.form.get('direct_repeat_days_list')
-            if repeat_days_list:
-                app.logger.debug(f"Using direct_repeat_days_list: {repeat_days_list}")
-                repeat_days = repeat_days_list
-            else:
-                # Fallback to the regular form field
-                app.logger.debug("No direct_repeat_days_list found, using form.repeat_days.data")
-                repeat_days = form.repeat_days.data
+            # Check if we have repeat days selected from any of the possible sources
+            repeat_days = None
+            
+            # First check for direct repeat days list from our direct selector (comma-separated string)
+            direct_repeat_days = request.form.get('direct_repeat_days_list')
+            if direct_repeat_days:
+                app.logger.debug(f"Found direct_repeat_days_list: {direct_repeat_days}")
+                repeat_days = direct_repeat_days
+                
+            # Next check the repeat_days hidden field (should be the same as direct_repeat_days_list)
+            if not repeat_days:
+                repeat_days_field = request.form.get('repeat_days')
+                if repeat_days_field:
+                    app.logger.debug(f"Found repeat_days hidden field: {repeat_days_field}")
+                    repeat_days = repeat_days_field
+            
+            # Fallback to checkbox approach used by the old form system
+            if not repeat_days:
+                app.logger.debug("Checking for repeat_days checkboxes")
+                repeat_days_checkboxes = request.form.getlist('repeat_days')
+                if repeat_days_checkboxes:
+                    app.logger.debug(f"Found repeat_days checkboxes: {repeat_days_checkboxes}")
+                    repeat_days = ','.join(repeat_days_checkboxes)
+            
+            # Fallback to the WTForms field data
+            if not repeat_days:
+                app.logger.debug("No repeat_days values found in request, checking form.repeat_days.data")
+                if form.repeat_days and form.repeat_days.data:
+                    repeat_days = form.repeat_days.data
+                    
+            app.logger.debug(f"Final repeat_days value: {repeat_days}")
             
             if schedule_id:
                 # Editing an existing schedule - doesn't support multi-day editing
@@ -529,8 +550,16 @@ def new_schedule():
                 if repeat_days:
                     # Multi-day scheduling for additional dates
                     try:
-                        dates = repeat_days.split(',')
-                        app.logger.debug(f"Processing additional schedules for days: {dates}")
+                        # Split the comma-separated string of dates
+                        if isinstance(repeat_days, str):
+                            dates = [d.strip() for d in repeat_days.split(',') if d.strip()]
+                            app.logger.debug(f"Processing additional schedules from string. Dates: {dates}")
+                        elif isinstance(repeat_days, list):
+                            dates = repeat_days
+                            app.logger.debug(f"Processing additional schedules from list. Dates: {dates}")
+                        else:
+                            app.logger.warning(f"Unexpected repeat_days type: {type(repeat_days)}")
+                            dates = []
                         
                         # Get the primary date string for filtering
                         primary_date_str = schedule_date.strftime('%Y-%m-%d')
@@ -539,10 +568,27 @@ def new_schedule():
                         # Filter out the primary date since we already created a schedule for it
                         dates = [date for date in dates if date.strip() != primary_date_str]
                         app.logger.debug(f"Additional dates list after removing primary date: {dates}")
+                        
+                        # Validate all dates have the proper format
+                        valid_dates = []
+                        for date_str in dates:
+                            try:
+                                # Check if this is a valid date string
+                                date_obj = datetime.strptime(date_str.strip(), '%Y-%m-%d').date()
+                                valid_dates.append(date_str.strip())
+                            except ValueError:
+                                app.logger.warning(f"Invalid date format ignored: {date_str}")
+                                
+                        dates = valid_dates
+                        app.logger.debug(f"Valid dates to process: {dates}")
+                        
                     except Exception as e:
                         app.logger.error(f"Error processing repeat days: {str(e)}")
                         import traceback
                         app.logger.error(f"Repeat days traceback: {traceback.format_exc()}")
+                        app.logger.error(f"Original repeat_days value: {repeat_days}")
+                        # Initialize empty dates list to avoid errors
+                        dates = []
                     
                     if not dates:
                         app.logger.debug("No additional dates selected besides primary date")

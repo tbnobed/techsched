@@ -234,8 +234,16 @@
                                     <!-- Selected dates will appear here -->
                                 </div>
                             </div>
+                            
+                            <!-- Hidden input for repeat_days -->
+                            <div id="repeat_days_inputs" style="display: none;">
+                                <!-- This will be filled by JavaScript -->
+                            </div>
                         </div>
                     </div>
+                    
+                    <!-- Hidden field for repeat_days -->
+                    <input type="hidden" id="repeat_days" name="repeat_days" value="">
                 </form>
             </div>
             <div class="modal-footer">
@@ -936,6 +944,35 @@ function clearDateSelection() {
     updateSelectedDatesDisplay();
 }
 
+// Function to initialize the direct calendar when the modal is shown
+function initializeCalendarInModal() {
+    console.log("Initializing calendar in modal");
+    
+    // Make sure date input has a value (today if not set)
+    const dateInput = document.getElementById('schedule_date');
+    if (!dateInput.value) {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${year}-${month}-${day}`;
+        console.log("Set default date to today:", dateInput.value);
+    }
+    
+    // Clear any previous selections
+    if (typeof directClearDateSelection === 'function') {
+        directClearDateSelection();
+    }
+    
+    // Initialize the calendar with the current date
+    if (typeof initDirectCalendar === 'function') {
+        console.log("Initializing direct calendar with date:", dateInput.value);
+        initDirectCalendar('direct-calendar-days', dateInput.value);
+    } else {
+        console.error("Direct calendar functions not available");
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Feather icons
     if (typeof feather !== 'undefined') {
@@ -946,29 +983,46 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Load the direct calendar script
+    // Add listener for modal shown event
+    const scheduleModal = document.getElementById('scheduleModal');
+    if (scheduleModal) {
+        scheduleModal.addEventListener('shown.bs.modal', function() {
+            console.log("Schedule modal shown");
+            
+            // Make sure the script is loaded before initializing
+            if (typeof initDirectCalendar === 'function') {
+                initializeCalendarInModal();
+            } else {
+                console.log("Direct calendar script not loaded yet, loading now");
+                // The script hasn't loaded yet, load it
+                const scriptElement = document.createElement('script');
+                scriptElement.src = "{{ url_for('static', filename='js/direct-date-selector.js') }}";
+                scriptElement.onload = function() {
+                    console.log("Direct calendar script loaded on demand");
+                    initializeCalendarInModal();
+                };
+                document.head.appendChild(scriptElement);
+            }
+        });
+    }
+    
+    // Also load the script on page load to ensure it's available
+    console.log("Loading direct calendar script on page load");
     const scriptElement = document.createElement('script');
     scriptElement.src = "{{ url_for('static', filename='js/direct-date-selector.js') }}";
     scriptElement.onload = function() {
-        // Script loaded successfully - now we can use its functions
-        console.log("Direct date selector script loaded");
+        console.log("Direct calendar script loaded on page load");
         
-        // Initialize the direct calendar immediately
+        // Attach date change event listener
         const dateInput = document.getElementById('schedule_date');
-        const primaryDateStr = dateInput.value || '';
-        
-        // Initialize the direct calendar with the selected date
-        initDirectCalendar('direct-calendar-days', primaryDateStr);
-        
-        // Also update when the checkbox changes or date changes
-        const repeatCheckbox = document.getElementById('enable_repeat_days');
-        if (repeatCheckbox) {
-            // When date changes, update the calendar
-            document.getElementById('schedule_date').addEventListener('change', function() {
-                directClearDateSelection();
-                const newPrimaryDate = this.value;
-                directPrimaryDate = newPrimaryDate;
-                directGenerateCalendarDays();
+        if (dateInput) {
+            dateInput.addEventListener('change', function() {
+                console.log("Date input changed to:", this.value);
+                if (typeof directClearDateSelection === 'function') {
+                    directClearDateSelection();
+                    directPrimaryDate = this.value;
+                    directGenerateCalendarDays();
+                }
             });
         }
     };

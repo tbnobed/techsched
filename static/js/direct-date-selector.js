@@ -281,50 +281,79 @@ function directUpdateFormWithSelectedDates() {
     // Update both direct_repeat_days_list and repeat_days fields for compatibility
     const datesList = Array.from(directSelectedDates).join(',');
     console.log("Selected dates to save:", datesList);
-    
-    // Update direct_repeat_days_list field
-    let directRepeatDaysField = document.querySelector('input[name="direct_repeat_days_list"]');
-    if (!directRepeatDaysField) {
-        // Create the field if it doesn't exist
-        directRepeatDaysField = document.createElement('input');
-        directRepeatDaysField.type = 'hidden';
-        directRepeatDaysField.name = 'direct_repeat_days_list';
-        directRepeatDaysField.id = 'direct_repeat_days_list';
+
+    try {
+        // Always remove existing repeat_days_inputs to avoid duplicates
+        const existingInputsContainer = document.getElementById('repeat_days_inputs');
+        if (existingInputsContainer) {
+            existingInputsContainer.innerHTML = '';
+        }
         
-        // Try to find the form
+        // Get form
         const form = document.getElementById('schedule_form') || document.querySelector('form');
-        if (form) {
+        if (!form) {
+            console.error("Could not find form to add repeat days fields");
+            return;
+        }
+        
+        // Update direct_repeat_days_list field
+        let directRepeatDaysField = document.getElementById('direct_repeat_days_list');
+        if (!directRepeatDaysField) {
+            // Create the field if it doesn't exist
+            directRepeatDaysField = document.createElement('input');
+            directRepeatDaysField.type = 'hidden';
+            directRepeatDaysField.name = 'direct_repeat_days_list';
+            directRepeatDaysField.id = 'direct_repeat_days_list';
             form.appendChild(directRepeatDaysField);
             console.log("Added direct_repeat_days_list field to form");
-        } else {
-            console.error("Could not find form to add direct_repeat_days_list field");
         }
-    }
-    
-    // Update repeat_days field (this is the field name in ScheduleForm)
-    let repeatDaysField = document.querySelector('input[name="repeat_days"]');
-    if (!repeatDaysField) {
-        // Create the field if it doesn't exist
-        repeatDaysField = document.createElement('input');
-        repeatDaysField.type = 'hidden';
-        repeatDaysField.name = 'repeat_days';
-        repeatDaysField.id = 'repeat_days';
         
-        // Try to find the form
-        const form = document.getElementById('schedule_form') || document.querySelector('form');
-        if (form) {
+        // Update repeat_days field (this is the field name in ScheduleForm)
+        let repeatDaysField = document.getElementById('repeat_days');
+        if (!repeatDaysField) {
+            // Create the field if it doesn't exist
+            repeatDaysField = document.createElement('input');
+            repeatDaysField.type = 'hidden';
+            repeatDaysField.name = 'repeat_days';
+            repeatDaysField.id = 'repeat_days';
             form.appendChild(repeatDaysField);
             console.log("Added repeat_days field to form");
-        } else {
-            console.error("Could not find form to add repeat_days field");
         }
+        
+        // Set both fields to the same value
+        directRepeatDaysField.value = datesList;
+        repeatDaysField.value = datesList;
+        
+        // Also create individual checkboxes for each date (for compatibility with server-side processing)
+        if (directSelectedDates.size > 0) {
+            const inputsContainer = document.getElementById('repeat_days_inputs');
+            if (inputsContainer) {
+                directSelectedDates.forEach(dateStr => {
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = 'repeat_days';
+                    checkbox.value = dateStr;
+                    checkbox.checked = true;
+                    checkbox.style.display = 'none'; // Hide these since they're just for form submission
+                    inputsContainer.appendChild(checkbox);
+                });
+            }
+        }
+        
+        console.log("Updated repeat_days field with value:", repeatDaysField.value);
+        console.log("Form data that will be submitted:", new FormData(form));
+        
+        // For debugging, list all input fields in the form
+        const formInputs = form.querySelectorAll('input, select, textarea');
+        console.log("Form has", formInputs.length, "input elements:");
+        formInputs.forEach(input => {
+            if (input.name) {
+                console.log(`- ${input.name}: ${input.value} (type: ${input.type})`);
+            }
+        });
+    } catch (error) {
+        console.error("Error updating form with selected dates:", error);
     }
-    
-    // Set both fields to the same value
-    directRepeatDaysField.value = datesList;
-    repeatDaysField.value = datesList;
-    
-    console.log("Updated repeat_days fields:", datesList);
 }
 
 /**

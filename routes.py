@@ -410,6 +410,12 @@ def new_schedule():
             else:
                 form.location_id.data = 0
                 
+            # Handle repeat days for mobile form
+            repeat_days_list = request.form.getlist('repeat_days')
+            if repeat_days_list:
+                form.repeat_days.data = ','.join(repeat_days_list)
+                app.logger.debug(f"Mobile form: Repeat days selected: {form.repeat_days.data}")
+                
             # Mobile validation successful
             is_mobile_validation_successful = True
             

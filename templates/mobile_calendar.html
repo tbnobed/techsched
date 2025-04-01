@@ -175,6 +175,32 @@
                         <input type="checkbox" class="form-check-input" id="time_off" name="time_off">
                         <label class="form-check-label" for="time_off">{{ form.time_off.label.text }}</label>
                     </div>
+                    
+                    <div class="mb-3" id="repeat_days_section">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="enable_repeat_days" onchange="toggleRepeatDaysCalendar()">
+                            <label class="form-check-label" for="enable_repeat_days">Repeat on additional days</label>
+                        </div>
+                        <div id="repeat_days_calendar" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6>Select additional days:</h6>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearDateSelection()">Clear All</button>
+                            </div>
+                            <div class="repeat-days-grid">
+                                {% for i in range(28) %}
+                                {% set day_date = week_start + timedelta(days=i) %}
+                                {% if day_date.date() != week_start.date() %}
+                                <div class="date-checkbox">
+                                    <input type="checkbox" id="repeat_day_{{ i }}" name="repeat_days" value="{{ day_date.strftime('%Y-%m-%d') }}" class="date-checkbox-input">
+                                    <label for="repeat_day_{{ i }}" class="date-checkbox-label">
+                                        {{ day_date.strftime('%b %d') }}
+                                    </label>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -370,6 +396,53 @@
 .dark-theme .time-off-card .schedule-desc {
     color: #e2e2e2 !important;
 }
+
+/* Repeat days styling */
+.repeat-days-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.date-checkbox {
+    position: relative;
+}
+
+.date-checkbox-input {
+    position: absolute;
+    opacity: 0;
+}
+
+.date-checkbox-label {
+    display: block;
+    padding: 8px 5px;
+    text-align: center;
+    font-size: 0.85rem;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.date-checkbox-input:checked + .date-checkbox-label {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+}
+
+[data-bs-theme="dark"] .date-checkbox-label,
+.dark-theme .date-checkbox-label {
+    border-color: #495057;
+    color: #e9ecef;
+}
+
+[data-bs-theme="dark"] .date-checkbox-input:checked + .date-checkbox-label,
+.dark-theme .date-checkbox-input:checked + .date-checkbox-label {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+}
 </style>
 
 <script>
@@ -395,6 +468,21 @@ function previousWeek() {
 
 function nextWeek() {
     window.location.href = "{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}";
+}
+
+function toggleRepeatDaysCalendar() {
+    const enableRepeatDays = document.getElementById('enable_repeat_days');
+    const repeatDaysCalendar = document.getElementById('repeat_days_calendar');
+    
+    if (enableRepeatDays && repeatDaysCalendar) {
+        repeatDaysCalendar.style.display = enableRepeatDays.checked ? 'block' : 'none';
+    }
+}
+
+function clearDateSelection() {
+    document.querySelectorAll('input[name="repeat_days"]').forEach(cb => {
+        cb.checked = false;
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {

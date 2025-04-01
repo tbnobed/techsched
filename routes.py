@@ -592,7 +592,12 @@ def new_schedule():
 def delete_schedule(schedule_id):
     # Get current week start to maintain the same view
     week_start = request.args.get('week_start') or request.form.get('week_start')
-    personal_view = request.args.get('personal_view') == 'true' or request.form.get('personal_view') == 'true'
+    
+    # Check both personal_view and return_to parameters for backward compatibility
+    personal_view = (request.args.get('personal_view') == 'true' or 
+                     request.form.get('personal_view') == 'true' or 
+                     request.args.get('return_to') == 'personal_schedule' or 
+                     request.form.get('return_to') == 'personal_schedule')
     
     schedule = Schedule.query.get_or_404(schedule_id)
 

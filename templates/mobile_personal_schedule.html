@@ -618,7 +618,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Set up delete button event
             document.getElementById('delete_button').onclick = function() {
                 if (confirm('Are you sure you want to delete this schedule?')) {
-                    window.location.href = `/schedule/delete/${scheduleId}?week_start={{ week_start.strftime('%Y-%m-%d') }}&return_to=personal_schedule`;
+                    window.location.href = `/schedule/delete/${scheduleId}?week_start={{ week_start.strftime('%Y-%m-%d') }}&personal_view=true`;
                 }
             };
         });

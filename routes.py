@@ -511,14 +511,24 @@ def new_schedule():
                 
                 if repeat_days:
                     # Multi-day scheduling
-                    dates = repeat_days.split(',')
-                    app.logger.debug(f"Creating schedules for multiple days: {dates}")
-                    
-                    # Also include the primary date unless it's already in the list
-                    primary_date_str = schedule_date.strftime('%Y-%m-%d')
-                    if primary_date_str not in dates:
-                        dates.insert(0, primary_date_str)
-                        app.logger.debug(f"Added primary date {primary_date_str} to dates list")
+                    try:
+                        dates = repeat_days.split(',')
+                        app.logger.debug(f"Creating schedules for multiple days: {dates}")
+                        
+                        # Also include the primary date unless it's already in the list
+                        primary_date_str = schedule_date.strftime('%Y-%m-%d')
+                        app.logger.debug(f"Primary date from schedule_date: {primary_date_str}, type: {type(primary_date_str)}")
+                        app.logger.debug(f"Current dates list before adding primary: {dates}")
+                        
+                        if primary_date_str not in dates:
+                            dates.insert(0, primary_date_str)
+                            app.logger.debug(f"Added primary date {primary_date_str} to dates list")
+                        
+                        app.logger.debug(f"Final dates list after processing: {dates}")
+                    except Exception as e:
+                        app.logger.error(f"Error processing repeat days: {str(e)}")
+                        import traceback
+                        app.logger.error(f"Repeat days traceback: {traceback.format_exc()}")
                     
                     if not dates:
                         flash('No valid dates selected for scheduling.')
@@ -607,6 +617,11 @@ def new_schedule():
             db.session.rollback()
             flash('Error saving schedule. Please check the time entries.')
             app.logger.error(f"Error saving schedule: {str(e)}")
+            # Add detailed traceback for debugging
+            import traceback
+            app.logger.error(f"Traceback: {traceback.format_exc()}")
+            # Log the request form data for debugging
+            app.logger.error(f"Form data: {request.form}")
             if personal_view:
                 return redirect(url_for('personal_schedule', week_start=week_start))
             else:

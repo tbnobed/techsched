@@ -538,7 +538,10 @@ window.toggleRepeatDaysSelection = function() {
                 // Set up delete button event
                 document.getElementById('delete_button').onclick = function() {
                     if (confirm('Are you sure you want to delete this schedule?')) {
-                        window.location.href = `/schedule/delete/${scheduleEvent.getAttribute('data-schedule-id')}?week_start={{ week_start.strftime('%Y-%m-%d') }}&personal_view=true`;
+                        const scheduleId = scheduleEvent.getAttribute('data-schedule-id');
+                        const deleteUrl = `/schedule/delete/${scheduleId}?week_start={{ week_start.strftime('%Y-%m-%d') }}&personal_view=true`;
+                        console.log("Deletion URL: ", deleteUrl);
+                        window.location.href = deleteUrl;
                     }
                 };
             } else {

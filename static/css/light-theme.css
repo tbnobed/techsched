@@ -17,10 +17,10 @@
   --light-danger: #ef4444;
   
   /* Sidebar section specific colors with vibrant gradients */
-  --sidebar-time-bg: linear-gradient(135deg, #e0f2fe, #bae6fd, #7dd3fc);
+  --sidebar-time-bg: linear-gradient(135deg, #7cbae4, #bae6fd, #07405a);
   --sidebar-active-bg: linear-gradient(135deg, #dbeafe, #bfdbfe, #93c5fd);
-  --sidebar-timeoff-bg: linear-gradient(135deg, #ddd6fe, #c4b5fd, #a78bfa);
-  --sidebar-tickets-bg: linear-gradient(135deg, #c7d2fe, #a5b4fc, #818cf8);
+  --sidebar-timeoff-bg: linear-gradient(135deg, #ddd6fe, #c4b5fd, #7e5ce6);
+  --sidebar-tickets-bg: linear-gradient(135deg, #c7d2fe, #4b5db9, #5b6af1);
   --sidebar-links-bg: linear-gradient(135deg, #e0e7ff, #c7d2fe, #a5b4fc);
 
   /* For Bootstrap compatibility */

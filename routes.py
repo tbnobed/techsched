@@ -1038,6 +1038,7 @@ def personal_schedule():
                             week_start=week_start,
                             week_end=week_start + timedelta(days=7),
                             form=form,
+                            locations=locations,  # Add locations to mobile template
                             today=datetime.now(current_user.get_timezone()),
                             datetime=datetime,
                             timedelta=timedelta,

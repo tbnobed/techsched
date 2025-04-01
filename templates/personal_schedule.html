@@ -190,20 +190,64 @@
                             </div>
                         </div>
                         <div class="mb-3">
-                            {{ form.time_off.label(class="form-check-label") }}
-                            {{ form.time_off(class="form-check-input", id="time_off") }}
+                            <div class="form-check">
+                                {{ form.time_off(class="form-check-input", id="time_off") }}
+                                {{ form.time_off.label(class="form-check-label") }}
+                            </div>
                         </div>
-                        <!-- Removed duplicate repeat days selection -->
-                            <div class="d-flex justify-content-between align-items-center">
-                            <label class="form-label mb-0">Select Additional Dates:</label>
-                            <button type="button" class="btn btn-sm btn-link" id="clear-selection" onclick="clearDateSelection()">Clear All</button>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Repeat Schedule</label>
+                            <div class="mt-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="repeat_days_toggle" onchange="toggleRepeatDaysSelection()">
+                                    <label class="form-check-label" for="repeat_days_toggle">Schedule for multiple days</label>
+                                </div>
+                            </div>
+                            <div id="repeat_days_container" class="mt-2" style="display: none;">
+                                <div class="alert alert-info mb-3">
+                                    <small>Select the days to create this schedule. The same time and details will be used for all selected days.</small>
+                                </div>
+                                <div class="mini-calendar">
+                                    <div class="month-navigator d-flex justify-content-between align-items-center mb-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="prev-month">
+                                            <i data-feather="chevron-left"></i>
+                                        </button>
+                                        <h6 class="m-0" id="calendar-month-year">{{ now.strftime('%B %Y') }}</h6>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="next-month">
+                                            <i data-feather="chevron-right"></i>
+                                        </button>
+                                    </div>
+                                    <div class="calendar-days">
+                                        <div class="day-names d-flex">
+                                            <div>Sun</div>
+                                            <div>Mon</div>
+                                            <div>Tue</div>
+                                            <div>Wed</div>
+                                            <div>Thu</div>
+                                            <div>Fri</div>
+                                            <div>Sat</div>
+                                        </div>
+                                        <div class="day-grid" id="calendar-days">
+                                            <!-- Days will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="selected-dates mt-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="m-0">Selected Dates</h6>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="clear-selection">
+                                            Clear All
+                                        </button>
+                                    </div>
+                                    <div id="selected-dates-container">
+                                        <span class="text-muted" id="no-dates-selected">No additional dates selected</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                            <div id="miniCalendar" class="mini-calendar"></div>
-                        <div id="selected-dates-container" class="d-flex flex-wrap mt-2">
-                            <!-- Selected dates will appear here -->
-                            <span class="text-muted" id="no-dates-selected">No additional dates selected</span>
-                        </div>
-                        </div>
+                        
                         {{ form.start_time(type="hidden", id="start_time_input") }}
                         {{ form.end_time(type="hidden", id="end_time_input") }}
                         {{ form.repeat_days(type="hidden", id="repeat_days_input") }}
@@ -426,19 +470,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Function to toggle repeat days selection
-window.toggleRepeatDaysSelection = function() {
-    const container = document.getElementById('repeat_days_container');
-    if (container) {
-        if (document.getElementById('repeat_days_toggle').checked) {
-            container.style.display = 'block';
-        } else {
-            container.style.display = 'none';
-        }
-    }
-};
-
-// Initialize tooltips for schedule events
+    // Initialize tooltips for schedule events
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
     tooltipTriggerList.forEach(function(tooltipTriggerEl) {
         new bootstrap.Tooltip(tooltipTriggerEl, {
@@ -448,11 +480,11 @@ window.toggleRepeatDaysSelection = function() {
         });
     });
     
-    // Global variables for the modal
-    let currentMonth = new Date();
-    let selectedDates = [];
-    let primaryDate = null;
-    let scheduleDates = [];
+    // These variables are defined in calendar.js
+    // let currentMonth = new Date();
+    // let selectedDates = [];
+    // let primaryDate = null;
+    // let scheduleDates = [];
     
     // Only initialize calendar components when the modal is opened
     const scheduleModal = document.getElementById('scheduleModal');
@@ -531,13 +563,8 @@ window.toggleRepeatDaysSelection = function() {
                 document.getElementById('copy_button').style.display = 'block';
                 document.querySelector('#scheduleModal .btn-primary').textContent = 'Save Changes';
                 
-                // Set up delete button event - no confirmation needed as it matches all schedules view
-                document.getElementById('delete_button').onclick = function() {
-                    const scheduleId = scheduleEvent.getAttribute('data-schedule-id');
-                    const deleteUrl = `/schedule/delete/${scheduleId}?week_start={{ week_start.strftime('%Y-%m-%d') }}&personal_view=true`;
-                    console.log("Deletion URL: ", deleteUrl);
-                    window.location.href = deleteUrl;
-                };
+                // Delete button is handled by the global event listener in calendar.js
+                // No need to set up a custom handler here
             } else {
                 // Creating new schedule
                 document.getElementById('schedule_id').value = '';

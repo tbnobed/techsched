@@ -309,13 +309,13 @@ function directUpdateFormWithSelectedDates() {
         }
         
         // Update repeat_days field (this is the field name in ScheduleForm)
-        let repeatDaysField = document.getElementById('repeat_days');
+        let repeatDaysField = document.getElementById('repeat_days_input');
         if (!repeatDaysField) {
             // Create the field if it doesn't exist
             repeatDaysField = document.createElement('input');
             repeatDaysField.type = 'hidden';
             repeatDaysField.name = 'repeat_days';
-            repeatDaysField.id = 'repeat_days';
+            repeatDaysField.id = 'repeat_days_input';
             form.appendChild(repeatDaysField);
             console.log("Added repeat_days field to form");
         }

@@ -562,7 +562,9 @@ def new_schedule():
                             dates = []
                         
                         # Get the primary date string for filtering
-                        primary_date_str = schedule_date.strftime('%Y-%m-%d')
+                        primary_date_str = schedule_date
+                        if not isinstance(schedule_date, str):
+                            primary_date_str = schedule_date.strftime('%Y-%m-%d')
                         app.logger.debug(f"Primary date (to exclude from additional dates): {primary_date_str}")
                         
                         # Filter out the primary date since we already created a schedule for it

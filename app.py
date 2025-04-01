@@ -153,30 +153,8 @@ def inject_mobile_detection():
     """Inject mobile device detection function into templates"""
     return {'is_mobile': is_mobile_device}
 
-# API Routes
-@app.route('/api/active_users')
-@login_required
-def api_active_users():
-    """Get list of active users for the application"""
-    logger.debug(f"Active users API called by user: {current_user.username if current_user.is_authenticated else 'Not authenticated'}")
-    logger.debug(f"Session data: {session}")
-    logger.debug(f"Request cookies: {request.cookies}")
-
-    if not current_user.is_authenticated:
-        logger.warning("Unauthenticated access to active_users API")
-        return jsonify({'error': 'Authentication required'}), 401
-
-    try:
-        users = User.query.all()
-        logger.debug(f"Found {len(users)} active users")
-        return jsonify([{
-            'id': user.id,
-            'username': user.username if user.username else 'Unknown',
-            'color': user.color if user.color else '#3498db'
-        } for user in users])
-    except Exception as e:
-        logger.error(f"Error in active_users API: {str(e)}")
-        return jsonify({'error': 'Internal server error'}), 500
+# API Routes 
+# Note: API routes are defined in routes.py
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

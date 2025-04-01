@@ -79,7 +79,10 @@ def logout():
 @login_required
 def get_active_users():
     """Get users who have schedules active at the current time"""
+    # The @login_required decorator will handle redirecting unauthenticated users
+    # But we'll add an explicit check for API JSON responses
     if not current_user.is_authenticated:
+        app.logger.debug("Unauthorized access to path: /api/active_users")
         return jsonify({'error': 'Authentication required'}), 401
 
     try:
@@ -1380,6 +1383,10 @@ def get_upcoming_time_off(for_template=False):
     If for_template is True, returns data formatted for template rendering
     Otherwise returns JSON response for API endpoint
     """
+    if not current_user.is_authenticated:
+        app.logger.debug("Unauthorized access to path: /api/upcoming_time_off")
+        return jsonify({'error': 'Authentication required'}), 401
+    
     try:
         # Get current time in UTC since our database stores times in UTC
         current_time = datetime.now(pytz.UTC)

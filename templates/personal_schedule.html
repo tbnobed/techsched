@@ -133,29 +133,7 @@
                                     <small>Select the days to create this schedule. The same time and details will be used for all selected days.</small>
                                 </div>
                                 <div id="miniCalendar" class="mini-calendar">
-                                    <div class="month-navigator d-flex justify-content-between align-items-center mb-2">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="prev-month">
-                                            <i data-feather="chevron-left"></i>
-                                        </button>
-                                        <h6 class="m-0" id="calendar-month-year">April 2025</h6>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="next-month">
-                                            <i data-feather="chevron-right"></i>
-                                        </button>
-                                    </div>
-                                    <div class="calendar-days">
-                                        <div class="day-names d-flex">
-                                            <div>Sun</div>
-                                            <div>Mon</div>
-                                            <div>Tue</div>
-                                            <div>Wed</div>
-                                            <div>Thu</div>
-                                            <div>Fri</div>
-                                            <div>Sat</div>
-                                        </div>
-                                        <div class="day-grid" id="calendar-days">
-                                            <!-- Days will be populated by JavaScript -->
-                                        </div>
-                                    </div>
+                                    <!-- Calendar will be populated by JavaScript -->
                                 </div>
                                 
                                 <div class="selected-dates mt-3">
@@ -439,6 +417,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Set up clear selection button
+    const clearButton = document.getElementById('clear-selection');
+    if (clearButton) {
+        clearButton.addEventListener('click', function() {
+            clearDateSelection();
+        });
+    }
+    
     // Initialize variables required for the calendar functionality
     // These would normally be defined in calendar.js but we need them here too
     let currentMonth = new Date();
@@ -632,55 +618,88 @@ document.addEventListener('DOMContentLoaded', function() {
         const miniCalendar = document.getElementById('miniCalendar');
         if (!miniCalendar) return;
         
-        // Create header
-        const header = document.createElement('div');
-        header.className = 'mini-calendar-header';
+        // Clear any existing content
+        miniCalendar.innerHTML = '';
+        
+        // Create the month navigation header
+        const monthNav = document.createElement('div');
+        monthNav.className = 'month-navigator d-flex justify-content-between align-items-center mb-2';
         
         const prevBtn = document.createElement('button');
-        prevBtn.innerHTML = '&laquo;';
         prevBtn.className = 'btn btn-sm btn-outline-secondary';
+        prevBtn.id = 'prev-month';
         prevBtn.onclick = () => navigateMonth(-1);
         
-        const monthLabel = document.createElement('span');
-        monthLabel.id = 'calendar-month-label';
+        const prevIcon = document.createElement('i');
+        prevIcon.setAttribute('data-feather', 'chevron-left');
+        prevBtn.appendChild(prevIcon);
+        
+        const monthLabel = document.createElement('h6');
+        monthLabel.className = 'm-0';
+        monthLabel.id = 'calendar-month-year';
         monthLabel.textContent = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         
         const nextBtn = document.createElement('button');
-        nextBtn.innerHTML = '&raquo;';
         nextBtn.className = 'btn btn-sm btn-outline-secondary';
+        nextBtn.id = 'next-month';
         nextBtn.onclick = () => navigateMonth(1);
         
-        header.appendChild(prevBtn);
-        header.appendChild(monthLabel);
-        header.appendChild(nextBtn);
-        miniCalendar.appendChild(header);
+        const nextIcon = document.createElement('i');
+        nextIcon.setAttribute('data-feather', 'chevron-right');
+        nextBtn.appendChild(nextIcon);
         
-        // Create day headers
-        const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-        dayNames.forEach(day => {
-            const dayHeader = document.createElement('div');
-            dayHeader.className = 'day-item';
-            dayHeader.style.fontWeight = 'bold';
-            dayHeader.textContent = day;
-            dayHeader.style.cursor = 'default';
-            miniCalendar.appendChild(dayHeader);
+        monthNav.appendChild(prevBtn);
+        monthNav.appendChild(monthLabel);
+        monthNav.appendChild(nextBtn);
+        
+        // Create calendar days container
+        const calendarDays = document.createElement('div');
+        calendarDays.className = 'calendar-days';
+        
+        // Add day names header
+        const dayNames = document.createElement('div');
+        dayNames.className = 'day-names';
+        
+        const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        weekDays.forEach(day => {
+            const dayDiv = document.createElement('div');
+            dayDiv.textContent = day;
+            dayNames.appendChild(dayDiv);
         });
+        
+        // Create grid for days
+        const dayGrid = document.createElement('div');
+        dayGrid.className = 'day-grid';
+        dayGrid.id = 'calendar-days';
+        
+        // Append all elements to the mini calendar
+        calendarDays.appendChild(dayNames);
+        calendarDays.appendChild(dayGrid);
+        
+        miniCalendar.appendChild(monthNav);
+        miniCalendar.appendChild(calendarDays);
+        
+        // Initialize Feather icons for the buttons
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
         
         // Generate calendar days
         generateCalendarDays();
     }
     
     function generateCalendarDays() {
-        const miniCalendar = document.getElementById('miniCalendar');
-        if (!miniCalendar) return;
+        const calendarDays = document.getElementById('calendar-days');
+        if (!calendarDays) return;
         
-        // Remove existing calendar days
-        const existingDays = miniCalendar.querySelectorAll('.day-item:not(:nth-child(-n+8))');
-        existingDays.forEach(day => day.remove());
+        // Clear existing days
+        calendarDays.innerHTML = '';
         
-        // Update the month label
-        const monthLabel = document.getElementById('calendar-month-label');
-        monthLabel.textContent = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        // Update the month/year display
+        const monthYearLabel = document.getElementById('calendar-month-year');
+        if (monthYearLabel) {
+            monthYearLabel.textContent = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        }
         
         // Get the first day of the month
         const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
@@ -690,11 +709,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
         const totalDays = lastDay.getDate();
         
-        // Add empty cells for the days before the first day of the month
+        // Add empty cells for days before the first day of the month
         for (let i = 0; i < startingDay; i++) {
             const emptyDay = document.createElement('div');
-            emptyDay.className = 'day-item disabled';
-            miniCalendar.appendChild(emptyDay);
+            emptyDay.className = 'day-item outside-month';
+            calendarDays.appendChild(emptyDay);
         }
         
         // Add the days of the month
@@ -726,7 +745,18 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add click handler
             dayItem.addEventListener('click', () => toggleDateSelection(dateFormatted, dayItem));
             
-            miniCalendar.appendChild(dayItem);
+            calendarDays.appendChild(dayItem);
+        }
+        
+        // Add empty cells for days after the last day of the month to fill out the grid
+        const totalCells = startingDay + totalDays;
+        const remainingCells = 7 - (totalCells % 7);
+        if (remainingCells < 7) {
+            for (let i = 0; i < remainingCells; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'day-item outside-month';
+                calendarDays.appendChild(emptyDay);
+            }
         }
     }
     
@@ -842,6 +872,29 @@ document.addEventListener('DOMContentLoaded', function() {
     function parseDate(dateStr) {
         const [year, month, day] = dateStr.split('-').map(Number);
         return new Date(year, month - 1, day);
+    }
+    
+    function toggleRepeatDaysSelection() {
+        const container = document.getElementById('repeat_days_container');
+        const isChecked = document.getElementById('repeat_days_toggle').checked;
+        
+        if (container) {
+            container.style.display = isChecked ? 'block' : 'none';
+            
+            // Clear selected dates if toggling off
+            if (!isChecked) {
+                clearDateSelection();
+            } else {
+                // Initialize and update mini calendar when showing
+                if (document.getElementById('miniCalendar')) {
+                    try {
+                        initMiniCalendar();
+                    } catch (e) {
+                        console.error("Error initializing mini calendar:", e);
+                    }
+                }
+            }
+        }
     }
 });
 </script>

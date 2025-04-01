@@ -138,6 +138,8 @@
                     {% if request.args.get('week_start') %}
                     <input type="hidden" name="week_start" value="{{ request.args.get('week_start') }}">
                     {% endif %}
+                    <!-- Hidden field for direct date selection -->
+                    <input type="hidden" name="direct_repeat_days_list" id="direct_repeat_days_list" value="">
                     
                     {% if current_user.is_admin %}
                     <div class="mb-3">
@@ -948,6 +950,18 @@ document.addEventListener('DOMContentLoaded', function() {
     scriptElement.onload = function() {
         // Script loaded successfully - now we can use its functions
         console.log("Direct date selector script loaded");
+        
+        // Add event listener for repeat days checkbox
+        document.getElementById('enable_repeat_days').addEventListener('change', function() {
+            if (this.checked) {
+                // Get the selected date from the form
+                const dateInput = document.getElementById('schedule_date');
+                const primaryDateStr = dateInput.value;
+                
+                // Initialize the direct calendar with the selected date
+                initDirectCalendar('direct-calendar-days', primaryDateStr);
+            }
+        });
     };
     document.head.appendChild(scriptElement);
     

@@ -250,7 +250,13 @@ function directUpdateFormWithSelectedDates() {
         repeatDaysField = document.createElement('input');
         repeatDaysField.type = 'hidden';
         repeatDaysField.name = 'direct_repeat_days_list';
-        document.getElementById('schedule_form').appendChild(repeatDaysField);
+        // Find the form and append to it
+        const form = document.querySelector('form');
+        if (form) {
+            form.appendChild(repeatDaysField);
+        } else {
+            console.error("Could not find form to append repeat days field");
+        }
     }
     
     // Set the value to a comma-separated list of selected dates

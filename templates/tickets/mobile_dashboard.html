@@ -75,14 +75,17 @@
                 {% if tickets %}
                     {% for ticket in tickets %}
                         <a href="{{ url_for('tickets.view_ticket', ticket_id=ticket.id) }}" 
-                           class="list-group-item list-group-item-action p-3 mb-2"
-                           style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
+                           class="list-group-item list-group-item-action p-3 mb-3 ticket-card"
+                           style="border-radius: 12px; 
+                           border: 1px solid {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#e0e0e0{% else %}#273449{% endif %};
+                           box-shadow: 0 4px 8px rgba(0,0,0,0.08); 
                            {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}
                            background: linear-gradient(to right, #ffffff, #f8f9fa);
                            {% else %}
                            background: linear-gradient(to right, #141B2D, #1A2332);
                            {% endif %}
-                           transform: translateY(0); transition: transform 0.3s ease, box-shadow 0.3s ease;"
+                           transform: translateY(0); 
+                           transition: all 0.3s ease;"
                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 10px rgba(0,0,0,0.15)';"
                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)';">
                             <div class="d-flex justify-content-between align-items-center mb-1">
@@ -128,4 +131,42 @@
         </div>
     </div>
 </div>
+
+<style>
+.ticket-card {
+    position: relative;
+    border-radius: 12px !important;
+    border-left-width: 5px !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08) !important;
+    transition: all 0.3s ease !important;
+    z-index: 1;
+}
+
+.ticket-card:active,
+.ticket-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15) !important;
+    z-index: 2;
+}
+
+/* Make badges more visible */
+.badge {
+    padding: 0.4em 0.6em;
+    font-weight: 500;
+    border-radius: 4px;
+}
+
+/* Fix ticket titles to be more readable */
+.ticket-card h6 {
+    font-weight: 600;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#000000{% else %}#ffffff{% endif %};
+}
+
+/* Better styling for muted text in tickets */
+.ticket-card .text-muted {
+    color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#6c757d{% else %}#a0aec0{% endif %} !important;
+}
+</style>
 {% endblock %}

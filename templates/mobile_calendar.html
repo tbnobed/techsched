@@ -102,13 +102,19 @@
     <!-- Controls moved below the calendar -->
     <div class="mobile-controls mt-1 mb-3">
         <div class="d-flex justify-content-between align-items-center">
-            <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
+            <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}" 
+               class="btn btn-outline-secondary btn-sm"
+               style="color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#495057{% else %}#f8f9fa{% endif %}; 
+                      border-color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#6c757d{% else %}#f8f9fa{% endif %};">
                 <i data-feather="arrow-left"></i> Previous Week
             </a>
             <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#scheduleModal">
                 <i data-feather="plus"></i> Add Schedule
             </button>
-            <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-sm">
+            <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}" 
+               class="btn btn-outline-secondary btn-sm"
+               style="color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#495057{% else %}#f8f9fa{% endif %}; 
+                      border-color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#6c757d{% else %}#f8f9fa{% endif %};">
                 Next Week <i data-feather="arrow-right"></i>
             </a>
         </div>
@@ -218,17 +224,17 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: white;
-    color: #000000 !important;
+    background: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}linear-gradient(120deg, #f8f9fa, #e9ecef){% else %}linear-gradient(120deg, #141B2D, #1A2332){% endif %};
+    color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#000000{% else %}#ffffff{% endif %} !important;
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 15px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#e0e0e0{% else %}#273449{% endif %};
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
 .mobile-title span, .mobile-title button, .mobile-title i {
-    color: #000000 !important;
+    color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#000000{% else %}#ffffff{% endif %} !important;
 }
 
 .mobile-controls {

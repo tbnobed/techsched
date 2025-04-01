@@ -78,10 +78,57 @@
 .form-control, .form-select {
     font-size: 16px; /* Prevents iOS zoom on focus */
     padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border: 1px solid {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#dee2e6{% else %}#273449{% endif %};
+    background-color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#ffffff{% else %}#1e293b{% endif %};
+    color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#000000{% else %}#ffffff{% endif %};
+}
+
+.form-control:focus, .form-select:focus {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+    border-color: #0d6efd;
 }
 
 textarea.form-control {
     min-height: 120px;
+}
+
+.form-label {
+    font-weight: 500;
+    color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#333333{% else %}#e2e2e2{% endif %};
+    margin-bottom: 0.5rem;
+}
+
+.btn {
+    padding: 0.5rem 1.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0a58ca, #084298);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn-secondary {
+    background: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}linear-gradient(135deg, #6c757d, #5a6268){% else %}linear-gradient(135deg, #343a40, #495057){% endif %};
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-secondary:hover {
+    background: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}linear-gradient(135deg, #5a6268, #495057){% else %}linear-gradient(135deg, #495057, #343a40){% endif %};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 </style>
 {% endblock %}

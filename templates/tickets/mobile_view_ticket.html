@@ -164,7 +164,7 @@
         <div class="card-header" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #e9ecef, #f8f9fa);{% else %}background: linear-gradient(to right, #1A2332, #273449);{% endif %} border: none;">
             <h5 class="card-title mb-0">Ticket Information</h5>
         </div>
-        <div class="card-body" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #ffffff, #f8f9fa);{% else %}background: linear-gradient(to right, #141B2D, #1A2332);{% endif %}";
+        <div class="card-body" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #ffffff, #f8f9fa);{% else %}background: linear-gradient(to right, #141B2D, #1A2332);{% endif %}">
             <dl class="row mb-0">
                 <dt class="col-5">Assigned To</dt>
                 <dd class="col-7">
@@ -195,14 +195,25 @@
         <div class="card-header" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #e9ecef, #f8f9fa);{% else %}background: linear-gradient(to right, #1A2332, #273449);{% endif %} border: none;">
             <h5 class="card-title mb-0">Comments</h5>
         </div>
-        <div class="card-body" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #ffffff, #f8f9fa);{% else %}background: linear-gradient(to right, #141B2D, #1A2332);{% endif %};";
+        <div class="card-body" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #ffffff, #f8f9fa);{% else %}background: linear-gradient(to right, #141B2D, #1A2332);{% endif %}">
             <div class="comments-list mb-3">
                 {% for comment in ticket['comments'] %}
-                <div class="comment mb-3 p-2" style="border-left: 3px solid #3498db; background-color: rgba(52, 152, 219, 0.05);">
-                    <div class="d-flex justify-content-between align-items-start">
+                <div class="comment mb-3 p-3" 
+                     style="border-left: 4px solid #3498db; 
+                           border-radius: 8px;
+                           box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+                           transition: all 0.3s ease;
+                           {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}
+                           background: linear-gradient(to right, #f8f9fa, #ffffff);
+                           {% else %}
+                           background: linear-gradient(to right, #1A2332, #213346);
+                           {% endif %}">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
-                            <strong>{{ comment['user']['username'] }}</strong>
-                            <small class="text-muted">{{ comment['created_at'].strftime('%Y-%m-%d %H:%M') }}</small>
+                            <strong class="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}text-dark{% else %}text-white{% endif %}">
+                                {{ comment['user']['username'] }}
+                            </strong>
+                            <small class="text-muted d-block">{{ comment['created_at'].strftime('%Y-%m-%d %H:%M') }}</small>
                         </div>
                         {% if current_user.is_admin or current_user.id == comment['user']['id'] %}
                         <button class="btn btn-sm btn-link text-danger p-0" onclick="deleteComment({{ comment['id'] }})">
@@ -210,7 +221,9 @@
                         </button>
                         {% endif %}
                     </div>
-                    <p class="mb-0 mt-1">{{ comment['content']|nl2br }}</p>
+                    <p class="mb-0 {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}text-dark{% else %}text-light{% endif %}">
+                        {{ comment['content']|nl2br }}
+                    </p>
                 </div>
                 {% else %}
                 <p class="text-muted text-center">No comments yet</p>
@@ -235,18 +248,26 @@
         <div class="card-header" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #e9ecef, #f8f9fa);{% else %}background: linear-gradient(to right, #1A2332, #273449);{% endif %} border: none;">
             <h5 class="card-title mb-0">History</h5>
         </div>
-        <div class="card-body" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #ffffff, #f8f9fa);{% else %}background: linear-gradient(to right, #141B2D, #1A2332);{% endif %};";
+        <div class="card-body" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #ffffff, #f8f9fa);{% else %}background: linear-gradient(to right, #141B2D, #1A2332);{% endif %}">
             {% for entry in ticket['history'] %}
-            <div class="history-entry mb-2">
-                <small class="text-muted">{{ entry['created_at'].strftime('%Y-%m-%d %H:%M') }}</small>
-                <p class="mb-1">
+            <div class="history-entry mb-3 p-2" 
+                 style="border-radius: 6px;
+                       border-left: 3px solid #6c757d;
+                       box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+                       transition: all 0.3s ease;
+                       {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}
+                       background: linear-gradient(to right, #f8f9fa, #ffffff);
+                       {% else %}
+                       background: linear-gradient(to right, #1A2332, #213346);
+                       {% endif %}">
+                <small class="text-muted d-block mb-1">{{ entry['created_at'].strftime('%Y-%m-%d %H:%M') }}</small>
+                <p class="mb-1 {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}text-dark{% else %}text-white{% endif %}">
                     <strong>{{ entry['user']['username'] }}</strong>
                     {{ entry['action']|replace('_', ' ')|title }}
                 </p>
                 {% if entry['details'] %}
                 <p class="mb-0 text-muted small">{{ entry['details'] }}</p>
                 {% endif %}
-                {% if not loop.last %}<hr class="my-2">{% endif %}
             </div>
             {% else %}
             <p class="text-muted text-center">No history available</p>

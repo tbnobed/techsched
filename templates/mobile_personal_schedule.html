@@ -10,14 +10,14 @@
         <!-- Date selector integrated at the top of the calendar section -->
         <div class="row mb-3">
             <div class="col-12">
-                <h2 class="mobile-title mb-2" style="background: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}linear-gradient(120deg, #f8f9fa, #e9ecef){% else %}linear-gradient(120deg, #141B2D, #1A2332){% endif %}; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                    <button class="btn btn-sm" onclick="previousWeek()">
+                <h2 class="mobile-title mb-2" style="background: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}linear-gradient(120deg, #f8f9fa, #e9ecef){% else %}linear-gradient(120deg, #141B2D, #1A2332){% endif %}; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#dee2e6{% else %}#273449{% endif %};">
+                    <button class="btn btn-sm" onclick="previousWeek()" style="color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#495057{% else %}#e2e2e2{% endif %};">
                         <i data-feather="chevron-left"></i>
                     </button>
-                    <span id="current-date-range" style="white-space: nowrap; font-size: 1.2rem; color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#000000{% else %}#ffffff{% endif %};">
+                    <span id="current-date-range" style="white-space: nowrap; font-size: 1.2rem; color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#212529{% else %}#ffffff{% endif %}; font-weight: 500;">
                         {{ week_start.strftime('%b %d') }} - {{ (week_start + timedelta(days=6)).strftime('%b %d, %Y') }}
                     </span>
-                    <button class="btn btn-sm" onclick="nextWeek()">
+                    <button class="btn btn-sm" onclick="nextWeek()" style="color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#495057{% else %}#e2e2e2{% endif %};">
                         <i data-feather="chevron-right"></i>
                     </button>
                 </h2>
@@ -227,17 +227,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: white;
-    color: #000000 !important;
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 15px;
-    border: 1px solid #e0e0e0;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    /* Theme colors are now controlled via inline styles */
 }
 
 .mobile-title span, .mobile-title button, .mobile-title i {
-    color: #000000 !important;
+    /* Theme-specific colors are now handled inline */
 }
 
 .mobile-controls {
@@ -250,14 +248,14 @@
     border-radius: 4px;
     margin: 0 2px;
     font-size: 0.9rem;
-    border: 1px solid #dddddd;
-    background-color: #f8f9fa;
-    color: #000000;
+    border: 1px solid {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#dddddd{% else %}#273449{% endif %};
+    background-color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#f8f9fa{% else %}#1A2332{% endif %};
+    color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#000000{% else %}#e2e2e2{% endif %};
     transition: all 0.2s ease;
 }
 
 .day-selector .nav-link:hover {
-    background-color: #e9ecef;
+    background-color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#e9ecef{% else %}#273449{% endif %};
     transform: translateY(-2px);
 }
 
@@ -423,14 +421,14 @@
 }
 
 .date-checkbox-label {
-    border: 1px solid #ccc;
+    border: 1px solid {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#ccc{% else %}#273449{% endif %};
     border-radius: 4px;
     padding: 5px;
     font-size: 0.8rem;
     text-align: center;
     cursor: pointer;
-    background-color: #f8f9fa;
-    color: #000;
+    background-color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#f8f9fa{% else %}#1A2332{% endif %};
+    color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#000{% else %}#e2e2e2{% endif %};
     transition: all 0.2s;
     display: block;
     margin: 0;
@@ -443,7 +441,7 @@
 }
 
 .date-checkbox-label:hover {
-    background-color: #e9ecef;
+    background-color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#e9ecef{% else %}#273449{% endif %};
 }
 </style>
 

@@ -10,14 +10,14 @@
         <!-- Date selector integrated at the top of the calendar section -->
         <div class="row mb-3">
             <div class="col-12">
-                <h2 class="mobile-title mb-2" style="background: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}linear-gradient(120deg, #f8f9fa, #e9ecef){% else %}linear-gradient(120deg, #141B2D, #1A2332){% endif %}; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                    <button class="btn btn-sm" onclick="previousWeek()">
+                <h2 class="mobile-title mb-2" style="background: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}linear-gradient(120deg, #f8f9fa, #e9ecef){% else %}linear-gradient(120deg, #141B2D, #1A2332){% endif %}; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#dee2e6{% else %}#273449{% endif %};">
+                    <button class="btn btn-sm" onclick="previousWeek()" style="color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#495057{% else %}#e2e2e2{% endif %};">
                         <i data-feather="chevron-left"></i>
                     </button>
-                    <span id="current-date-range" style="white-space: nowrap; font-size: 1.2rem; color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#000000{% else %}#ffffff{% endif %};">
+                    <span id="current-date-range" style="white-space: nowrap; font-size: 1.2rem; color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#212529{% else %}#ffffff{% endif %}; font-weight: 500;">
                         {{ week_start.strftime('%b %d') }} - {{ (week_start + timedelta(days=6)).strftime('%b %d, %Y') }}
                     </span>
-                    <button class="btn btn-sm" onclick="nextWeek()">
+                    <button class="btn btn-sm" onclick="nextWeek()" style="color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#495057{% else %}#e2e2e2{% endif %};">
                         <i data-feather="chevron-right"></i>
                     </button>
                 </h2>
@@ -89,8 +89,10 @@
                         <button class="btn btn-sm btn-outline-primary" 
                                 data-bs-toggle="modal" 
                                 data-bs-target="#scheduleModal"
-                                data-date="{{ current_date.strftime('%Y-%m-%d') }}">
-                            Add Schedule
+                                data-date="{{ current_date.strftime('%Y-%m-%d') }}"
+                                style="border-color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#0d6efd{% else %}#0d6efd{% endif %}; 
+                                       color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#0d6efd{% else %}#0d6efd{% endif %};">
+                            <i data-feather="plus"></i> Add Schedule
                         </button>
                     </div>
                 {% endif %}
@@ -224,17 +226,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}linear-gradient(120deg, #f8f9fa, #e9ecef){% else %}linear-gradient(120deg, #141B2D, #1A2332){% endif %};
-    color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#000000{% else %}#ffffff{% endif %} !important;
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 15px;
-    border: 1px solid {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#e0e0e0{% else %}#273449{% endif %};
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    /* Theme colors are now controlled via inline styles */
 }
 
 .mobile-title span, .mobile-title button, .mobile-title i {
-    color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#000000{% else %}#ffffff{% endif %} !important;
+    /* Theme-specific colors are now handled inline */
 }
 
 .mobile-controls {
@@ -247,14 +247,14 @@
     border-radius: 4px;
     margin: 0 2px;
     font-size: 0.9rem;
-    border: 1px solid #dddddd;
-    background-color: #f8f9fa;
-    color: #000000;
+    border: 1px solid {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#dddddd{% else %}#273449{% endif %};
+    background-color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#f8f9fa{% else %}#1A2332{% endif %};
+    color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#000000{% else %}#e2e2e2{% endif %};
     transition: all 0.2s ease;
 }
 
 .day-selector .nav-link:hover {
-    background-color: #e9ecef;
+    background-color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#e9ecef{% else %}#273449{% endif %};
     transform: translateY(-2px);
 }
 
@@ -271,11 +271,12 @@
 }
 
 .day-container {
-    border: 1px solid #dee2e6;
+    border: 1px solid {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#dee2e6{% else %}#273449{% endif %};
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 15px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    background-color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#ffffff{% else %}#141B2D{% endif %};
 }
 
 .day-header {
@@ -309,7 +310,7 @@
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    border: 1px solid #e0e0e0;
+    border: 1px solid {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#e0e0e0{% else %}#273449{% endif %};
 }
 
 .mobile-schedule-card::before {
@@ -350,7 +351,7 @@
 .empty-day-message {
     text-align: center;
     padding: 20px 0;
-    color: #6c757d;
+    color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#6c757d{% else %}#a9b0ba{% endif %};
 }
 
 .feather-small {
@@ -359,16 +360,16 @@
 }
 
 .time-off-card {
-    background-color: var(--bs-gray-100, #f8f9fa) !important;
-    border-color: var(--bs-gray-500, #dee2e6) !important;
-    color: var(--bs-body-color, #000) !important;
+    background-color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#f8f9fa{% else %}#2d3035{% endif %} !important;
+    border-color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#dee2e6{% else %}#495057{% endif %} !important;
+    color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#000000{% else %}#e2e2e2{% endif %} !important;
 }
 
 .time-off-card .schedule-time,
 .time-off-card .schedule-tech,
 .time-off-card .schedule-location,
 .time-off-card .schedule-desc {
-    color: var(--bs-body-color, #000) !important;
+    color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#000000{% else %}#e2e2e2{% endif %} !important;
 }
 
 .time-off-card::before {
@@ -386,24 +387,6 @@
     margin-right: 5px;
     display: inline-block;
     vertical-align: middle;
-}
-
-/* Dark theme adjustments */
-[data-bs-theme="dark"] .time-off-card,
-.dark-theme .time-off-card {
-    background-color: #2d3035 !important;
-    border-color: #495057 !important;
-}
-
-[data-bs-theme="dark"] .time-off-card .schedule-time,
-[data-bs-theme="dark"] .time-off-card .schedule-tech,
-[data-bs-theme="dark"] .time-off-card .schedule-location,
-[data-bs-theme="dark"] .time-off-card .schedule-desc,
-.dark-theme .time-off-card .schedule-time,
-.dark-theme .time-off-card .schedule-tech,
-.dark-theme .time-off-card .schedule-location,
-.dark-theme .time-off-card .schedule-desc {
-    color: #e2e2e2 !important;
 }
 
 /* Repeat days styling */
@@ -428,10 +411,12 @@
     padding: 8px 5px;
     text-align: center;
     font-size: 0.85rem;
-    border: 1px solid #dee2e6;
+    border: 1px solid {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#dee2e6{% else %}#273449{% endif %};
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s;
+    background-color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#f8f9fa{% else %}#1A2332{% endif %};
+    color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#212529{% else %}#e2e2e2{% endif %};
 }
 
 .date-checkbox-input:checked + .date-checkbox-label {
@@ -440,18 +425,7 @@
     border-color: #0d6efd;
 }
 
-[data-bs-theme="dark"] .date-checkbox-label,
-.dark-theme .date-checkbox-label {
-    border-color: #495057;
-    color: #e9ecef;
-}
-
-[data-bs-theme="dark"] .date-checkbox-input:checked + .date-checkbox-label,
-.dark-theme .date-checkbox-input:checked + .date-checkbox-label {
-    background-color: #0d6efd;
-    color: white;
-    border-color: #0d6efd;
-}
+/* Removed redundant dark theme overrides since we're now using conditional theme colors directly */
 </style>
 
 <script>

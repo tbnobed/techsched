@@ -12,7 +12,7 @@
     </div>
 
     <div class="card" style="border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-        <div class="card-body" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #ffffff, #f8f9fa);{% else %}background: linear-gradient(to right, #141B2D, #1A2332);{% endif %};";
+        <div class="card-body" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #ffffff, #f8f9fa);{% else %}background: linear-gradient(to right, #141B2D, #1A2332);{% endif %};">
             <form method="POST" action="{{ url_for('tickets.create_ticket') }}">
                 {{ form.hidden_tag() }}
                 

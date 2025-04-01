@@ -30,7 +30,8 @@
                 <li class="nav-item">
                     <button class="nav-link {% if day == 0 %}active{% endif %}" 
                             onclick="showDay({{ day }})"
-                            data-day="{{ day }}">
+                            data-day="{{ day }}"
+                            style="color: {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}#212529{% else %}#f8f9fa{% endif %};">
                         {{ current_date.strftime('%a') }}<br>
                         <span class="day-number">{{ current_date.day }}</span>
                     </button>

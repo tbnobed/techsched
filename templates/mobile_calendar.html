@@ -143,6 +143,10 @@
                     {% if request.args.get('week_start') %}
                     <input type="hidden" name="week_start" value="{{ request.args.get('week_start') }}">
                     {% endif %}
+                    <!-- Make sure technician_id is always included -->
+                    {% if not current_user.is_admin %}
+                    <input type="hidden" name="technician" value="{{ current_user.id }}">
+                    {% endif %}
                     <!-- Hidden field for direct date selection -->
                     <input type="hidden" name="direct_repeat_days_list" id="direct_repeat_days_list" value="">
                     <!-- Hidden field for repeat_days that matches the form field name in ScheduleForm -->

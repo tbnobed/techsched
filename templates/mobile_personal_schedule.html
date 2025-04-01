@@ -129,6 +129,8 @@
                     <input type="hidden" name="return_to" value="personal_schedule">
                     <input type="hidden" name="week_start" value="{{ week_start.strftime('%Y-%m-%d') }}">
                     <input type="hidden" name="personal_view" value="true">
+                    <!-- Add hidden technician field for the current user -->
+                    <input type="hidden" name="technician" value="{{ current_user.id }}">
                     <!-- Hidden field for direct date selection -->
                     <input type="hidden" name="direct_repeat_days_list" id="direct_repeat_days_list" value="">
                     <!-- Hidden field for repeat_days that matches the form field name in ScheduleForm -->

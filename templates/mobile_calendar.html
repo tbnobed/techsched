@@ -140,6 +140,8 @@
                     {% endif %}
                     <!-- Hidden field for direct date selection -->
                     <input type="hidden" name="direct_repeat_days_list" id="direct_repeat_days_list" value="">
+                    <!-- Hidden field for repeat_days that matches the form field name in ScheduleForm -->
+                    <input type="hidden" name="repeat_days" id="repeat_days" value="">
                     
                     {% if current_user.is_admin %}
                     <div class="mb-3">

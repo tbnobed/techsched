@@ -590,16 +590,25 @@ def new_schedule():
 @app.route('/schedule/delete/<int:schedule_id>')
 @login_required
 def delete_schedule(schedule_id):
+    # Debug information
+    app.logger.debug(f"Delete schedule request for schedule_id: {schedule_id}")
+    app.logger.debug(f"Request args: {request.args}")
+    app.logger.debug(f"Request form: {request.form}")
+    
     # Get current week start to maintain the same view
     week_start = request.args.get('week_start') or request.form.get('week_start')
+    app.logger.debug(f"Week start: {week_start}")
     
     # Check both personal_view and return_to parameters for backward compatibility
     personal_view = (request.args.get('personal_view') == 'true' or 
                      request.form.get('personal_view') == 'true' or 
                      request.args.get('return_to') == 'personal_schedule' or 
                      request.form.get('return_to') == 'personal_schedule')
+    app.logger.debug(f"Personal view: {personal_view}")
     
+    # Try to get the schedule, with error handling
     schedule = Schedule.query.get_or_404(schedule_id)
+    app.logger.debug(f"Schedule found: {schedule.id}, technician_id: {schedule.technician_id}")
 
     if schedule.technician_id != current_user.id and not current_user.is_admin:
         flash('You do not have permission to delete this schedule.')

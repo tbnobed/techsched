@@ -54,7 +54,7 @@
                     {% endif %}
                 {% endfor %}
                 
-                {% for schedule in day_schedules %}
+                {% for schedule in day_schedules|sort(attribute='start_time') %}
                     <div class="mobile-schedule-card {% if schedule.time_off %}time-off-card{% endif %}" 
                          style="--tech-color: {{ current_user.color }};"
                          data-bs-toggle="modal" 

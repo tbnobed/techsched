@@ -49,38 +49,43 @@
             <div class="day-schedules">
                 {% set ns = namespace(has_schedules = false) %}
                 
+                {% set day_schedules = [] %}
                 {% for schedule in schedules %}
                     {% if schedule.start_time.year == current_date.year and schedule.start_time.month == current_date.month and schedule.start_time.day == current_date.day %}
-                        {% set ns.has_schedules = true %}
-                        <div class="mobile-schedule-card {% if schedule.time_off %}time-off-card{% endif %}" 
-                             style="--tech-color: {{ schedule.technician.color }};"
-                             data-bs-toggle="modal" 
-                             data-bs-target="#scheduleModal"
-                             data-schedule-id="{{ schedule.id }}"
-                             data-start-time="{{ schedule.start_time }}"
-                             data-end-time="{{ schedule.end_time }}"
-                             data-time-off="{{ 'true' if schedule.time_off else 'false' }}">
-                            <div class="schedule-time">
-                                {% if schedule.time_off %}
-                                <span class="time-off-badge">Time Off</span>
-                                {% endif %}
-                                {{ schedule.start_time.strftime('%I:%M %p') }} - {{ schedule.end_time.strftime('%I:%M %p') }}
-                            </div>
-                            <div class="schedule-tech">
-                                {{ schedule.technician.username }}
-                            </div>
-                            {% if schedule.location %}
-                            <div class="schedule-location">
-                                <i data-feather="map-pin" class="feather-small"></i> {{ schedule.location.name }}
-                            </div>
-                            {% endif %}
-                            {% if schedule.description %}
-                            <div class="schedule-desc">
-                                {{ schedule.description }}
-                            </div>
-                            {% endif %}
-                        </div>
+                        {% set _ = day_schedules.append(schedule) %}
                     {% endif %}
+                {% endfor %}
+                
+                {% for schedule in day_schedules|sort(attribute='start_time') %}
+                    {% set ns.has_schedules = true %}
+                    <div class="mobile-schedule-card {% if schedule.time_off %}time-off-card{% endif %}" 
+                         style="--tech-color: {{ schedule.technician.color }};"
+                         data-bs-toggle="modal" 
+                         data-bs-target="#scheduleModal"
+                         data-schedule-id="{{ schedule.id }}"
+                         data-start-time="{{ schedule.start_time }}"
+                         data-end-time="{{ schedule.end_time }}"
+                         data-time-off="{{ 'true' if schedule.time_off else 'false' }}">
+                        <div class="schedule-time">
+                            {% if schedule.time_off %}
+                            <span class="time-off-badge">Time Off</span>
+                            {% endif %}
+                            {{ schedule.start_time.strftime('%I:%M %p') }} - {{ schedule.end_time.strftime('%I:%M %p') }}
+                        </div>
+                        <div class="schedule-tech">
+                            {{ schedule.technician.username }}
+                        </div>
+                        {% if schedule.location %}
+                        <div class="schedule-location">
+                            <i data-feather="map-pin" class="feather-small"></i> {{ schedule.location.name }}
+                        </div>
+                        {% endif %}
+                        {% if schedule.description %}
+                        <div class="schedule-desc">
+                            {{ schedule.description }}
+                        </div>
+                        {% endif %}
+                    </div>
                 {% endfor %}
                 
                 {% if not ns.has_schedules %}

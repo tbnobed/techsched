@@ -277,6 +277,9 @@ def calendar():
 
     if location_filter:
         query = query.filter(Schedule.location_id == location_filter)
+        
+    # Order by start_time to ensure chronological display
+    query = query.order_by(Schedule.start_time)
 
     schedules = query.all()
 
@@ -1085,7 +1088,7 @@ def personal_schedule():
         Schedule.technician_id == current_user.id,
         Schedule.start_time >= week_start_utc,
         Schedule.start_time < week_end_utc
-    ).all()
+    ).order_by(Schedule.start_time).all()
 
     # Convert schedule times to user's timezone
     user_tz = current_user.get_timezone()

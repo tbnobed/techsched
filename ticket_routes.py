@@ -567,9 +567,6 @@ def create_ticket():
         except ValueError as ve:
             db.session.rollback()
             app.logger.error(f"Validation error in ticket creation: {str(ve)}")
-            # Print full exception traceback for debugging
-            import traceback
-            app.logger.error(f"Exception traceback: {traceback.format_exc()}")
             flash('Error validating ticket data. Please try again.', 'error')
             
             # Choose template based on device type
@@ -581,9 +578,6 @@ def create_ticket():
         except Exception as e:
             db.session.rollback()
             app.logger.error(f"Error creating ticket: {str(e)}")
-            # Print full exception traceback for debugging
-            import traceback
-            app.logger.error(f"Exception traceback: {traceback.format_exc()}")
             flash('Error creating ticket. Please try again.', 'error')
             
             # Choose template based on device type

@@ -254,8 +254,8 @@ class TicketComment(db.Model):
         }
 
 class TicketHistory(db.Model):
-    # Use db.sequence to generate unique IDs
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    # Use explicit sequence for generating unique IDs
+    id = db.Column(db.Integer, db.Sequence('ticket_history_id_seq', start=1000), primary_key=True)
     ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     action = db.Column(db.String(50), nullable=False)  # e.g., "status_changed", "assigned", etc.

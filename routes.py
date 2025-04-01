@@ -509,33 +509,44 @@ def new_schedule():
                 # Creating new schedule(s)
                 schedules_created = 0
                 
+                # First, always create a schedule for the primary date
+                app.logger.debug(f"Creating primary schedule for date: {schedule_date}")
+                
+                # Create primary schedule - this ensures the main date always gets a schedule
+                primary_schedule = Schedule(
+                    technician_id=technician_id,
+                    start_time=start_time_utc,
+                    end_time=end_time_utc,
+                    description=form.description.data,
+                    time_off=form.time_off.data,
+                    location_id=form.location_id.data if form.location_id.data != 0 else None
+                )
+                db.session.add(primary_schedule)
+                schedules_created += 1
+                app.logger.debug(f"Primary schedule created for {schedule_date}")
+                
+                # Then handle additional dates if repeat_days is provided
                 if repeat_days:
-                    # Multi-day scheduling
+                    # Multi-day scheduling for additional dates
                     try:
                         dates = repeat_days.split(',')
-                        app.logger.debug(f"Creating schedules for multiple days: {dates}")
+                        app.logger.debug(f"Processing additional schedules for days: {dates}")
                         
-                        # Also include the primary date unless it's already in the list
+                        # Get the primary date string for filtering
                         primary_date_str = schedule_date.strftime('%Y-%m-%d')
-                        app.logger.debug(f"Primary date from schedule_date: {primary_date_str}, type: {type(primary_date_str)}")
-                        app.logger.debug(f"Current dates list before adding primary: {dates}")
+                        app.logger.debug(f"Primary date (to exclude from additional dates): {primary_date_str}")
                         
-                        if primary_date_str not in dates:
-                            dates.insert(0, primary_date_str)
-                            app.logger.debug(f"Added primary date {primary_date_str} to dates list")
-                        
-                        app.logger.debug(f"Final dates list after processing: {dates}")
+                        # Filter out the primary date since we already created a schedule for it
+                        dates = [date for date in dates if date.strip() != primary_date_str]
+                        app.logger.debug(f"Additional dates list after removing primary date: {dates}")
                     except Exception as e:
                         app.logger.error(f"Error processing repeat days: {str(e)}")
                         import traceback
                         app.logger.error(f"Repeat days traceback: {traceback.format_exc()}")
                     
                     if not dates:
-                        flash('No valid dates selected for scheduling.')
-                        if personal_view:
-                            return redirect(url_for('personal_schedule', week_start=week_start))
-                        else:
-                            return redirect(url_for('calendar', week_start=week_start))
+                        app.logger.debug("No additional dates selected besides primary date")
+                        # We already created the primary schedule, so continue processing
                     
                     # Create a schedule for each selected day
                     for date_str in dates:
@@ -587,25 +598,20 @@ def new_schedule():
                         schedules_created += 1
                         
                     if schedules_created > 0:
-                        send_schedule_notification(schedule, 'created', 
+                        send_schedule_notification(primary_schedule, 'created', 
                             f"Multiple schedules created by {current_user.username}")
                         db.session.commit()
                         flash(f'{schedules_created} schedules created successfully!')
                     else:
-                        flash('No schedules could be created due to conflicts with existing schedules.')
+                        # We already created the primary schedule, so we should still commit
+                        send_schedule_notification(primary_schedule, 'created', 
+                            f"Schedule created by {current_user.username}")
+                        db.session.commit()
+                        flash('Schedule created for the primary date.')
                         
                 else:
-                    # Single day scheduling
-                    schedule = Schedule(
-                        technician_id=technician_id,
-                        start_time=start_time_utc,
-                        end_time=end_time_utc,
-                        description=form.description.data,
-                        time_off=form.time_off.data,
-                        location_id=form.location_id.data if form.location_id.data != 0 else None
-                    )
-                    db.session.add(schedule)
-                    send_schedule_notification(schedule, 'created', f"Schedule created by {current_user.username}")
+                    # Single day scheduling - primary schedule already created above
+                    send_schedule_notification(primary_schedule, 'created', f"Schedule created by {current_user.username}")
                     db.session.commit()
                     flash('Schedule created successfully!')
             if personal_view:

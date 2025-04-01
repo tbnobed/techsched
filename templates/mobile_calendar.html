@@ -667,67 +667,105 @@ function navigateMonth(direction) {
     generateCalendarDays();
 }
 
+// Get days in month (handles leap years correctly)
+function getDaysInMonth(year, month) {
+    return new Date(year, month + 1, 0).getDate();
+}
+
+// Format date from year, month, day components
+function formatDateFromComponents(year, month, day) {
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 // Generate calendar days for the current month
 function generateCalendarDays() {
     const calendarDays = document.getElementById('calendar-days');
     calendarDays.innerHTML = '';
     
-    // First day of the current month
-    const firstDay = new Date(Date.UTC(currentYear, currentMonth, 1, 12, 0, 0));
-    const lastDay = new Date(Date.UTC(currentYear, currentMonth + 1, 0, 12, 0, 0));
+    // First day of the current month - use plain number calculations
+    // Use JavaScript's built-in date API minimally to avoid timezone issues
+    const daysInCurrentMonth = getDaysInMonth(currentYear, currentMonth);
     
-    // Get the day of the week the month starts on (0 = Sunday, 6 = Saturday)
-    const startingDayOfWeek = firstDay.getDay();
+    // Calculate the day of the week for the first day of the month (0 = Sunday)
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+    const startingDayOfWeek = firstDayOfMonth.getDay();
+
+    // Calculate previous month for display
+    let prevMonthYear = currentYear;
+    let prevMonth = currentMonth - 1;
+    if (prevMonth < 0) {
+        prevMonth = 11; // December
+        prevMonthYear--;
+    }
     
-    // Get number of days in the current month
-    const daysInMonth = lastDay.getDate();
+    // Calculate next month for display
+    let nextMonthYear = currentYear;
+    let nextMonth = currentMonth + 1;
+    if (nextMonth > 11) {
+        nextMonth = 0; // January
+        nextMonthYear++;
+    }
     
-    // Get today's date for highlighting
+    // Get today's date components for highlighting
     const today = new Date();
-    today.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
-    const todayFormatted = formatDate(today);
+    const todayYear = today.getFullYear();
+    const todayMonth = today.getMonth();
+    const todayDay = today.getDate();
     
     // Add the days from the previous month to fill the first row
-    const prevMonthLastDay = new Date(Date.UTC(currentYear, currentMonth, 0, 12, 0, 0)).getDate();
+    const daysInPrevMonth = getDaysInMonth(prevMonthYear, prevMonth);
     for (let i = startingDayOfWeek - 1; i >= 0; i--) {
-        const day = prevMonthLastDay - i;
-        const date = new Date(Date.UTC(currentYear, currentMonth - 1, day, 12, 0, 0));
-        const dateFormatted = formatDate(date);
+        const day = daysInPrevMonth - i;
+        
+        // Format date string directly from components to avoid timezone conversion
+        const dateYear = prevMonthYear;
+        const dateMonth = prevMonth + 1; // JavaScript months are 0-indexed
+        const dateDay = day;
+        const dateFormatted = formatDateFromComponents(dateYear, dateMonth, dateDay);
+        
+        const isToday = dateYear === todayYear && dateMonth === todayMonth + 1 && dateDay === todayDay;
         
         addDayToCalendar(calendarDays, day, dateFormatted, 'outside-month', 
-            dateFormatted === todayFormatted, 
+            isToday, 
             dateFormatted === primaryDate,
-            selectedDates.has(dateFormatted));
+            selectedDates.has(dateFormatted),
+            dateYear, dateMonth, dateDay);
     }
     
     // Add the days of the current month
-    for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(Date.UTC(currentYear, currentMonth, day, 12, 0, 0));
-        const dateFormatted = formatDate(date);
+    for (let day = 1; day <= daysInCurrentMonth; day++) {
+        // Format date string directly
+        const dateFormatted = formatDateFromComponents(currentYear, currentMonth + 1, day);
+        
+        const isToday = currentYear === todayYear && currentMonth === todayMonth && day === todayDay;
         
         addDayToCalendar(calendarDays, day, dateFormatted, '', 
-            dateFormatted === todayFormatted, 
+            isToday, 
             dateFormatted === primaryDate,
-            selectedDates.has(dateFormatted));
+            selectedDates.has(dateFormatted),
+            currentYear, currentMonth + 1, day);
     }
     
     // Add days from the next month to complete the grid (always show 6 rows)
     const totalCells = 42; // 6 rows x 7 columns
-    const cellsToAdd = totalCells - (startingDayOfWeek + daysInMonth);
+    const cellsToAdd = totalCells - (startingDayOfWeek + daysInCurrentMonth);
     
     for (let day = 1; day <= cellsToAdd; day++) {
-        const date = new Date(Date.UTC(currentYear, currentMonth + 1, day, 12, 0, 0));
-        const dateFormatted = formatDate(date);
+        // Format date string directly
+        const dateFormatted = formatDateFromComponents(nextMonthYear, nextMonth + 1, day);
+        
+        const isToday = nextMonthYear === todayYear && nextMonth === todayMonth && day === todayDay;
         
         addDayToCalendar(calendarDays, day, dateFormatted, 'outside-month', 
-            dateFormatted === todayFormatted, 
+            isToday, 
             dateFormatted === primaryDate,
-            selectedDates.has(dateFormatted));
+            selectedDates.has(dateFormatted),
+            nextMonthYear, nextMonth + 1, day);
     }
 }
 
 // Add a day to the calendar
-function addDayToCalendar(container, day, dateFormatted, extraClass, isToday, isPrimary, isSelected) {
+function addDayToCalendar(container, day, dateFormatted, extraClass, isToday, isPrimary, isSelected, year, month, dayNum) {
     const dayItem = document.createElement('div');
     dayItem.textContent = day;
     dayItem.className = `day-item${extraClass ? ' ' + extraClass : ''}${isToday ? ' today' : ''}`;
@@ -739,16 +777,12 @@ function addDayToCalendar(container, day, dateFormatted, extraClass, isToday, is
         dayItem.classList.add('selected');
     }
     
-    // Store the date components explicitly to avoid timezone issues
-    const dateParts = dateFormatted.split('-');
-    const year = parseInt(dateParts[0]);
-    const month = parseInt(dateParts[1]);
-    const day_num = parseInt(dateParts[2]);
-    
+    // Use the provided date components from parameters (year, month, dayNum)
+    // We pass these explicitly now to avoid any timezone conversion issues
     dayItem.setAttribute('data-date', dateFormatted);
     dayItem.setAttribute('data-year', year);
     dayItem.setAttribute('data-month', month);
-    dayItem.setAttribute('data-day', day_num);
+    dayItem.setAttribute('data-day', dayNum);
     
     // Add click event to select/deselect the date
     if (!isPrimary) { // Don't allow selecting the primary date
@@ -869,6 +903,21 @@ function removeDate(date) {
         updateFormWithSelectedDates();
         updateSelectedDatesDisplay();
     }
+}
+
+// Clear all selected dates
+function clearDateSelection() {
+    // Clear the set of selected dates
+    selectedDates.clear();
+    
+    // Remove 'selected' class from all day items
+    document.querySelectorAll('.day-item.selected').forEach(dayItem => {
+        dayItem.classList.remove('selected');
+    });
+    
+    // Update the form and display
+    updateFormWithSelectedDates();
+    updateSelectedDatesDisplay();
 }
 
 document.addEventListener('DOMContentLoaded', function() {

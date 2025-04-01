@@ -1085,17 +1085,30 @@ document.addEventListener('DOMContentLoaded', function() {
     document.head.appendChild(directScriptElement);
     
     directScriptElement.onload = function() {
-        // Script is loaded, check if we need to initialize direct calendar
-        document.getElementById('enable_repeat_days').addEventListener('change', function() {
-            if (this.checked) {
-                // Get the selected date from the form
+        // Script is loaded, initialize the direct calendar immediately
+        // Get the selected date from the form
+        const dateInput = document.getElementById('schedule_date');
+        const primaryDateStr = dateInput.value || '';
+        
+        // Initialize the direct calendar with the selected date
+        initDirectCalendar('direct-calendar-days', primaryDateStr);
+        
+        // Also update when the checkbox changes
+        const repeatCheckbox = document.getElementById('enable_repeat_days');
+        if (repeatCheckbox) {
+            repeatCheckbox.addEventListener('change', function() {
                 const dateInput = document.getElementById('schedule_date');
-                const primaryDateStr = dateInput.value;
+                const primaryDateStr = dateInput.value || '';
                 
-                // Initialize the direct calendar with the selected date
-                initDirectCalendar('direct-calendar-days', primaryDateStr);
-            }
-        });
+                // Update calendar when date changes
+                document.getElementById('schedule_date').addEventListener('change', function() {
+                    directClearDateSelection();
+                    const newPrimaryDate = this.value;
+                    directPrimaryDate = newPrimaryDate;
+                    directGenerateCalendarDays();
+                });
+            });
+        }
     };
 });
 </script>

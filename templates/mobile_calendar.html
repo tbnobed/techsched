@@ -951,17 +951,24 @@ document.addEventListener('DOMContentLoaded', function() {
         // Script loaded successfully - now we can use its functions
         console.log("Direct date selector script loaded");
         
-        // Add event listener for repeat days checkbox
-        document.getElementById('enable_repeat_days').addEventListener('change', function() {
-            if (this.checked) {
-                // Get the selected date from the form
-                const dateInput = document.getElementById('schedule_date');
-                const primaryDateStr = dateInput.value;
-                
-                // Initialize the direct calendar with the selected date
-                initDirectCalendar('direct-calendar-days', primaryDateStr);
-            }
-        });
+        // Initialize the direct calendar immediately
+        const dateInput = document.getElementById('schedule_date');
+        const primaryDateStr = dateInput.value || '';
+        
+        // Initialize the direct calendar with the selected date
+        initDirectCalendar('direct-calendar-days', primaryDateStr);
+        
+        // Also update when the checkbox changes or date changes
+        const repeatCheckbox = document.getElementById('enable_repeat_days');
+        if (repeatCheckbox) {
+            // When date changes, update the calendar
+            document.getElementById('schedule_date').addEventListener('change', function() {
+                directClearDateSelection();
+                const newPrimaryDate = this.value;
+                directPrimaryDate = newPrimaryDate;
+                directGenerateCalendarDays();
+            });
+        }
     };
     document.head.appendChild(scriptElement);
     

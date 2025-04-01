@@ -18,13 +18,36 @@ let directCurrentYear = new Date().getFullYear();
  */
 function initDirectCalendar(containerId, primaryDateStr = null) {
     directPrimaryDate = primaryDateStr;
+    console.log("Initializing direct calendar with primary date:", primaryDateStr);
     
-    // Initialize buttons
-    document.getElementById('direct-prev-month-btn').addEventListener('click', function() {
+    // Make sure the container exists
+    if (!document.getElementById(containerId)) {
+        console.error("Container not found:", containerId);
+        return;
+    }
+    
+    // Make sure the buttons exist
+    const prevBtn = document.getElementById('direct-prev-month-btn');
+    const nextBtn = document.getElementById('direct-next-month-btn');
+    
+    if (!prevBtn || !nextBtn) {
+        console.error("Month navigation buttons not found");
+        return;
+    }
+    
+    // Clear any existing handlers to prevent duplicates
+    const newPrevBtn = prevBtn.cloneNode(true);
+    const newNextBtn = nextBtn.cloneNode(true);
+    
+    prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+    nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+    
+    // Initialize buttons with new event listeners
+    newPrevBtn.addEventListener('click', function() {
         directPrevMonth();
     });
     
-    document.getElementById('direct-next-month-btn').addEventListener('click', function() {
+    newNextBtn.addEventListener('click', function() {
         directNextMonth();
     });
     
@@ -228,10 +251,14 @@ function directAddDayToCalendar(container, day, dateStr, extraClass, isToday, is
  * @param {HTMLElement} dayItem - The day item element
  */
 function directToggleDateSelection(dateStr, dayItem) {
+    console.log("Toggling date selection for:", dateStr);
+    
     if (directSelectedDates.has(dateStr)) {
+        console.log("Removing date:", dateStr);
         directSelectedDates.delete(dateStr);
         dayItem.classList.remove('selected');
     } else {
+        console.log("Adding date:", dateStr);
         directSelectedDates.add(dateStr);
         dayItem.classList.add('selected');
     }
@@ -239,28 +266,53 @@ function directToggleDateSelection(dateStr, dayItem) {
     // Update form and display
     directUpdateFormWithSelectedDates();
     directUpdateSelectedDatesDisplay();
+    
+    // Make sure the checkbox is checked if we have dates selected
+    const repeatCheckbox = document.getElementById('enable_repeat_days');
+    if (repeatCheckbox && directSelectedDates.size > 0) {
+        repeatCheckbox.checked = true;
+    }
 }
 
 /**
  * Update the form with selected dates
  */
 function directUpdateFormWithSelectedDates() {
+    // Try to find the existing field first
     let repeatDaysField = document.querySelector('input[name="direct_repeat_days_list"]');
+    
     if (!repeatDaysField) {
+        // Create a new field
         repeatDaysField = document.createElement('input');
         repeatDaysField.type = 'hidden';
         repeatDaysField.name = 'direct_repeat_days_list';
-        // Find the form and append to it
-        const form = document.querySelector('form');
+        repeatDaysField.id = 'direct_repeat_days_list';
+        
+        // Try several approaches to find the form
+        let form = document.getElementById('schedule_form');
+        
+        if (!form) {
+            // Try any form in the document
+            form = document.querySelector('form');
+        }
+        
         if (form) {
+            console.log("Found form, appending repeat days field");
             form.appendChild(repeatDaysField);
         } else {
-            console.error("Could not find form to append repeat days field");
+            // Log the error but continue
+            console.error("Could not find any form to append repeat days field");
+            // Try to add it to the modal body as a fallback
+            const modalBody = document.querySelector('.modal-body');
+            if (modalBody) {
+                modalBody.appendChild(repeatDaysField);
+            }
         }
     }
     
     // Set the value to a comma-separated list of selected dates
     repeatDaysField.value = Array.from(directSelectedDates).join(',');
+    console.log("Updated repeat days list:", repeatDaysField.value);
 }
 
 /**

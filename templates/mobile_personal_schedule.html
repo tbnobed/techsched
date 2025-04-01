@@ -777,12 +777,27 @@ function addDayToCalendar(container, day, dateFormatted, extraClass, isToday, is
         dayItem.classList.add('selected');
     }
     
+    // Store the date components explicitly to avoid timezone issues
+    const dateParts = dateFormatted.split('-');
+    const year = parseInt(dateParts[0]);
+    const month = parseInt(dateParts[1]);
+    const day_num = parseInt(dateParts[2]);
+    
     dayItem.setAttribute('data-date', dateFormatted);
+    dayItem.setAttribute('data-year', year);
+    dayItem.setAttribute('data-month', month);
+    dayItem.setAttribute('data-day', day_num);
     
     // Add click event to select/deselect the date
     if (!isPrimary) { // Don't allow selecting the primary date
         dayItem.addEventListener('click', function() {
-            toggleDateSelection(dateFormatted, dayItem);
+            // Create the exact date string directly from the attributes
+            const clickedYear = this.getAttribute('data-year');
+            const clickedMonth = this.getAttribute('data-month').padStart(2, '0');
+            const clickedDay = this.getAttribute('data-day').padStart(2, '0');
+            const exactDateStr = `${clickedYear}-${clickedMonth}-${clickedDay}`;
+            
+            toggleDateSelection(exactDateStr, dayItem);
         });
     } else {
         dayItem.classList.add('disabled');
@@ -877,8 +892,13 @@ function removeDate(date) {
     if (selectedDates.has(date)) {
         selectedDates.delete(date);
         
-        // Update the calendar visual state
-        const dayItem = document.querySelector(`.day-item[data-date="${date}"]`);
+        // Update the calendar visual state - search by exact attributes to avoid any issues
+        const dateParts = date.split('-');
+        const year = parseInt(dateParts[0]);
+        const month = parseInt(dateParts[1]);
+        const day = parseInt(dateParts[2]);
+        
+        const dayItem = document.querySelector(`.day-item[data-year="${year}"][data-month="${month}"][data-day="${day}"]`);
         if (dayItem) {
             dayItem.classList.remove('selected');
         }

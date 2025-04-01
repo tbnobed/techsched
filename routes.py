@@ -514,6 +514,12 @@ def new_schedule():
                     dates = repeat_days.split(',')
                     app.logger.debug(f"Creating schedules for multiple days: {dates}")
                     
+                    # Also include the primary date unless it's already in the list
+                    primary_date_str = schedule_date.strftime('%Y-%m-%d')
+                    if primary_date_str not in dates:
+                        dates.insert(0, primary_date_str)
+                        app.logger.debug(f"Added primary date {primary_date_str} to dates list")
+                    
                     if not dates:
                         flash('No valid dates selected for scheduling.')
                         if personal_view:

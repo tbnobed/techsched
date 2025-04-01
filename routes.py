@@ -411,10 +411,17 @@ def new_schedule():
                 form.location_id.data = 0
                 
             # Handle repeat days for mobile form
-            repeat_days_list = request.form.getlist('repeat_days')
-            if repeat_days_list:
-                form.repeat_days.data = ','.join(repeat_days_list)
-                app.logger.debug(f"Mobile form: Repeat days selected: {form.repeat_days.data}")
+            # First try the new mini-calendar format (comma-separated list in a single field)
+            repeat_days_list_field = request.form.get('repeat_days_list')
+            if repeat_days_list_field:
+                form.repeat_days.data = repeat_days_list_field
+                app.logger.debug(f"Mobile form (mini-calendar): Repeat days selected: {form.repeat_days.data}")
+            else:
+                # Fall back to original checkbox format
+                repeat_days_list = request.form.getlist('repeat_days')
+                if repeat_days_list:
+                    form.repeat_days.data = ','.join(repeat_days_list)
+                    app.logger.debug(f"Mobile form (checkboxes): Repeat days selected: {form.repeat_days.data}")
                 
             # Mobile validation successful
             is_mobile_validation_successful = True

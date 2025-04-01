@@ -19,7 +19,10 @@
     {% if active_tickets %}
         {% for ticket in active_tickets %}
         <a href="{{ url_for('tickets.view_ticket', ticket_id=ticket.id) }}" 
-           class="list-group-item list-group-item-action d-flex align-items-center">
+           class="list-group-item list-group-item-action d-flex align-items-center mb-2 p-3"
+           style="border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.08); border: 1px solid var(--dark-border); transform: translateY(0); transition: transform 0.3s ease, box-shadow 0.3s ease;"
+           onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.12)';"
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.08)';">
             {% if ticket.priority == 3 %}
                 <span class="badge bg-danger me-2">Urgent</span>
             {% elif ticket.priority == 2 %}
@@ -32,7 +35,7 @@
             
             <div>
                 <div class="fw-bold text-truncate" style="max-width: 190px;">{{ ticket.title }}</div>
-                <small class="text-muted">
+                <small>
                     {% if ticket.status == 'open' %}
                         <i data-feather="inbox" class="me-1" style="width: 12px; height: 12px;"></i>New
                     {% elif ticket.status == 'in_progress' %}

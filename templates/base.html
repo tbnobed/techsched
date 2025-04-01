@@ -57,10 +57,17 @@
         #current-time-display {
             background-color: var(--dark-panel);
             padding: 0.5rem;
-            border-radius: 0.25rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1), 0 3px 6px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
             border: 1px solid var(--dark-border);
+            transform: translateY(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        #current-time-display:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 20px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.1);
         }
 
         #current-time-display h4 {
@@ -70,17 +77,45 @@
             font-weight: 500;
         }
         
+        /* Floating card styles for sidebar */
+        .col-md-3 .card {
+            border-radius: 0.8rem;
+            border: 1px solid var(--dark-border);
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1), 0 6px 6px rgba(0,0,0,0.06);
+            margin-bottom: 1.5rem;
+            transform: translateY(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .col-md-3 .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15), 0 10px 10px rgba(0,0,0,0.08);
+        }
+        
+        .col-md-3 .card-header {
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--dark-panel) 0%, var(--dark-accent) 100%);
+            border-bottom: 1px solid var(--dark-border);
+        }
+        
+        .col-md-3 .card-body {
+            padding: 1rem;
+        }
+        
         /* Style for active users and time off sections */
         .active-user-entry, .time-off-entry {
-            border-radius: 4px;
+            border-radius: 6px;
             background-color: var(--dark-card);
             transition: all 0.2s ease;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0.5rem;
+            overflow: hidden;
         }
         
         .active-user-entry:hover, .time-off-entry:hover {
-            transform: translateX(2px);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transform: translateX(3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         
         .active-user-entry .badge, .time-off-entry .badge {
@@ -388,10 +423,13 @@
                         <h5 class="card-title mb-0">Quick Links</h5>
                     </div>
                     <div class="card-body p-0">
-                        <div class="list-group list-group-flush">
+                        <div class="list-group list-group-flush p-2">
                             {% for link in get_quick_links() %}
                             <a href="{{ link.url }}" target="_blank"
-                               class="list-group-item list-group-item-action d-flex align-items-center">
+                               class="list-group-item list-group-item-action d-flex align-items-center mb-2 p-3"
+                               style="border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.08); border: 1px solid var(--dark-border); transform: translateY(0); transition: transform 0.3s ease, box-shadow 0.3s ease;"
+                               onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.12)';"
+                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.08)';">
                                 <i data-feather="{{ link.icon }}" class="me-2"></i>
                                 {{ link.title }}
                             </a>

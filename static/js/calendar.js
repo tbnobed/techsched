@@ -602,19 +602,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 timeOffDiv.innerHTML = entries.map(entry => `
-                    <div class="d-flex align-items-center mb-2">
-                        <i data-feather="calendar" class="me-2"></i>
-                        <div>
-                            <strong>${entry.username}</strong>
-                            <br>
-                            <small class="text-muted">
-                                ${entry.start_date} to ${entry.end_date}
-                                <span class="badge bg-secondary ms-1">${entry.duration}</span>
-                                ${entry.description ? `<br>${entry.description}` : ''}
-                            </small>
+                    <div class="time-off-entry p-3 mb-3" 
+                         style="border-left: 4px solid ${entry.color || '#6c757d'};">
+                        <div class="d-flex align-items-top">
+                            <i data-feather="calendar" class="me-2 mt-1"></i>
+                            <div>
+                                <strong>${entry.username}</strong>
+                                <br>
+                                <small>
+                                    ${entry.start_date} to ${entry.end_date}
+                                    <span class="badge bg-danger ms-1">${entry.duration}</span>
+                                </small>
+                                ${entry.description ? `<div class="mt-1 small">${entry.description}</div>` : ''}
+                            </div>
                         </div>
                     </div>
-                    <div class="border-bottom mb-2"></div>
                 `).join('');
 
                 // Initialize the newly added feather icons
@@ -644,9 +646,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 activeUsersDiv.innerHTML = users.map(user => `
-                    <div class="d-flex align-items-center mb-2">
+                    <div class="active-user-entry d-flex align-items-center mb-3 p-2" 
+                         style="border-left: 4px solid ${user.color};">
                         <span class="me-2" style="width: 12px; height: 12px; border-radius: 50%; background-color: ${user.color}"></span>
-                        <span>${user.username}</span>
+                        <span class="fw-medium">${user.username}</span>
                     </div>
                 `).join('');
             })

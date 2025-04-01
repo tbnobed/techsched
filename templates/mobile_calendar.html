@@ -141,7 +141,7 @@
                     <!-- Hidden field for direct date selection -->
                     <input type="hidden" name="direct_repeat_days_list" id="direct_repeat_days_list" value="">
                     <!-- Hidden field for repeat_days that matches the form field name in ScheduleForm -->
-                    <input type="hidden" name="repeat_days" id="repeat_days" value="">
+                    <input type="hidden" name="repeat_days" id="repeat_days_input" value="">
                     
                     {% if current_user.is_admin %}
                     <div class="mb-3">
@@ -243,7 +243,7 @@
                     </div>
                     
                     <!-- Hidden field for repeat_days -->
-                    <input type="hidden" id="repeat_days" name="repeat_days" value="">
+                    <input type="hidden" id="repeat_days_duplicate" name="repeat_days_duplicate" value="">
                 </form>
             </div>
             <div class="modal-footer">
@@ -860,22 +860,35 @@ function toggleDateSelection(dateFormatted, dayItem) {
 
 // Update the form with selected dates
 function updateFormWithSelectedDates() {
-    // First clear existing checkboxes (backward compatibility)
-    document.querySelectorAll('input[name="repeat_days"]').forEach(cb => {
-        cb.checked = false;
-    });
+    console.log("Updating form with selected dates");
     
-    // Create hidden inputs for selected dates
-    let repeatDaysField = document.querySelector('input[name="repeat_days_list"]');
-    if (!repeatDaysField) {
-        repeatDaysField = document.createElement('input');
-        repeatDaysField.type = 'hidden';
-        repeatDaysField.name = 'repeat_days_list';
-        document.getElementById('schedule_form').appendChild(repeatDaysField);
+    // Get selected dates as a comma-separated string
+    const datesStr = Array.from(selectedDates).join(',');
+    console.log("Selected dates: ", datesStr);
+    
+    // Update direct_repeat_days_list field
+    const directRepeatDaysField = document.getElementById('direct_repeat_days_list');
+    if (directRepeatDaysField) {
+        directRepeatDaysField.value = datesStr;
+        console.log("Updated direct_repeat_days_list: ", directRepeatDaysField.value);
     }
     
-    // Set the value to a comma-separated list of selected dates
-    repeatDaysField.value = Array.from(selectedDates).join(',');
+    // Update repeat_days field - this is the field that matches ScheduleForm
+    const repeatDaysField = document.getElementById('repeat_days_input');
+    if (repeatDaysField) {
+        repeatDaysField.value = datesStr;
+        console.log("Updated repeat_days_input: ", repeatDaysField.value);
+    }
+    
+    // For backward compatibility, update any other repeat_days fields
+    document.querySelectorAll('input[name="repeat_days"]').forEach(cb => {
+        if (cb.type === 'checkbox') {
+            cb.checked = false;
+        } else if (cb.type === 'hidden') {
+            cb.value = datesStr;
+            console.log("Updated additional repeat_days field: ", cb.value);
+        }
+    });
 }
 
 // Display selected dates below calendar

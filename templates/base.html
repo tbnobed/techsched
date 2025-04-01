@@ -46,41 +46,6 @@
         .navbar-brand:hover img {
             transform: rotate(20deg);
         }
-        
-        /* Floating sidebar cards with drop shadows */
-        .sidebar-card {
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
-            border-radius: 10px;
-            transition: all 0.3s ease-in-out;
-            border: none;
-            margin-bottom: 20px;
-            transform: translateY(0);
-        }
-        
-        .sidebar-card:hover {
-            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.2);
-            transform: translateY(-5px);
-        }
-        
-        .sidebar-card .card-header {
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-            background: linear-gradient(120deg, var(--primary, #0d6efd) 0%, var(--secondary, #6610f2) 100%);
-            color: white;
-            font-weight: bold;
-        }
-        
-        .light-theme .sidebar-card {
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .light-theme .sidebar-card:hover {
-            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
-        }
-        
-        .light-theme .sidebar-card .card-header {
-            background: linear-gradient(120deg, #1a73e8 0%, #4285f4 100%);
-        }
     </style>
     {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}
     <link href="{{ url_for('static', filename='css/light-theme.css') }}?v={{ now.timestamp() | int }}" rel="stylesheet">
@@ -90,50 +55,32 @@
     <style>
         /* Use theme variables for current time display */
         #current-time-display {
-            background: linear-gradient(120deg, var(--primary, #0d6efd) 0%, var(--secondary, #6610f2) 100%);
-            padding: 0.8rem;
-            border-radius: 10px;
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
-            margin-bottom: 20px;
-            border: none;
-            transition: all 0.3s ease-in-out;
-            transform: translateY(0);
-        }
-        
-        #current-time-display:hover {
-            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.2);
-            transform: translateY(-5px);
-        }
-        
-        .light-theme #current-time-display {
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-            background: linear-gradient(120deg, #1a73e8 0%, #4285f4 100%);
-            color: white;
+            background-color: var(--dark-panel);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            margin-bottom: 1rem;
+            border: 1px solid var(--dark-border);
         }
 
         #current-time-display h4 {
             margin: 0;
-            color: white;
-            font-size: 1.2rem;
-            font-weight: 600;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            color: var(--dark-text);
+            font-size: 1.1rem;
+            font-weight: 500;
         }
         
         /* Style for active users and time off sections */
         .active-user-entry, .time-off-entry {
-            border-radius: 8px;
+            border-radius: 4px;
             background-color: var(--dark-card);
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            padding: 10px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--user-color, #0d6efd);
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
         .active-user-entry:hover, .time-off-entry:hover {
-            transform: translateX(5px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            background-color: rgba(255, 255, 255, 0.05);
+            transform: translateX(2px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
         
         .active-user-entry .badge, .time-off-entry .badge {
@@ -149,87 +96,6 @@
         .active-user-entry .small, .time-off-entry .small {
             font-size: 0.75rem;
             line-height: 1.4;
-        }
-        
-        /* Styling for the ticket items in the sidebar */
-        .ticket-item {
-            transition: all 0.3s ease;
-            border: none;
-            margin-bottom: 2px;
-            border-left: 4px solid transparent;
-        }
-        
-        .ticket-item:hover {
-            transform: translateX(5px);
-            background-color: rgba(255, 255, 255, 0.05);
-            z-index: 1;
-        }
-        
-        .ticket-item .ticket-priority {
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-        }
-        
-        /* Different border colors based on priority */
-        .ticket-item:has(.badge.bg-danger) {
-            border-left-color: #dc3545;
-        }
-        
-        .ticket-item:has(.badge.bg-warning) {
-            border-left-color: #ffc107;
-        }
-        
-        .ticket-item:has(.badge.bg-info) {
-            border-left-color: #17a2b8;
-        }
-        
-        .ticket-item:has(.badge.bg-secondary) {
-            border-left-color: #6c757d;
-        }
-        
-        /* Styling for the Create New Ticket button */
-        .create-ticket-btn {
-            background: linear-gradient(120deg, var(--primary, #0d6efd) 0%, var(--secondary, #6610f2) 100%);
-            color: white !important;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            border-radius: 0 0 10px 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-        .create-ticket-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-            background: linear-gradient(120deg, var(--secondary, #6610f2) 0%, var(--primary, #0d6efd) 100%);
-        }
-        
-        .light-theme .create-ticket-btn {
-            background: linear-gradient(120deg, #1a73e8 0%, #4285f4 100%);
-        }
-        
-        .light-theme .create-ticket-btn:hover {
-            background: linear-gradient(120deg, #4285f4 0%, #1a73e8 100%);
-        }
-        
-        /* Styling for quick links */
-        .quick-link-item {
-            transition: all 0.3s ease;
-            border: none;
-            margin-bottom: 2px;
-            border-left: 4px solid transparent;
-        }
-        
-        .quick-link-item:hover {
-            transform: translateX(5px);
-            background-color: rgba(255, 255, 255, 0.05);
-            border-left-color: var(--primary, #0d6efd);
-            z-index: 1;
-        }
-        
-        .light-theme .quick-link-item:hover {
-            background-color: rgba(0, 0, 0, 0.03);
-            border-left-color: #1a73e8;
         }
         
         /* Add CSS for theme toggle in the navbar */
@@ -438,7 +304,7 @@
                     <h4 class="current-datetime"></h4>
                 </div>
 
-                <div class="card sidebar-card">
+                <div class="card">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Currently Active</h5>
                     </div>
@@ -450,7 +316,7 @@
                 </div>
 
                 <!-- Upcoming Time Off Panel -->
-                <div class="card mt-3 sidebar-card">
+                <div class="card mt-3">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Upcoming Time Off</h5>
                     </div>
@@ -462,7 +328,7 @@
                 </div>
 
                 <!-- Open Tickets -->
-                <div class="card mt-3 sidebar-card">
+                <div class="card mt-3">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Active Tickets</h5>
                     </div>
@@ -478,15 +344,15 @@
                                 {% if tickets %}
                                     {% for ticket in tickets %}
                                     <a href="{{ url_for('tickets.view_ticket', ticket_id=ticket.id) }}" 
-                                       class="list-group-item list-group-item-action d-flex align-items-center ticket-item">
+                                       class="list-group-item list-group-item-action d-flex align-items-center">
                                         {% if ticket.priority == 3 %}
-                                            <span class="badge bg-danger me-2 ticket-priority">Urgent</span>
+                                            <span class="badge bg-danger me-2">Urgent</span>
                                         {% elif ticket.priority == 2 %}
-                                            <span class="badge bg-warning text-dark me-2 ticket-priority">High</span>
+                                            <span class="badge bg-warning text-dark me-2">High</span>
                                         {% elif ticket.priority == 1 %}
-                                            <span class="badge bg-info me-2 ticket-priority">Medium</span>
+                                            <span class="badge bg-info me-2">Medium</span>
                                         {% else %}
-                                            <span class="badge bg-secondary me-2 ticket-priority">Low</span>
+                                            <span class="badge bg-secondary me-2">Low</span>
                                         {% endif %}
                                         
                                         <div>
@@ -509,7 +375,7 @@
                                 </div>
                                 {% endif %}
                             {% endif %}
-                            <a href="{{ url_for('tickets.create_ticket') }}" class="list-group-item list-group-item-action text-center create-ticket-btn">
+                            <a href="{{ url_for('tickets.create_ticket') }}" class="list-group-item list-group-item-action text-primary text-center">
                                 <i data-feather="plus-circle" class="me-1"></i> Create New Ticket
                             </a>
                         </div>
@@ -517,7 +383,7 @@
                 </div>
 
                 <!-- Dynamic Quick Links -->
-                <div class="card mt-3 sidebar-card">
+                <div class="card mt-3">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Quick Links</h5>
                     </div>
@@ -525,7 +391,7 @@
                         <div class="list-group list-group-flush">
                             {% for link in get_quick_links() %}
                             <a href="{{ link.url }}" target="_blank"
-                               class="list-group-item list-group-item-action d-flex align-items-center quick-link-item">
+                               class="list-group-item list-group-item-action d-flex align-items-center">
                                 <i data-feather="{{ link.icon }}" class="me-2"></i>
                                 {{ link.title }}
                             </a>

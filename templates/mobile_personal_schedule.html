@@ -46,40 +46,43 @@
                 <h4>{{ current_date.strftime('%A, %B %d, %Y') }}</h4>
             </div>
             <div class="day-schedules">
-                {% set has_schedules = false %}
+                {% set day_schedules = [] %}
                 
                 {% for schedule in schedules %}
                     {% if schedule.start_time.date() == current_date.date() %}
-                        {% set has_schedules = true %}
-                        <div class="mobile-schedule-card {% if schedule.time_off %}time-off-card{% endif %}" 
-                             style="--tech-color: {{ current_user.color }};"
-                             data-bs-toggle="modal" 
-                             data-bs-target="#scheduleModal"
-                             data-schedule-id="{{ schedule.id }}"
-                             data-start-time="{{ schedule.start_time }}"
-                             data-end-time="{{ schedule.end_time }}"
-                             data-time-off="{{ 'true' if schedule.time_off else 'false' }}">
-                            <div class="schedule-time">
-                                {{ schedule.start_time.strftime('%I:%M %p') }} - {{ schedule.end_time.strftime('%I:%M %p') }}
-                            </div>
-                            {% if schedule.location %}
-                            <div class="schedule-location">
-                                <i data-feather="map-pin" class="feather-small"></i> {{ schedule.location.name }}
-                            </div>
-                            {% endif %}
-                            {% if schedule.time_off %}
-                            <span class="time-off-badge">Time Off</span>
-                            {% endif %}
-                            {% if schedule.description %}
-                            <div class="schedule-desc">
-                                {{ schedule.description }}
-                            </div>
-                            {% endif %}
-                        </div>
+                        {% set _ = day_schedules.append(schedule) %}
                     {% endif %}
                 {% endfor %}
                 
-                {% if not has_schedules %}
+                {% for schedule in day_schedules %}
+                    <div class="mobile-schedule-card {% if schedule.time_off %}time-off-card{% endif %}" 
+                         style="--tech-color: {{ current_user.color }};"
+                         data-bs-toggle="modal" 
+                         data-bs-target="#scheduleModal"
+                         data-schedule-id="{{ schedule.id }}"
+                         data-start-time="{{ schedule.start_time }}"
+                         data-end-time="{{ schedule.end_time }}"
+                         data-time-off="{{ 'true' if schedule.time_off else 'false' }}">
+                        <div class="schedule-time">
+                            {{ schedule.start_time.strftime('%I:%M %p') }} - {{ schedule.end_time.strftime('%I:%M %p') }}
+                        </div>
+                        {% if schedule.location %}
+                        <div class="schedule-location">
+                            <i data-feather="map-pin" class="feather-small"></i> {{ schedule.location.name }}
+                        </div>
+                        {% endif %}
+                        {% if schedule.time_off %}
+                        <span class="time-off-badge">Time Off</span>
+                        {% endif %}
+                        {% if schedule.description %}
+                        <div class="schedule-desc">
+                            {{ schedule.description }}
+                        </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                
+                {% if day_schedules|length == 0 %}
                     <div class="empty-day-message">
                         <p>No schedules for this day.</p>
                         <button class="btn btn-sm btn-outline-primary" 

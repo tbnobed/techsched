@@ -132,17 +132,40 @@
                                 <div class="alert alert-info mb-3">
                                     <small>Select the days to create this schedule. The same time and details will be used for all selected days.</small>
                                 </div>
-                                <div id="miniCalendar" class="d-flex flex-wrap">
-                                    <!-- Calendar will be populated by JavaScript -->
+                                <div class="mini-calendar">
+                                    <div class="month-navigator d-flex justify-content-between align-items-center mb-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="prev-month">
+                                            <i data-feather="chevron-left"></i>
+                                        </button>
+                                        <h6 class="m-0" id="calendar-month-year">April 2025</h6>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="next-month">
+                                            <i data-feather="chevron-right"></i>
+                                        </button>
+                                    </div>
+                                    <div class="calendar-days">
+                                        <div class="day-names d-flex">
+                                            <div>Sun</div>
+                                            <div>Mon</div>
+                                            <div>Tue</div>
+                                            <div>Wed</div>
+                                            <div>Thu</div>
+                                            <div>Fri</div>
+                                            <div>Sat</div>
+                                        </div>
+                                        <div class="day-grid" id="calendar-days">
+                                            <!-- Days will be populated by JavaScript -->
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <div class="selected-dates mt-3">
-                                    <div class="d-flex mb-2">
-                                        <strong>Selected Dates:</strong>
-                                        <button type="button" class="btn btn-sm btn-link ms-auto" id="clear-selection">Clear All</button>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="m-0">Selected Dates</h6>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="clear-selection">
+                                            Clear All
+                                        </button>
                                     </div>
-                                    <div id="selected-dates-container" class="d-flex flex-wrap">
-                                        <!-- Selected dates will appear here -->
+                                    <div id="selected-dates-container">
                                         <span class="text-muted" id="no-dates-selected">No additional dates selected</span>
                                     </div>
                                 </div>

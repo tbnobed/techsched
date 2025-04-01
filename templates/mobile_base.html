@@ -21,7 +21,7 @@
 </head>
 <body {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}class="light-theme"{% endif %}>
     <nav class="navbar navbar-expand-lg {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}navbar-light{% else %}navbar-dark{% endif %}" 
-         style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background-color: #f8f9fa; border-bottom: 1px solid #dee2e6;{% else %}background-color: #0F1624; border-bottom: 1px solid #182234;{% endif %}">
+         style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(120deg, #f8f9fa, #e9ecef); border-bottom: 1px solid #dee2e6;{% else %}background: linear-gradient(120deg, #0F1624, #1A2332); border-bottom: 1px solid #182234;{% endif %}">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="{{ url_for('calendar') }}">
                 <img src="{{ url_for('static', filename='images/plex_logo_small.png') }}" alt="Plex Engineering" class="me-2" width="36" height="36">
@@ -121,21 +121,33 @@
         <div class="mt-4">
             <!-- Currently Active and Upcoming Time Off sections removed for mobile -->
 
-            <div class="card mb-3">
-                <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card mb-3" style="border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <div class="card-header d-flex justify-content-between align-items-center"
+                    style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #e9ecef, #f8f9fa);{% else %}background: linear-gradient(to right, #1A2332, #273449);{% endif %} border: none;">
                     <h5 class="card-title mb-0">Active Tickets</h5>
                     <div>
-                        <a href="{{ url_for('tickets.create_ticket') }}" class="btn btn-sm btn-primary me-2">
+                        <a href="{{ url_for('tickets.create_ticket') }}" class="btn btn-sm btn-primary me-2"
+                           style="background: linear-gradient(45deg, #4747A1, #6A6AE3); border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                             <i data-feather="plus" class="feather-small"></i> New
                         </a>
                         <a href="{{ url_for('tickets.tickets_dashboard') }}" class="btn btn-sm btn-outline-primary">View All</a>
                     </div>
                 </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
+                <div class="card-body p-0" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background-color: #ffffff;{% else %}background-color: #0F1624;{% endif %}">
+                    <div class="list-group list-group-flush p-2">
                         {% if active_sidebar_tickets %}
                             {% for ticket in active_sidebar_tickets %}
-                                <a href="{{ url_for('tickets.view_ticket', ticket_id=ticket.id) }}" class="list-group-item list-group-item-action p-2">
+                                <a href="{{ url_for('tickets.view_ticket', ticket_id=ticket.id) }}" 
+                                   class="list-group-item list-group-item-action p-3 mb-2"
+                                   style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
+                                   {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}
+                                   background: linear-gradient(to right, #ffffff, #f8f9fa);
+                                   {% else %}
+                                   background: linear-gradient(to right, #141B2D, #1A2332);
+                                   {% endif %}
+                                   transform: translateY(0); transition: transform 0.3s ease, box-shadow 0.3s ease;"
+                                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 10px rgba(0,0,0,0.15)';"
+                                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)';">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             <span class="badge {% if ticket.priority >= 3 %}bg-danger{% elif ticket.priority == 2 %}bg-warning{% elif ticket.priority == 1 %}bg-info{% else %}bg-secondary{% endif %} me-1">
@@ -145,7 +157,7 @@
                                         </div>
                                         <small class="text-muted">{{ ticket.status }}</small>
                                     </div>
-                                    <div class="mt-1">{{ ticket.title }}</div>
+                                    <div class="mt-1 fw-bold">{{ ticket.title }}</div>
                                 </a>
                             {% endfor %}
                         {% else %}

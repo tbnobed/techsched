@@ -4,8 +4,9 @@
 
 {% block content %}
 <div class="ticket-view">
-    <div class="card mb-3">
-        <div class="card-header d-flex justify-content-between align-items-center">
+    <div class="card mb-3" style="border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <div class="card-header d-flex justify-content-between align-items-center"
+             style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #e9ecef, #f8f9fa);{% else %}background: linear-gradient(to right, #1A2332, #273449);{% endif %} border: none;">
             <h5 class="card-title mb-0">Ticket #{{ ticket['id'] }}</h5>
         </div>
     </div>
@@ -58,8 +59,8 @@
     </div>
 
     <!-- Ticket Details -->
-    <div class="card mb-3">
-        <div class="card-body">
+    <div class="card mb-3" style="border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <div class="card-body" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #ffffff, #f8f9fa);{% else %}background: linear-gradient(to right, #141B2D, #1A2332);{% endif %}">
             <h5 class="card-title">{{ ticket['title'] }}</h5>
             <div class="d-flex gap-2 mb-3">
                 <span class="badge bg-secondary">
@@ -159,11 +160,11 @@
     </div>
 
     <!-- Ticket Info -->
-    <div class="card mb-3">
-        <div class="card-header">
+    <div class="card mb-3" style="border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <div class="card-header" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #e9ecef, #f8f9fa);{% else %}background: linear-gradient(to right, #1A2332, #273449);{% endif %} border: none;">
             <h5 class="card-title mb-0">Ticket Information</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #ffffff, #f8f9fa);{% else %}background: linear-gradient(to right, #141B2D, #1A2332);{% endif %}";
             <dl class="row mb-0">
                 <dt class="col-5">Assigned To</dt>
                 <dd class="col-7">
@@ -190,11 +191,11 @@
     </div>
 
     <!-- Comments Section -->
-    <div class="card mb-3">
-        <div class="card-header">
+    <div class="card mb-3" style="border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <div class="card-header" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #e9ecef, #f8f9fa);{% else %}background: linear-gradient(to right, #1A2332, #273449);{% endif %} border: none;">
             <h5 class="card-title mb-0">Comments</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #ffffff, #f8f9fa);{% else %}background: linear-gradient(to right, #141B2D, #1A2332);{% endif %};";
             <div class="comments-list mb-3">
                 {% for comment in ticket['comments'] %}
                 <div class="comment mb-3 p-2" style="border-left: 3px solid #3498db; background-color: rgba(52, 152, 219, 0.05);">
@@ -230,11 +231,11 @@
     </div>
 
     <!-- Ticket History -->
-    <div class="card mb-3">
-        <div class="card-header">
+    <div class="card mb-3" style="border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <div class="card-header" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #e9ecef, #f8f9fa);{% else %}background: linear-gradient(to right, #1A2332, #273449);{% endif %} border: none;">
             <h5 class="card-title mb-0">History</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body" style="{% if current_user.is_authenticated and current_user.theme_preference == 'light' %}background: linear-gradient(to right, #ffffff, #f8f9fa);{% else %}background: linear-gradient(to right, #141B2D, #1A2332);{% endif %};";
             {% for entry in ticket['history'] %}
             <div class="history-entry mb-2">
                 <small class="text-muted">{{ entry['created_at'].strftime('%Y-%m-%d %H:%M') }}</small>

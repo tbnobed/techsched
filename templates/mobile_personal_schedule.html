@@ -128,13 +128,16 @@
                     <input type="hidden" name="schedule_id" id="schedule_id" value="">
                     <input type="hidden" name="return_to" value="personal_schedule">
                     <input type="hidden" name="week_start" value="{{ week_start.strftime('%Y-%m-%d') }}">
+                    <input type="hidden" name="personal_view" value="true">
                     <!-- Hidden field for direct date selection -->
                     <input type="hidden" name="direct_repeat_days_list" id="direct_repeat_days_list" value="">
+                    <!-- Hidden field for repeat_days that matches the form field name in ScheduleForm -->
+                    <input type="hidden" name="repeat_days" id="repeat_days" value="">
                     
                     <div class="row mb-3">
                         <div class="col-12">
                             <label for="schedule_date" class="form-label">Date</label>
-                            <input type="date" class="form-control" id="schedule_date" name="schedule_date" required>
+                            <input type="date" class="form-control" id="schedule_date" name="schedule_date" value="{{ today.strftime('%Y-%m-%d') }}" required>
                         </div>
                     </div>
 
@@ -621,8 +624,36 @@ function toggleRepeatDaysCalendar() {
         repeatDaysCalendar.style.display = enableRepeatDays.checked ? 'block' : 'none';
         
         if (enableRepeatDays.checked) {
-            // Initialize calendar when showing the repeat days section
-            initMiniCalendar();
+            // Get the primary date
+            const dateInput = document.getElementById('schedule_date');
+            const primaryDateStr = dateInput.value || '';
+            console.log("Toggle repeat calendar with date:", primaryDateStr);
+            
+            // Initialize the calendar when showing it
+            try {
+                initDirectCalendar('direct-calendar-days', primaryDateStr);
+                console.log("Calendar initialized from toggleRepeatDaysCalendar");
+            } catch (e) {
+                console.error("Error initializing calendar:", e);
+            }
+            
+            // Log for debugging
+            console.log("Toggle calendar visibility:", enableRepeatDays.checked);
+            console.log("Primary date for calendar:", primaryDateStr);
+            
+            // Initialize or refresh direct calendar
+            try {
+                // Initialize the direct calendar with the selected date
+                if (typeof initDirectCalendar === 'function') {
+                    initDirectCalendar('direct-calendar-days', primaryDateStr);
+                    console.log("Direct calendar initialized");
+                } else {
+                    console.error("initDirectCalendar function not available");
+                }
+            } catch (e) {
+                console.error("Error initializing direct calendar:", e);
+            }
+            
             // Update feather icons
             if (typeof feather !== 'undefined') {
                 feather.replace({
@@ -1073,43 +1104,62 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("Deletion URL: ", deleteUrl);
                 window.location.href = deleteUrl;
             };
+            
+            // Initialize direct calendar if we're showing repeat days
+            if (document.getElementById('repeat_days_section').style.display !== 'none') {
+                // Check if the repeat checkbox is enabled and calendar is shown
+                const repeatCheckbox = document.getElementById('enable_repeat_days');
+                if (repeatCheckbox && repeatCheckbox.checked) {
+                    try {
+                        const dateInput = document.getElementById('schedule_date');
+                        const primaryDateStr = dateInput.value || '';
+                        console.log("Initializing calendar with date:", primaryDateStr);
+                        initDirectCalendar('direct-calendar-days', primaryDateStr);
+                    } catch (e) {
+                        console.error("Error initializing calendar for editing:", e);
+                    }
+                }
+            }
         });
     });
     
     // Initial setup for repeat days toggle
     toggleRepeatDaysSelection();
     
-    // Load direct date selector script
-    const directScriptElement = document.createElement('script');
-    directScriptElement.src = "{{ url_for('static', filename='js/direct-date-selector.js') }}";
-    document.head.appendChild(directScriptElement);
+    // Setup the direct date selector
+    const repeatCheckbox = document.getElementById('enable_repeat_days');
+    if (repeatCheckbox) {
+        repeatCheckbox.addEventListener('change', function() {
+            console.log("Repeat checkbox changed:", this.checked);
+            const dateInput = document.getElementById('schedule_date');
+            const primaryDateStr = dateInput.value || '';
+            
+            if (this.checked) {
+                // Initialize the calendar when the checkbox is checked
+                try {
+                    console.log("Initializing calendar with date:", primaryDateStr);
+                    initDirectCalendar('direct-calendar-days', primaryDateStr);
+                } catch (e) {
+                    console.error("Error initializing calendar:", e);
+                }
+            }
+        });
+    }
     
-    directScriptElement.onload = function() {
-        // Script is loaded, initialize the direct calendar immediately
-        // Get the selected date from the form
-        const dateInput = document.getElementById('schedule_date');
-        const primaryDateStr = dateInput.value || '';
-        
-        // Initialize the direct calendar with the selected date
-        initDirectCalendar('direct-calendar-days', primaryDateStr);
-        
-        // Also update when the checkbox changes
-        const repeatCheckbox = document.getElementById('enable_repeat_days');
-        if (repeatCheckbox) {
-            repeatCheckbox.addEventListener('change', function() {
-                const dateInput = document.getElementById('schedule_date');
-                const primaryDateStr = dateInput.value || '';
-                
-                // Update calendar when date changes
-                document.getElementById('schedule_date').addEventListener('change', function() {
-                    directClearDateSelection();
-                    const newPrimaryDate = this.value;
-                    directPrimaryDate = newPrimaryDate;
-                    directGenerateCalendarDays();
-                });
-            });
-        }
-    };
+    // Add change event to the date input to update the calendar
+    const dateInput = document.getElementById('schedule_date');
+    if (dateInput) {
+        dateInput.addEventListener('change', function() {
+            console.log("Date input changed to:", this.value);
+            try {
+                directClearDateSelection();
+                directPrimaryDate = this.value;
+                directGenerateCalendarDays();
+            } catch (e) {
+                console.error("Error updating calendar on date change:", e);
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

@@ -278,48 +278,60 @@ function directToggleDateSelection(dateStr, dayItem) {
  * Update the form with selected dates
  */
 function directUpdateFormWithSelectedDates() {
-    // Try to find the existing field first
-    let repeatDaysField = document.querySelector('input[name="direct_repeat_days_list"]');
+    // Update both direct_repeat_days_list and repeat_days fields for compatibility
+    const datesList = Array.from(directSelectedDates).join(',');
+    console.log("Selected dates to save:", datesList);
     
-    if (!repeatDaysField) {
-        // Create a new field
-        repeatDaysField = document.createElement('input');
-        repeatDaysField.type = 'hidden';
-        repeatDaysField.name = 'direct_repeat_days_list';
-        repeatDaysField.id = 'direct_repeat_days_list';
+    // Update direct_repeat_days_list field
+    let directRepeatDaysField = document.querySelector('input[name="direct_repeat_days_list"]');
+    if (!directRepeatDaysField) {
+        // Create the field if it doesn't exist
+        directRepeatDaysField = document.createElement('input');
+        directRepeatDaysField.type = 'hidden';
+        directRepeatDaysField.name = 'direct_repeat_days_list';
+        directRepeatDaysField.id = 'direct_repeat_days_list';
         
-        // Try several approaches to find the form
-        let form = document.getElementById('schedule_form');
-        
-        if (!form) {
-            // Try any form in the document
-            form = document.querySelector('form');
-        }
-        
+        // Try to find the form
+        const form = document.getElementById('schedule_form') || document.querySelector('form');
         if (form) {
-            console.log("Found form, appending repeat days field");
-            form.appendChild(repeatDaysField);
+            form.appendChild(directRepeatDaysField);
+            console.log("Added direct_repeat_days_list field to form");
         } else {
-            // Log the error but continue
-            console.error("Could not find any form to append repeat days field");
-            // Try to add it to the modal body as a fallback
-            const modalBody = document.querySelector('.modal-body');
-            if (modalBody) {
-                modalBody.appendChild(repeatDaysField);
-            }
+            console.error("Could not find form to add direct_repeat_days_list field");
         }
     }
     
-    // Set the value to a comma-separated list of selected dates
-    repeatDaysField.value = Array.from(directSelectedDates).join(',');
-    console.log("Updated repeat days list:", repeatDaysField.value);
+    // Update repeat_days field (this is the field name in ScheduleForm)
+    let repeatDaysField = document.querySelector('input[name="repeat_days"]');
+    if (!repeatDaysField) {
+        // Create the field if it doesn't exist
+        repeatDaysField = document.createElement('input');
+        repeatDaysField.type = 'hidden';
+        repeatDaysField.name = 'repeat_days';
+        repeatDaysField.id = 'repeat_days';
+        
+        // Try to find the form
+        const form = document.getElementById('schedule_form') || document.querySelector('form');
+        if (form) {
+            form.appendChild(repeatDaysField);
+            console.log("Added repeat_days field to form");
+        } else {
+            console.error("Could not find form to add repeat_days field");
+        }
+    }
+    
+    // Set both fields to the same value
+    directRepeatDaysField.value = datesList;
+    repeatDaysField.value = datesList;
+    
+    console.log("Updated repeat_days fields:", datesList);
 }
 
 /**
  * Update the display of selected dates
  */
 function directUpdateSelectedDatesDisplay() {
-    const container = document.getElementById('direct-selected-dates-list');
+    const container = document.getElementById('selected-dates-list');
     if (!container) return;
     
     container.innerHTML = '';

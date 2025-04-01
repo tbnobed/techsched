@@ -18,6 +18,9 @@
     {% else %}
     <link href="{{ url_for('static', filename='css/dark-theme.css') }}?v={{ now.timestamp() | int }}" rel="stylesheet">
     {% endif %}
+    
+    <!-- Load the direct date selector script in the head to ensure it's available -->
+    <script src="{{ url_for('static', filename='js/direct-date-selector.js') }}"></script>
 </head>
 <body {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}class="light-theme"{% endif %}>
     <nav class="navbar navbar-expand-lg {% if current_user.is_authenticated and current_user.theme_preference == 'light' %}navbar-light{% else %}navbar-dark{% endif %}" 

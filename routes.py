@@ -606,8 +606,16 @@ def delete_schedule(schedule_id):
                      request.form.get('return_to') == 'personal_schedule')
     app.logger.debug(f"Personal view: {personal_view}")
     
-    # Try to get the schedule, with error handling
-    schedule = Schedule.query.get_or_404(schedule_id)
+    # Try to get the schedule, but don't force a 404 if not found
+    schedule = Schedule.query.get(schedule_id)
+    if not schedule:
+        app.logger.warning(f"Schedule with ID {schedule_id} not found")
+        flash('Schedule not found or already deleted.')
+        if personal_view:
+            return redirect(url_for('personal_schedule', week_start=week_start))
+        else:
+            return redirect(url_for('calendar', week_start=week_start))
+    
     app.logger.debug(f"Schedule found: {schedule.id}, technician_id: {schedule.technician_id}")
 
     if schedule.technician_id != current_user.id and not current_user.is_admin:

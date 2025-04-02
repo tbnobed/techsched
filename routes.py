@@ -566,8 +566,24 @@ def new_schedule():
                         
                         # Get the primary date string for filtering
                         primary_date_str = schedule_date
-                        if not isinstance(schedule_date, str):
-                            primary_date_str = schedule_date.strftime('%Y-%m-%d')
+                        if not primary_date_str:
+                            # If no schedule_date provided (e.g., in desktop version), extract from start_time
+                            try:
+                                if form.start_time and form.start_time.data:
+                                    primary_date_str = form.start_time.data.strftime('%Y-%m-%d')
+                                else:
+                                    app.logger.warning("No start_time data available in form")
+                                    primary_date_str = datetime.now().strftime('%Y-%m-%d')
+                            except Exception as e:
+                                app.logger.error(f"Error getting date from form.start_time.data: {e}")
+                                # Fallback to current date
+                                primary_date_str = datetime.now().strftime('%Y-%m-%d')
+                        elif not isinstance(primary_date_str, str):
+                            try:
+                                primary_date_str = primary_date_str.strftime('%Y-%m-%d')
+                            except Exception as e:
+                                app.logger.error(f"Error formatting primary_date_str: {e}")
+                                primary_date_str = datetime.now().strftime('%Y-%m-%d')
                         app.logger.debug(f"Primary date (to exclude from additional dates): {primary_date_str}")
                         
                         # Filter out the primary date since we already created a schedule for it

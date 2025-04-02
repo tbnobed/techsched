@@ -128,21 +128,38 @@ body {
 
 .form-control, .form-select {
   background-color: var(--light-input-bg);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  color: var(--light-text);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: #333333;
   border-radius: 8px;
   padding: 0.6rem 0.8rem;
   font-size: 1rem;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .form-control:focus, .form-select:focus {
   background-color: var(--light-input-bg);
-  color: var(--light-text);
+  color: #333333;
   border-color: var(--light-accent);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
   transform: translateY(-1px);
+}
+
+/* Ensure better contrast for select elements in light mode */
+.form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23333333' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e") !important;
+  background-color: #f8f9fa;
+  color: #333333;
+  font-weight: 500;
+}
+
+/* Specific styling for the calendar location filter to improve contrast in light mode */
+.calendar-location-filter {
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
+  background-color: #ffffff !important;
+  color: #333333 !important;
+  font-weight: 500 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
 }
 
 .form-text {

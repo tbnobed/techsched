@@ -6,7 +6,7 @@
         <div class="d-flex align-items-center">
             <h2>{{ week_start.strftime('%B %Y') }}</h2>
             <div class="ms-4">
-                <select class="form-select" onchange="applyLocationFilter(this.value)">
+                <select class="form-select calendar-location-filter" onchange="applyLocationFilter(this.value)">
                     <option value="">All Locations</option>
                     {% for location in locations %}
                     <option value="{{ location.id }}" {% if selected_location == location.id %}selected{% endif %}>

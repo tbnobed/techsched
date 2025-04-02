@@ -151,6 +151,10 @@ body {
   background-color: #f8f9fa;
   color: #333333;
   font-weight: 500;
+  background-position: right 0.75rem center !important;
+  background-repeat: no-repeat !important;
+  background-size: 16px 12px !important;
+  padding-right: 2rem !important;
 }
 
 /* Specific styling for the calendar location filter to improve contrast in light mode */
@@ -160,6 +164,8 @@ body {
   color: #333333 !important;
   font-weight: 500 !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+  background-position: right 0.75rem center !important;
+  padding-right: 2.25rem !important;
 }
 
 .form-text {

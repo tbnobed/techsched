@@ -302,7 +302,13 @@ def calendar():
         form.technician.data = current_user.id
 
     # Add location choices to the form
-    form.location_id.choices = [(l.id, l.name) for l in Location.query.filter_by(active=True).order_by(Location.name).all()]
+    locations_list = Location.query.filter_by(active=True).order_by(Location.name).all()
+    form.location_id.choices = [(l.id, l.name) for l in locations_list]
+    
+    # Set default location to Plex (ID 1)
+    plex_location = Location.query.filter(Location.name.ilike('Plex')).first()
+    if plex_location:
+        form.location_id.data = plex_location.id
 
     # Get all active locations for the filter dropdown
     locations = Location.query.filter_by(active=True).order_by(Location.name).all()
@@ -365,6 +371,11 @@ def new_schedule():
     if not locations:
         form.location_id.choices = [(0, 'No locations available')]
 
+    # Set default location to Plex
+    plex_location = Location.query.filter(Location.name.ilike('Plex')).first()
+    if plex_location:
+        form.location_id.data = plex_location.id
+        
     # Check if we're dealing with a mobile form submission (with schedule_date, start_hour, end_hour)
     schedule_date = request.form.get('schedule_date')
     start_hour = request.form.get('start_hour')
@@ -1130,6 +1141,11 @@ def personal_schedule():
     if not locations:
         form.location_id.choices = [(0, 'No locations available')]
 
+    # Set default location to Plex
+    plex_location = Location.query.filter(Location.name.ilike('Plex')).first()
+    if plex_location:
+        form.location_id.data = plex_location.id
+    
     # Debug mobile detection
     print(f"is_mobile_device() in personal_schedule: {is_mobile_device()}")
     is_mobile = is_mobile_device()  # Force evaluation

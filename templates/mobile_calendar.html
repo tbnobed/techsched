@@ -66,6 +66,7 @@
                          data-start-time="{{ schedule.start_time }}"
                          data-end-time="{{ schedule.end_time }}"
                          data-time-off="{{ 'true' if schedule.time_off else 'false' }}">
+                         data-location-id="{{ schedule.location_id or "" }}"
                         <div class="schedule-time">
                             {% if schedule.time_off %}
                             <span class="time-off-badge">Time Off</span>
@@ -1057,10 +1058,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const startTime = new Date(this.getAttribute('data-start-time'));
             const endTime = new Date(this.getAttribute('data-end-time'));
             const timeOff = this.getAttribute('data-time-off') === 'true';
+            const locationId = this.getAttribute('data-location-id');
             
             // Populate the modal with schedule data
             document.getElementById('schedule_id').value = scheduleId;
             document.getElementById('schedule_date').valueAsDate = startTime;
+            
+            // Set location if available
+            const locationSelect = document.getElementById('location_id');
+            if (locationSelect && locationId) {
+                locationSelect.value = locationId;
+            }
             
             // Set start and end times
             const startHour = document.getElementById('start_hour');

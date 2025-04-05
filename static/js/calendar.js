@@ -131,6 +131,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const description = this.querySelector('.schedule-desc').textContent;
             const technicianId = this.dataset.technicianId;
             const timeOff = this.dataset.timeOff === 'true';  // Add time off status
+            const locationId = this.dataset.locationId || "";  // Get location ID
+            const locationId = this.dataset.locationId || '';  // Get location ID
 
             // Set form values
             document.getElementById('schedule_id').value = scheduleId;
@@ -139,6 +141,18 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('end_hour').value = endTime.getHours().toString().padStart(2, '0');
             document.getElementById('description').value = description;
             document.getElementById('time_off').checked = timeOff;  // Set time off checkbox
+            
+            // Set location if the select exists
+            const locationSelect = document.getElementById("location_id");
+            if (locationSelect && locationId) {
+                locationSelect.value = locationId;
+            }
+            
+            // Set location if the select exists
+            const locationSelect = document.getElementById('location_id');
+            if (locationSelect && locationId) {
+                locationSelect.value = locationId;
+            }
 
             // Set technician if the select exists (admin only)
             const technicianSelect = document.getElementById('technician');

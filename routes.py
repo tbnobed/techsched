@@ -722,7 +722,7 @@ def new_schedule():
     else:
         return redirect(url_for('calendar', week_start=week_start))
 
-@app.route('/schedule/delete/<int:schedule_id>')
+@app.route('/schedule/delete/<int:schedule_id>', methods=['GET', 'POST'])
 @login_required
 def delete_schedule(schedule_id):
     # Debug information

@@ -204,6 +204,52 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Handle delete button click
+    const deleteButton = document.getElementById('delete_button');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', function() {
+            // Get schedule ID
+            const scheduleIdElement = document.getElementById('schedule_id');
+            if (scheduleIdElement && scheduleIdElement.value) {
+                // Confirm deletion
+                if (confirm('Are you sure you want to delete this schedule?')) {
+                    // Create and submit form
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/schedule/delete/${scheduleIdElement.value}`;
+                    
+                    // Get week_start for redirect
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const weekStart = urlParams.get('week_start');
+                    
+                    // Check if we're in personal view
+                    const isPersonalView = window.location.pathname.includes('personal_schedule');
+                    
+                    // Add week_start and personal_view as hidden inputs if needed
+                    if (weekStart) {
+                        const weekStartInput = document.createElement('input');
+                        weekStartInput.type = 'hidden';
+                        weekStartInput.name = 'week_start';
+                        weekStartInput.value = weekStart;
+                        form.appendChild(weekStartInput);
+                    }
+                    
+                    if (isPersonalView) {
+                        const personalViewInput = document.createElement('input');
+                        personalViewInput.type = 'hidden';
+                        personalViewInput.name = 'personal_view';
+                        personalViewInput.value = 'true';
+                        form.appendChild(personalViewInput);
+                    }
+                    
+                    // Append to body and submit
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            }
+        });
+    }
+    
     // Handle copy button click
     const copyButton = document.getElementById('copy_button');
     if (copyButton) {

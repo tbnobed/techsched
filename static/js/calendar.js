@@ -131,19 +131,63 @@ document.addEventListener('DOMContentLoaded', function() {
             const description = this.querySelector('.schedule-desc').textContent;
             const technicianId = this.dataset.technicianId;
             const timeOff = this.dataset.timeOff === 'true';  // Add time off status
-
+            
             // Set form values
             document.getElementById('schedule_id').value = scheduleId;
             document.getElementById('schedule_date').value = startTime.toISOString().split('T')[0];
             document.getElementById('start_hour').value = startTime.getHours().toString().padStart(2, '0');
             document.getElementById('end_hour').value = endTime.getHours().toString().padStart(2, '0');
             document.getElementById('description').value = description;
-            document.getElementById('time_off').checked = timeOff;  // Set time off checkbox
-
+            
+            // Handle time off checkbox if it exists
+            const timeOffCheckbox = document.getElementById('time_off');
+            if (timeOffCheckbox) {
+                timeOffCheckbox.checked = timeOff;
+            }
+            
             // Set technician if the select exists (admin only)
             const technicianSelect = document.getElementById('technician');
             if (technicianSelect) {
                 technicianSelect.value = technicianId;
+            }
+            
+            // Set location if it exists
+            // We need to find the location ID from the location element
+            const locationElement = this.querySelector('.schedule-location');
+            if (locationElement) {
+                const locationText = locationElement.textContent.trim();
+                // Find the location select and set it to the proper location if found
+                const locationSelect = document.getElementById('location_id');
+                if (locationSelect) {
+                    console.log("Setting location from:", locationText);
+                    
+                    // Try to find the matching location option
+                    let locationFound = false;
+                    for (let i = 0; i < locationSelect.options.length; i++) {
+                        if (locationSelect.options[i].text.trim() === locationText) {
+                            locationSelect.selectedIndex = i;
+                            locationFound = true;
+                            console.log("Location matched:", locationSelect.options[i].text);
+                            break;
+                        }
+                    }
+                    
+                    if (!locationFound) {
+                        console.log("No matching location found in dropdown for:", locationText);
+                    }
+                }
+            } else {
+                console.log("No location element found, setting to default Plex location");
+                const locationSelect = document.getElementById('location_id');
+                if (locationSelect) {
+                    // Find the Plex option
+                    for (let i = 0; i < locationSelect.options.length; i++) {
+                        if (locationSelect.options[i].text.trim() === 'Plex') {
+                            locationSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
             }
 
             // Update modal title and buttons
@@ -182,6 +226,19 @@ document.addEventListener('DOMContentLoaded', function() {
             // Set the date and initial times
             document.getElementById('schedule_date').value = date;
             document.getElementById('start_hour').value = hour;
+            
+            // Set default location to Plex
+            const locationSelect = document.getElementById('location_id');
+            if (locationSelect) {
+                // First try to find "Plex" (ID 1)
+                for (let i = 0; i < locationSelect.options.length; i++) {
+                    if (locationSelect.options[i].text.trim() === 'Plex') {
+                        locationSelect.selectedIndex = i;
+                        console.log("Setting default location to Plex");
+                        break;
+                    }
+                }
+            }
 
             // Update modal title and buttons
             document.querySelector('.modal-title').textContent = 'Add New Schedule';

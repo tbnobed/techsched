@@ -1011,7 +1011,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('schedule_date').value = date;
                 document.getElementById('schedule_id').value = '';
                 document.getElementById('description').value = '';
-                document.getElementById('location_id').value = '';
+                
+                // Set default location to Plex
+                const locationSelect = document.getElementById('location_id');
+                if (locationSelect) {
+                    // Find the Plex option
+                    for (let i = 0; i < locationSelect.options.length; i++) {
+                        if (locationSelect.options[i].text.trim() === 'Plex') {
+                            locationSelect.selectedIndex = i;
+                            console.log("Setting default location to Plex");
+                            break;
+                        }
+                    }
+                }
+                
                 document.getElementById('time_off').checked = false;
                 
                 // Default to 9 AM start time for new entries
@@ -1077,18 +1090,38 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Get location if present
             const locationElement = this.querySelector('.schedule-location');
-            if (locationElement) {
+            const locationSelect = document.getElementById('location_id');
+            
+            if (locationElement && locationSelect) {
                 // Try to find the location name in the dropdown
                 const locationName = locationElement.textContent.trim().replace('map-pin', '').trim();
-                const locationSelect = document.getElementById('location_id');
+                console.log("Found location in schedule:", locationName);
+                
+                let locationFound = false;
                 for (let i = 0; i < locationSelect.options.length; i++) {
-                    if (locationSelect.options[i].text === locationName) {
-                        locationSelect.value = locationSelect.options[i].value;
+                    if (locationSelect.options[i].text.trim() === locationName) {
+                        locationSelect.selectedIndex = i;
+                        locationFound = true;
+                        console.log("Location matched:", locationSelect.options[i].text);
                         break;
                     }
                 }
-            } else {
-                document.getElementById('location_id').value = '';
+                
+                if (!locationFound) {
+                    console.log("No matching location found for:", locationName);
+                }
+            } else if (locationSelect) {
+                // No location in the schedule - set to Plex as default
+                console.log("No location found in schedule, setting to Plex");
+                
+                // Find Plex in the options
+                for (let i = 0; i < locationSelect.options.length; i++) {
+                    if (locationSelect.options[i].text.trim() === 'Plex') {
+                        locationSelect.selectedIndex = i;
+                        console.log("Default location set to Plex");
+                        break;
+                    }
+                }
             }
             
             // Update modal title and buttons

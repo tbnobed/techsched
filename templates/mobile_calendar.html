@@ -1008,8 +1008,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add listener for modal shown event
     const scheduleModal = document.getElementById('scheduleModal');
     if (scheduleModal) {
-        scheduleModal.addEventListener('shown.bs.modal', function() {
+        scheduleModal.addEventListener('shown.bs.modal', function(event) {
             console.log("Schedule modal shown");
+            
+            // Set Plex as default location when creating a new schedule
+            const scheduleId = document.getElementById('schedule_id').value;
+            if (!scheduleId) {
+                console.log("Setting default location to Plex");
+                const locationSelect = document.getElementById('location_id');
+                if (locationSelect) {
+                    // Find the Plex option
+                    for (let i = 0; i < locationSelect.options.length; i++) {
+                        if (locationSelect.options[i].text.trim() === 'Plex') {
+                            locationSelect.selectedIndex = i;
+                            console.log("Default location set to Plex");
+                            break;
+                        }
+                    }
+                }
+            }
             
             // Make sure the script is loaded before initializing
             if (typeof initDirectCalendar === 'function') {

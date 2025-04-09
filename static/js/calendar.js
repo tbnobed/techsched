@@ -133,13 +133,37 @@ document.addEventListener('DOMContentLoaded', function() {
             const timeOff = this.dataset.timeOff === 'true';  // Add time off status
             const locationId = this.dataset.locationId || '';  // Get location ID
 
-            // Set form values
-            document.getElementById('schedule_id').value = scheduleId;
-            document.getElementById('schedule_date').value = startTime.toISOString().split('T')[0];
-            document.getElementById('start_hour').value = startTime.getHours().toString().padStart(2, '0');
-            document.getElementById('end_hour').value = endTime.getHours().toString().padStart(2, '0');
-            document.getElementById('description').value = description;
-            document.getElementById('time_off').checked = timeOff;  // Set time off checkbox
+            // Get elements and set form values only if they exist
+            const scheduleIdElement = document.getElementById('schedule_id');
+            const scheduleDateElement = document.getElementById('schedule_date');
+            const startHourElement = document.getElementById('start_hour');
+            const endHourElement = document.getElementById('end_hour');
+            const descriptionElement = document.getElementById('description');
+            const timeOffElement = document.getElementById('time_off');
+            
+            if (scheduleIdElement) {
+                scheduleIdElement.value = scheduleId;
+            }
+            
+            if (scheduleDateElement) {
+                scheduleDateElement.value = startTime.toISOString().split('T')[0];
+            }
+            
+            if (startHourElement) {
+                startHourElement.value = startTime.getHours().toString().padStart(2, '0');
+            }
+            
+            if (endHourElement) {
+                endHourElement.value = endTime.getHours().toString().padStart(2, '0');
+            }
+            
+            if (descriptionElement) {
+                descriptionElement.value = description;
+            }
+            
+            if (timeOffElement) {
+                timeOffElement.checked = timeOff;
+            }
             
             // Set location if the select exists
             const locationSelect = document.getElementById('location_id');
@@ -154,10 +178,26 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Update modal title and buttons
-            document.querySelector('.modal-title').textContent = 'Edit Schedule';
-            document.querySelector('button[type="submit"]').textContent = 'Update Schedule';
-            document.getElementById('delete_button').style.display = 'block';
-            document.getElementById('copy_button').style.display = 'block';
+            const modalTitle = document.querySelector('.modal-title');
+            const submitButton = document.querySelector('button[type="submit"]');
+            const deleteButton = document.getElementById('delete_button');
+            const copyButton = document.getElementById('copy_button');
+            
+            if (modalTitle) {
+                modalTitle.textContent = 'Edit Schedule';
+            }
+            
+            if (submitButton) {
+                submitButton.textContent = 'Update Schedule';
+            }
+            
+            if (deleteButton) {
+                deleteButton.style.display = 'block';
+            }
+            
+            if (copyButton) {
+                copyButton.style.display = 'block';
+            }
 
             // Show the modal
             scheduleModal.show();
@@ -165,16 +205,37 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Handle copy button click
-    document.getElementById('copy_button').addEventListener('click', function() {
-        // Clear the schedule ID to create a new entry
-        document.getElementById('schedule_id').value = '';
+    const copyButton = document.getElementById('copy_button');
+    if (copyButton) {
+        copyButton.addEventListener('click', function() {
+            // Clear the schedule ID to create a new entry
+            const scheduleIdElement = document.getElementById('schedule_id');
+            if (scheduleIdElement) {
+                scheduleIdElement.value = '';
+            }
 
-        // Update modal title and buttons
-        document.querySelector('.modal-title').textContent = 'Copy Schedule';
-        document.querySelector('button[type="submit"]').textContent = 'Add Copy';
-        document.getElementById('delete_button').style.display = 'none';
-        document.getElementById('copy_button').style.display = 'none';
-    });
+            // Update modal title and buttons
+            const modalTitle = document.querySelector('.modal-title');
+            const submitButton = document.querySelector('button[type="submit"]');
+            const deleteButton = document.getElementById('delete_button');
+            
+            if (modalTitle) {
+                modalTitle.textContent = 'Copy Schedule';
+            }
+            
+            if (submitButton) {
+                submitButton.textContent = 'Add Copy';
+            }
+            
+            if (deleteButton) {
+                deleteButton.style.display = 'none';
+            }
+            
+            if (copyButton) {
+                copyButton.style.display = 'none';
+            }
+        });
+    }
 
     // Handle time slot clicks
     document.querySelectorAll('.time-slot').forEach(slot => {
@@ -182,22 +243,56 @@ document.addEventListener('DOMContentLoaded', function() {
             const hour = this.dataset.hour;
             const date = this.closest('.day-slots').dataset.date;
 
-            // Reset form
-            document.getElementById('schedule_form').reset();
-            document.getElementById('schedule_id').value = '';
+            // Reset form if it exists
+            const scheduleForm = document.getElementById('schedule_form');
+            if (scheduleForm) {
+                scheduleForm.reset();
+            }
+            
+            // Set schedule ID to empty if it exists
+            const scheduleIdElement = document.getElementById('schedule_id');
+            if (scheduleIdElement) {
+                scheduleIdElement.value = '';
+            }
 
-            // Set the date and initial times
-            document.getElementById('schedule_date').value = date;
-            document.getElementById('start_hour').value = hour;
+            // Set the date and initial times - check if elements exist before setting values
+            const dateElement = document.getElementById('schedule_date');
+            const startHourElement = document.getElementById('start_hour');
+            
+            if (dateElement) {
+                dateElement.value = date;
+            }
+            
+            if (startHourElement) {
+                startHourElement.value = hour;
+            }
 
-            // Update modal title and buttons
-            document.querySelector('.modal-title').textContent = 'Add New Schedule';
-            document.querySelector('button[type="submit"]').textContent = 'Add Schedule';
-            document.getElementById('delete_button').style.display = 'none';
-            document.getElementById('copy_button').style.display = 'none';
+            // Update modal title and buttons if they exist
+            const modalTitle = document.querySelector('.modal-title');
+            const submitButton = document.querySelector('button[type="submit"]');
+            const deleteButton = document.getElementById('delete_button');
+            const copyButton = document.getElementById('copy_button');
+            
+            if (modalTitle) {
+                modalTitle.textContent = 'Add New Schedule';
+            }
+            
+            if (submitButton) {
+                submitButton.textContent = 'Add Schedule';
+            }
+            
+            if (deleteButton) {
+                deleteButton.style.display = 'none';
+            }
+            
+            if (copyButton) {
+                copyButton.style.display = 'none';
+            }
 
-            // Show the modal
-            scheduleModal.show();
+            // Show the modal if it exists
+            if (scheduleModal) {
+                scheduleModal.show();
+            }
         });
     });
 
@@ -424,7 +519,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update the hidden input with the selected dates for form submission
     function updateSelectedDatesInput() {
         const datesArray = Array.from(selectedDates);
-        document.getElementById('repeat_days_list').value = datesArray.join(',');
+        const repeatDaysList = document.getElementById('repeat_days_list');
+        
+        if (repeatDaysList) {
+            repeatDaysList.value = datesArray.join(',');
+        }
         
         // Also update a display of selected dates count
         const selectedCount = document.getElementById('selected-dates-count');
@@ -446,8 +545,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const directDateToggle = document.getElementById('direct_date_toggle');
     if (directDateToggle) {
         directDateToggle.addEventListener('change', function() {
-            document.getElementById('direct_date_selector').style.display = 
-                this.checked ? 'block' : 'none';
+            const directDateSelector = document.getElementById('direct_date_selector');
+            if (directDateSelector) {
+                directDateSelector.style.display = this.checked ? 'block' : 'none';
+            }
         });
     }
 

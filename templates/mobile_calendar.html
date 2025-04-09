@@ -1077,7 +1077,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Populate the modal with schedule data
             document.getElementById('schedule_id').value = scheduleId;
-            document.getElementById('schedule_date').valueAsDate = startTime;
+            
+            // Fix for date display - extract date directly from data attribute
+            const startTimeStr = this.getAttribute('data-start-time').split(' ')[0]; // Get YYYY-MM-DD portion
+            console.log("Original date from server:", this.getAttribute('data-start-time'));
+            console.log("Using date:", startTimeStr);
+            
+            document.getElementById('schedule_date').value = startTimeStr;
             
             // Set start and end times
             const startHour = document.getElementById('start_hour');
@@ -1097,6 +1103,42 @@ document.addEventListener('DOMContentLoaded', function() {
             // Get description
             const descElement = this.querySelector('.schedule-desc');
             document.getElementById('description').value = descElement ? descElement.textContent.trim() : '';
+            
+            // Get location if present
+            const locationElement = this.querySelector('.schedule-location');
+            const locationSelect = document.getElementById('location_id');
+            
+            if (locationElement && locationSelect) {
+                // Try to find the location name in the dropdown
+                const locationName = locationElement.textContent.trim().replace('map-pin', '').trim();
+                console.log("Setting location from:", locationName);
+                
+                let locationFound = false;
+                for (let i = 0; i < locationSelect.options.length; i++) {
+                    if (locationSelect.options[i].text.trim() === locationName) {
+                        locationSelect.selectedIndex = i;
+                        locationFound = true;
+                        console.log("Location matched:", locationSelect.options[i].text);
+                        break;
+                    }
+                }
+                
+                if (!locationFound) {
+                    console.log("No matching location found for:", locationName);
+                }
+            } else if (locationSelect) {
+                // No location in the schedule - set to Plex as default
+                console.log("No location found in schedule, setting to Plex");
+                
+                // Find Plex in the options
+                for (let i = 0; i < locationSelect.options.length; i++) {
+                    if (locationSelect.options[i].text.trim() === 'Plex') {
+                        locationSelect.selectedIndex = i;
+                        console.log("Default location set to Plex");
+                        break;
+                    }
+                }
+            }
             
             // Update modal title and buttons
             document.querySelector('#scheduleModal .modal-title').textContent = 'Edit Schedule';
@@ -1121,6 +1163,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('schedule_id').value = '';
                 document.getElementById('description').value = '';
                 document.getElementById('time_off').checked = false;
+                
+                // Set default location to Plex
+                const locationSelect = document.getElementById('location_id');
+                if (locationSelect) {
+                    // Find the Plex option
+                    for (let i = 0; i < locationSelect.options.length; i++) {
+                        if (locationSelect.options[i].text.trim() === 'Plex') {
+                            locationSelect.selectedIndex = i;
+                            console.log("Setting default location to Plex");
+                            break;
+                        }
+                    }
+                }
+                
                 document.querySelector('#scheduleModal .modal-title').textContent = 'Add New Schedule';
                 document.getElementById('delete_button').style.display = 'none';
                 document.querySelector('#scheduleModal .btn-primary').textContent = 'Add Schedule';

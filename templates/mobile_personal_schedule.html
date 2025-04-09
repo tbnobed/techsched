@@ -1066,7 +1066,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Populate the modal with schedule data
             document.getElementById('schedule_id').value = scheduleId;
-            document.getElementById('schedule_date').valueAsDate = startTime;
+            
+            // Fix for date display - extract date directly from data attribute
+            const startTimeStr = this.getAttribute('data-start-time').split(' ')[0]; // Get YYYY-MM-DD portion
+            console.log("Original date from server:", this.getAttribute('data-start-time'));
+            console.log("Using date:", startTimeStr);
+            
+            document.getElementById('schedule_date').value = startTimeStr;
             
             // Set start and end times
             const startHour = document.getElementById('start_hour');

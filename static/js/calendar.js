@@ -134,7 +134,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Set form values
             document.getElementById('schedule_id').value = scheduleId;
-            document.getElementById('schedule_date').value = startTime.toISOString().split('T')[0];
+            
+            // Fix for date display - adjust for timezone issues
+            // Use the date from the data attribute directly without timezone conversion
+            const startTimeStr = this.dataset.startTime.split(' ')[0]; // Get YYYY-MM-DD portion
+            console.log("Original date from server:", this.dataset.startTime);
+            console.log("Using date:", startTimeStr);
+            
+            document.getElementById('schedule_date').value = startTimeStr;
             document.getElementById('start_hour').value = startTime.getHours().toString().padStart(2, '0');
             document.getElementById('end_hour').value = endTime.getHours().toString().padStart(2, '0');
             document.getElementById('description').value = description;

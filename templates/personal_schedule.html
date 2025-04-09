@@ -178,6 +178,7 @@
                         {{ form.start_time(type="hidden", id="start_time_input") }}
                         {{ form.end_time(type="hidden", id="end_time_input") }}
                         {{ form.repeat_days(type="hidden", id="repeat_days_input") }}
+                        <input type="hidden" id="repeat_days_list" name="repeat_days_list">
                         <div class="modal-footer">
                             <button type="button" id="delete_button" class="btn btn-danger" style="display: none;">Delete</button>
                             <button type="button" id="copy_button" class="btn btn-info" style="display: none;">Copy Schedule</button>
@@ -598,9 +599,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Set repeat days if we have any selected and the toggle is checked
                     if (document.getElementById('repeat_days_toggle').checked && selectedDates.length > 0) {
-                        document.getElementById('repeat_days_input').value = selectedDates.join(',');
+                        const repeatDaysStr = selectedDates.join(',');
+                        document.getElementById('repeat_days_input').value = repeatDaysStr;
+                        
+                        // Also set the repeat_days_list field if it exists
+                        const repeatDaysList = document.getElementById('repeat_days_list');
+                        if (repeatDaysList) {
+                            repeatDaysList.value = repeatDaysStr;
+                        }
                     } else {
                         document.getElementById('repeat_days_input').value = '';
+                        
+                        // Also clear the repeat_days_list field if it exists
+                        const repeatDaysList = document.getElementById('repeat_days_list');
+                        if (repeatDaysList) {
+                            repeatDaysList.value = '';
+                        }
                     }
                 } catch (error) {
                     console.error("Error in form submission handler:", error);
@@ -855,9 +869,15 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedDates = [];
         primaryDate = null;
         
-        // Clear the input
+        // Clear the inputs
         if (!keepHidden) {
             document.getElementById('repeat_days_input').value = '';
+            
+            // Also clear repeat_days_list if it exists
+            const repeatDaysList = document.getElementById('repeat_days_list');
+            if (repeatDaysList) {
+                repeatDaysList.value = '';
+            }
         }
         
         // Update UI

@@ -45,6 +45,8 @@ cp -r \
     update_timezone_field.sh \
     update_theme_preference.py \
     update_theme_preference.sql \
+    add_schedule_created_at.sql \
+    update_schedule_columns.sh \
     .env.example \
     admin_guide.md \
     technician_quick_start.md \

@@ -15,7 +15,9 @@ CREATE TABLE schedule (
     start_time TIMESTAMP WITH TIME ZONE NOT NULL,
     end_time TIMESTAMP WITH TIME ZONE NOT NULL,
     description TEXT,
-    time_off BOOLEAN DEFAULT FALSE
+    time_off BOOLEAN DEFAULT FALSE,
+    location_id INTEGER REFERENCES location(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE quick_link (

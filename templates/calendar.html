@@ -110,7 +110,6 @@
                          data-start-time="{{ schedule.start_time.strftime('%Y-%m-%d %H:%M:%S') }}"
                          data-end-time="{{ schedule.end_time.strftime('%Y-%m-%d %H:%M:%S') }}"
                          data-time-off="{{ 'true' if schedule.time_off else 'false' }}"
-                         data-location-id="{{ schedule.location_id or '' }}"
                          data-toggle="tooltip"
                          data-html="true"
                          title="<div class='hover-content'><strong>{{ schedule.technician.username }}</strong> <span class='text-muted'>{{ schedule.start_time.strftime('%m/%d/%y') }}</span><br>{{ schedule.start_time.strftime('%H:%M') }}-{{ schedule.end_time.strftime('%H:%M') }} ({{ ((schedule.end_time - schedule.start_time).total_seconds() / 3600)|int }}h){% if schedule.location %}<br><i data-feather='map-pin'></i> {{ schedule.location.name }}{% endif %}{{ ('<br>' + schedule.description) if schedule.description else '' }}</div>">
@@ -238,7 +237,6 @@
                         {{ form.start_time(type="hidden", id="start_time_input") }}
                         {{ form.end_time(type="hidden", id="end_time_input") }}
                         {{ form.repeat_days(type="hidden", id="repeat_days_input") }}
-                        <input type="hidden" id="repeat_days_list" name="repeat_days_list">
                         <div class="modal-footer">
                             <button type="button" id="delete_button" class="btn btn-danger" style="display: none;">Delete</button>
                             <button type="button" id="copy_button" class="btn btn-info" style="display: none;">Copy Schedule</button>
@@ -401,45 +399,6 @@ document.addEventListener('DOMContentLoaded', function() {
             boundary: 'window'
         });
     });
-    
-    // Add form submission event listener to handle date and time formatting
-    const scheduleForm = document.getElementById('schedule_form');
-    if (scheduleForm) {
-        scheduleForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const dateInput = document.getElementById('schedule_date');
-            const startHourInput = document.getElementById('start_hour');
-            const endHourInput = document.getElementById('end_hour');
-            const startTimeInput = document.getElementById('start_time_input');
-            const endTimeInput = document.getElementById('end_time_input');
-            
-            if (dateInput && startHourInput && endHourInput && startTimeInput && endTimeInput) {
-                // Format the date and time inputs into the format expected by Flask-WTF
-                const date = dateInput.value;
-                const startHour = startHourInput.value;
-                const endHour = endHourInput.value;
-                
-                // Create formatted datetime strings
-                startTimeInput.value = `${date} ${startHour}:00`;
-                endTimeInput.value = `${date} ${endHour}:00`;
-                
-                console.log('Submitting form with:');
-                console.log('Start time:', startTimeInput.value);
-                console.log('End time:', endTimeInput.value);
-            }
-            
-            // Copy repeat_days_list to repeat_days_input if it exists
-            const repeatDaysList = document.getElementById('repeat_days_list');
-            const repeatDaysInput = document.getElementById('repeat_days_input');
-            if (repeatDaysList && repeatDaysInput) {
-                repeatDaysInput.value = repeatDaysList.value;
-            }
-            
-            // Submit the form
-            this.submit();
-        });
-    }
 });
 </script>
 {% endblock %}

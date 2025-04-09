@@ -63,7 +63,6 @@
                          data-start-time="{{ schedule.start_time }}"
                          data-end-time="{{ schedule.end_time }}"
                          data-time-off="{{ 'true' if schedule.time_off else 'false' }}">
-                         data-location-id="{{ schedule.location_id or "" }}"
                         <div class="schedule-time">
                             {{ schedule.start_time.strftime('%I:%M %p') }} - {{ schedule.end_time.strftime('%I:%M %p') }}
                         </div>
@@ -1051,17 +1050,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const startTime = new Date(this.getAttribute('data-start-time'));
             const endTime = new Date(this.getAttribute('data-end-time'));
             const timeOff = this.getAttribute('data-time-off') === 'true';
-            const locationId = this.getAttribute('data-location-id');
             
             // Populate the modal with schedule data
             document.getElementById('schedule_id').value = scheduleId;
             document.getElementById('schedule_date').valueAsDate = startTime;
-            
-            // Set location if available
-            const locationSelect = document.getElementById('location_id');
-            if (locationSelect && locationId) {
-                locationSelect.value = locationId;
-            }
             
             // Set start and end times
             const startHour = document.getElementById('start_hour');
@@ -1109,31 +1101,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Set up delete button event
             document.getElementById('delete_button').onclick = function() {
-                // Confirm deletion
-                if (confirm('Are you sure you want to delete this schedule?')) {
-                    // Create and submit form
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = `/schedule/delete/${scheduleId}`;
-                    
-                    // Add week_start and personal_view as hidden inputs
-                    const weekStartInput = document.createElement('input');
-                    weekStartInput.type = 'hidden';
-                    weekStartInput.name = 'week_start';
-                    weekStartInput.value = '{{ week_start.strftime("%Y-%m-%d") }}';
-                    form.appendChild(weekStartInput);
-                    
-                    // Add personal_view since we're in personal schedule view
-                    const personalViewInput = document.createElement('input');
-                    personalViewInput.type = 'hidden';
-                    personalViewInput.name = 'personal_view';
-                    personalViewInput.value = 'true';
-                    form.appendChild(personalViewInput);
-                    
-                    // Append to body and submit
-                    document.body.appendChild(form);
-                    form.submit();
-                }
+                // No confirmation needed for consistency with all schedules view
+                const deleteUrl = `/schedule/delete/${scheduleId}?week_start={{ week_start.strftime('%Y-%m-%d') }}&personal_view=true`;
+                console.log("Deletion URL: ", deleteUrl);
+                window.location.href = deleteUrl;
             };
             
             // Initialize direct calendar if we're showing repeat days

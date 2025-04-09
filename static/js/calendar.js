@@ -131,45 +131,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const description = this.querySelector('.schedule-desc').textContent;
             const technicianId = this.dataset.technicianId;
             const timeOff = this.dataset.timeOff === 'true';  // Add time off status
-            const locationId = this.dataset.locationId || '';  // Get location ID
 
-            // Get elements and set form values only if they exist
-            const scheduleIdElement = document.getElementById('schedule_id');
-            const scheduleDateElement = document.getElementById('schedule_date');
-            const startHourElement = document.getElementById('start_hour');
-            const endHourElement = document.getElementById('end_hour');
-            const descriptionElement = document.getElementById('description');
-            const timeOffElement = document.getElementById('time_off');
-            
-            if (scheduleIdElement) {
-                scheduleIdElement.value = scheduleId;
-            }
-            
-            if (scheduleDateElement) {
-                scheduleDateElement.value = startTime.toISOString().split('T')[0];
-            }
-            
-            if (startHourElement) {
-                startHourElement.value = startTime.getHours().toString().padStart(2, '0');
-            }
-            
-            if (endHourElement) {
-                endHourElement.value = endTime.getHours().toString().padStart(2, '0');
-            }
-            
-            if (descriptionElement) {
-                descriptionElement.value = description;
-            }
-            
-            if (timeOffElement) {
-                timeOffElement.checked = timeOff;
-            }
-            
-            // Set location if the select exists
-            const locationSelect = document.getElementById('location_id');
-            if (locationSelect && locationId) {
-                locationSelect.value = locationId;
-            }
+            // Set form values
+            document.getElementById('schedule_id').value = scheduleId;
+            document.getElementById('schedule_date').value = startTime.toISOString().split('T')[0];
+            document.getElementById('start_hour').value = startTime.getHours().toString().padStart(2, '0');
+            document.getElementById('end_hour').value = endTime.getHours().toString().padStart(2, '0');
+            document.getElementById('description').value = description;
+            document.getElementById('time_off').checked = timeOff;  // Set time off checkbox
 
             // Set technician if the select exists (admin only)
             const technicianSelect = document.getElementById('technician');
@@ -178,110 +147,27 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Update modal title and buttons
-            const modalTitle = document.querySelector('.modal-title');
-            const submitButton = document.querySelector('button[type="submit"]');
-            const deleteButton = document.getElementById('delete_button');
-            const copyButton = document.getElementById('copy_button');
-            
-            if (modalTitle) {
-                modalTitle.textContent = 'Edit Schedule';
-            }
-            
-            if (submitButton) {
-                submitButton.textContent = 'Update Schedule';
-            }
-            
-            if (deleteButton) {
-                deleteButton.style.display = 'block';
-            }
-            
-            if (copyButton) {
-                copyButton.style.display = 'block';
-            }
+            document.querySelector('.modal-title').textContent = 'Edit Schedule';
+            document.querySelector('button[type="submit"]').textContent = 'Update Schedule';
+            document.getElementById('delete_button').style.display = 'block';
+            document.getElementById('copy_button').style.display = 'block';
 
             // Show the modal
             scheduleModal.show();
         });
     });
 
-    // Handle delete button click
-    const deleteButton = document.getElementById('delete_button');
-    if (deleteButton) {
-        deleteButton.addEventListener('click', function() {
-            // Get schedule ID
-            const scheduleIdElement = document.getElementById('schedule_id');
-            if (scheduleIdElement && scheduleIdElement.value) {
-                // Confirm deletion
-                if (confirm('Are you sure you want to delete this schedule?')) {
-                    // Create and submit form
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = `/schedule/delete/${scheduleIdElement.value}`;
-                    
-                    // Get week_start for redirect
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const weekStart = urlParams.get('week_start');
-                    
-                    // Check if we're in personal view
-                    const isPersonalView = window.location.pathname.includes('personal_schedule');
-                    
-                    // Add week_start and personal_view as hidden inputs if needed
-                    if (weekStart) {
-                        const weekStartInput = document.createElement('input');
-                        weekStartInput.type = 'hidden';
-                        weekStartInput.name = 'week_start';
-                        weekStartInput.value = weekStart;
-                        form.appendChild(weekStartInput);
-                    }
-                    
-                    if (isPersonalView) {
-                        const personalViewInput = document.createElement('input');
-                        personalViewInput.type = 'hidden';
-                        personalViewInput.name = 'personal_view';
-                        personalViewInput.value = 'true';
-                        form.appendChild(personalViewInput);
-                    }
-                    
-                    // Append to body and submit
-                    document.body.appendChild(form);
-                    form.submit();
-                }
-            }
-        });
-    }
-    
     // Handle copy button click
-    const copyButton = document.getElementById('copy_button');
-    if (copyButton) {
-        copyButton.addEventListener('click', function() {
-            // Clear the schedule ID to create a new entry
-            const scheduleIdElement = document.getElementById('schedule_id');
-            if (scheduleIdElement) {
-                scheduleIdElement.value = '';
-            }
+    document.getElementById('copy_button').addEventListener('click', function() {
+        // Clear the schedule ID to create a new entry
+        document.getElementById('schedule_id').value = '';
 
-            // Update modal title and buttons
-            const modalTitle = document.querySelector('.modal-title');
-            const submitButton = document.querySelector('button[type="submit"]');
-            const deleteButton = document.getElementById('delete_button');
-            
-            if (modalTitle) {
-                modalTitle.textContent = 'Copy Schedule';
-            }
-            
-            if (submitButton) {
-                submitButton.textContent = 'Add Copy';
-            }
-            
-            if (deleteButton) {
-                deleteButton.style.display = 'none';
-            }
-            
-            if (copyButton) {
-                copyButton.style.display = 'none';
-            }
-        });
-    }
+        // Update modal title and buttons
+        document.querySelector('.modal-title').textContent = 'Copy Schedule';
+        document.querySelector('button[type="submit"]').textContent = 'Add Copy';
+        document.getElementById('delete_button').style.display = 'none';
+        document.getElementById('copy_button').style.display = 'none';
+    });
 
     // Handle time slot clicks
     document.querySelectorAll('.time-slot').forEach(slot => {
@@ -289,56 +175,22 @@ document.addEventListener('DOMContentLoaded', function() {
             const hour = this.dataset.hour;
             const date = this.closest('.day-slots').dataset.date;
 
-            // Reset form if it exists
-            const scheduleForm = document.getElementById('schedule_form');
-            if (scheduleForm) {
-                scheduleForm.reset();
-            }
-            
-            // Set schedule ID to empty if it exists
-            const scheduleIdElement = document.getElementById('schedule_id');
-            if (scheduleIdElement) {
-                scheduleIdElement.value = '';
-            }
+            // Reset form
+            document.getElementById('schedule_form').reset();
+            document.getElementById('schedule_id').value = '';
 
-            // Set the date and initial times - check if elements exist before setting values
-            const dateElement = document.getElementById('schedule_date');
-            const startHourElement = document.getElementById('start_hour');
-            
-            if (dateElement) {
-                dateElement.value = date;
-            }
-            
-            if (startHourElement) {
-                startHourElement.value = hour;
-            }
+            // Set the date and initial times
+            document.getElementById('schedule_date').value = date;
+            document.getElementById('start_hour').value = hour;
 
-            // Update modal title and buttons if they exist
-            const modalTitle = document.querySelector('.modal-title');
-            const submitButton = document.querySelector('button[type="submit"]');
-            const deleteButton = document.getElementById('delete_button');
-            const copyButton = document.getElementById('copy_button');
-            
-            if (modalTitle) {
-                modalTitle.textContent = 'Add New Schedule';
-            }
-            
-            if (submitButton) {
-                submitButton.textContent = 'Add Schedule';
-            }
-            
-            if (deleteButton) {
-                deleteButton.style.display = 'none';
-            }
-            
-            if (copyButton) {
-                copyButton.style.display = 'none';
-            }
+            // Update modal title and buttons
+            document.querySelector('.modal-title').textContent = 'Add New Schedule';
+            document.querySelector('button[type="submit"]').textContent = 'Add Schedule';
+            document.getElementById('delete_button').style.display = 'none';
+            document.getElementById('copy_button').style.display = 'none';
 
-            // Show the modal if it exists
-            if (scheduleModal) {
-                scheduleModal.show();
-            }
+            // Show the modal
+            scheduleModal.show();
         });
     });
 
@@ -491,45 +343,147 @@ document.addEventListener('DOMContentLoaded', function() {
     function addDayToCalendar(container, day, dateFormatted, extraClass, isToday, isPrimary, isSelected) {
         const dayItem = document.createElement('div');
         dayItem.textContent = day;
-        dayItem.className = `day-item${extraClass ? ' ' + extraClass : ''}${isToday ? ' today' : ''}${isPrimary ? ' primary-date' : ''}${isSelected ? ' selected' : ''}`;
-        dayItem.dataset.date = dateFormatted;
+        dayItem.className = `day-item${extraClass ? ' ' + extraClass : ''}${isToday ? ' today' : ''}`;
         
-        // Add click event to toggle selection
-        dayItem.addEventListener('click', function() {
-            // Don't allow selection/deselection of the primary date
-            if (dateFormatted === primaryDate) {
-                return;
-            }
-            
-            // Toggle selection
-            if (selectedDates.has(dateFormatted)) {
-                selectedDates.delete(dateFormatted);
-                this.classList.remove('selected');
-            } else {
-                selectedDates.add(dateFormatted);
-                this.classList.add('selected');
-            }
-            
-            // Update the hidden input with selected dates
-            updateSelectedDatesInput();
-        });
+        if (isPrimary) {
+            dayItem.classList.add('primary-date');
+            dayItem.setAttribute('title', 'Primary schedule date');
+        } else if (isSelected) {
+            dayItem.classList.add('selected');
+        }
+        
+        dayItem.setAttribute('data-date', dateFormatted);
+        
+        // Add click event to select/deselect the date
+        if (!isPrimary) { // Don't allow clicking on the primary date
+            dayItem.addEventListener('click', function() {
+                toggleDateSelection(dateFormatted, dayItem);
+            });
+        } else {
+            dayItem.classList.add('disabled');
+        }
         
         container.appendChild(dayItem);
     }
     
-    // Format a date as YYYY-MM-DD
-    function formatDate(date) {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        return `${year}-${month}-${day}`;
+    // Toggle date selection
+    function toggleDateSelection(dateStr, dayItem) {
+        if (selectedDates.has(dateStr)) {
+            // Deselect the date
+            selectedDates.delete(dateStr);
+            dayItem.classList.remove('selected');
+        } else {
+            // Select the date
+            selectedDates.add(dateStr);
+            dayItem.classList.add('selected');
+        }
+        
+        // Update the display of selected dates
+        updateSelectedDatesDisplay();
+        
+        // Update the hidden input
+        updateRepeatDaysInput();
     }
     
-    // Navigate to previous or next month
-    function navigateMonth(offset) {
-        currentMonth += offset;
+    // Update the display of selected dates
+    function updateSelectedDatesDisplay() {
+        const container = document.getElementById('selected-dates-container');
         
-        // Handle year change
+        if (selectedDates.size === 0) {
+            container.innerHTML = '<span class="text-muted" id="no-dates-selected">No additional dates selected</span>';
+            return;
+        }
+        
+        // Sort the dates
+        const sortedDates = Array.from(selectedDates).sort();
+        container.innerHTML = '';
+        
+        // Add date tags
+        sortedDates.forEach(dateStr => {
+            const dateObj = parseDate(dateStr);
+            
+            const dateTag = document.createElement('div');
+            dateTag.className = 'date-tag';
+            
+            // Format the date nicely (e.g., "Mon 03/27")
+            const dateLabel = document.createElement('span');
+            dateLabel.textContent = new Date(dateObj).toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: '2-digit',
+                day: '2-digit'
+            });
+            
+            // Add a remove button
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'close ms-2';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                removeDateSelection(dateStr);
+            });
+            
+            dateTag.appendChild(dateLabel);
+            dateTag.appendChild(closeBtn);
+            container.appendChild(dateTag);
+        });
+    }
+    
+    // Remove a specific date from the selection
+    function removeDateSelection(dateStr) {
+        selectedDates.delete(dateStr);
+        
+        // Update the calendar if the date is currently visible
+        const dayItem = document.querySelector(`.day-item[data-date="${dateStr}"]`);
+        if (dayItem) {
+            dayItem.classList.remove('selected');
+        }
+        
+        // Update the display
+        updateSelectedDatesDisplay();
+        
+        // Update the hidden input
+        updateRepeatDaysInput();
+    }
+    
+    // Clear all selected dates
+    function clearDateSelection(keepHidden = false) {
+        selectedDates.clear();
+        
+        // Remove selected class from all visible days
+        document.querySelectorAll('.day-item.selected').forEach(item => {
+            item.classList.remove('selected');
+        });
+        
+        // Update the display
+        updateSelectedDatesDisplay();
+        
+        // Update the hidden input
+        if (!keepHidden) {
+            updateRepeatDaysInput();
+        }
+    }
+    
+    // Update the hidden input with selected dates
+    function updateRepeatDaysInput() {
+        const allDates = new Set(selectedDates);
+        
+        // Include the primary date
+        if (primaryDate) {
+            allDates.add(primaryDate);
+        }
+        
+        // Update the hidden input
+        if (allDates.size > 0) {
+            document.getElementById('repeat_days_input').value = Array.from(allDates).sort().join(',');
+        } else {
+            document.getElementById('repeat_days_input').value = '';
+        }
+    }
+    
+    // Navigate to previous/next month
+    function navigateMonth(direction) {
+        currentMonth += direction;
+        
         if (currentMonth < 0) {
             currentMonth = 11;
             currentYear--;
@@ -538,69 +492,174 @@ document.addEventListener('DOMContentLoaded', function() {
             currentYear++;
         }
         
-        // Update the calendar
         updateCalendarHeader();
         generateCalendarDays();
     }
     
-    // Clear date selection (optionally keeping the primary date)
-    function clearDateSelection(keepPrimary = false) {
-        if (keepPrimary) {
-            selectedDates.clear();
-            // Keep primary date if it exists
-            if (primaryDate) {
-                selectedDates.add(primaryDate);
-            }
-        } else {
-            selectedDates.clear();
-        }
-        
-        // Update the hidden input
-        updateSelectedDatesInput();
-        
-        // Refresh the calendar display
-        generateCalendarDays();
+    // Format date as YYYY-MM-DD
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
     
-    // Update the hidden input with the selected dates for form submission
-    function updateSelectedDatesInput() {
-        const datesArray = Array.from(selectedDates);
-        const repeatDaysList = document.getElementById('repeat_days_list');
-        
-        if (repeatDaysList) {
-            repeatDaysList.value = datesArray.join(',');
-        }
-        
-        // Also update a display of selected dates count
-        const selectedCount = document.getElementById('selected-dates-count');
-        if (selectedCount) {
-            const count = selectedDates.size - (selectedDates.has(primaryDate) ? 1 : 0);
-            selectedCount.textContent = count > 0 ? `${count} additional date${count !== 1 ? 's' : ''} selected` : 'No additional dates selected';
-        }
-    }
-    
-    // Check if the mini-calendar exists before initializing
-    if (document.getElementById('repeat_days_container')) {
-        // If the toggle is checked by default, initialize the calendar
-        if (document.getElementById('repeat_days_toggle').checked) {
-            initMiniCalendar();
-        }
-    }
-    
-    // Initialize the direct date selector toggle if it exists
-    const directDateToggle = document.getElementById('direct_date_toggle');
-    if (directDateToggle) {
-        directDateToggle.addEventListener('change', function() {
-            const directDateSelector = document.getElementById('direct_date_selector');
-            if (directDateSelector) {
-                directDateSelector.style.display = this.checked ? 'block' : 'none';
-            }
-        });
+    // Parse date string YYYY-MM-DD
+    function parseDate(dateStr) {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        return new Date(year, month - 1, day);
     }
 
-    // Run position schedules on load
+    // Handle form submission
+    document.getElementById('schedule_form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const date = document.getElementById('schedule_date').value;
+        const startHour = document.getElementById('start_hour').value;
+        const endHour = document.getElementById('end_hour').value;
+        const isRepeatEnabled = document.getElementById('repeat_days_toggle').checked;
+
+        // Update the primary date in case it changed
+        primaryDate = date;
+        
+        // Set the hidden datetime inputs for the first/main date
+        document.getElementById('start_time_input').value = `${date} ${startHour}:00`;
+        document.getElementById('end_time_input').value = `${date} ${endHour}:00`;
+        
+        // Handle repeat days if enabled
+        if (isRepeatEnabled) {
+            // Update the repeat days input with all selected dates
+            updateRepeatDaysInput();
+            
+            // Log selection for debugging
+            console.log('Repeat days selection:', Array.from(selectedDates));
+        } else {
+            // Clear the repeat days input
+            document.getElementById('repeat_days_input').value = '';
+        }
+
+        // Make sure the primary date is included in the input
+        // But only if we have at least one additional day selected
+        if (isRepeatEnabled && selectedDates.size > 0) {
+            let currentValue = document.getElementById('repeat_days_input').value;
+            if (!currentValue.includes(primaryDate)) {
+                if (currentValue) {
+                    currentValue += ',';
+                }
+                currentValue += primaryDate;
+                document.getElementById('repeat_days_input').value = currentValue;
+            }
+        }
+
+        console.log('Form submission:', {
+            date: date,
+            startHour: startHour,
+            endHour: endHour,
+            repeatEnabled: isRepeatEnabled,
+            repeatDays: document.getElementById('repeat_days_input').value
+        });
+
+        // Submit the form
+        this.submit();
+    });
+
+    // Handle delete button
+    document.getElementById('delete_button').addEventListener('click', function() {
+        if (confirm('Are you sure you want to delete this schedule?')) {
+            const scheduleId = document.getElementById('schedule_id').value;
+            
+            // Get the current week_start from the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const weekStart = urlParams.get('week_start');
+            
+            // Check if we're in personal view
+            const isPersonalView = window.location.pathname.includes('/personal_schedule');
+            const deletePath = isPersonalView ? '/schedule/delete/' : '/schedule/delete/';
+            
+            // Redirect with the week_start parameter to maintain the same view
+            if (weekStart) {
+                window.location.href = `${deletePath}${scheduleId}?week_start=${weekStart}${isPersonalView ? '&personal_view=true' : ''}`;
+            } else {
+                window.location.href = `${deletePath}${scheduleId}${isPersonalView ? '?personal_view=true' : ''}`;
+            }
+        }
+    });
+
+    // Initialize positions
     positionSchedules();
-    
-    // Run it again after a small delay to ensure all elements are fully rendered
-    setTimeout(positionSchedules, 100);
+
+    // Update upcoming time off panel
+    function updateUpcomingTimeOff() {
+        const timeOffDiv = document.getElementById('upcoming-time-off');
+        if (!timeOffDiv) return;
+
+        fetch('/api/upcoming_time_off')
+            .then(response => response.json())
+            .then(entries => {
+                if (entries.length === 0) {
+                    timeOffDiv.innerHTML = '<p class="text-muted">No upcoming time off scheduled</p>';
+                    return;
+                }
+
+                timeOffDiv.innerHTML = entries.map(entry => `
+                    <div class="time-off-entry p-3 mb-3" 
+                         style="border-left: 4px solid ${entry.color || '#6c757d'};">
+                        <div class="d-flex align-items-top">
+                            <i data-feather="calendar" class="me-2 mt-1"></i>
+                            <div>
+                                <strong>${entry.username}</strong>
+                                <br>
+                                <small>
+                                    ${entry.start_date} to ${entry.end_date}
+                                    <span class="badge bg-danger ms-1">${entry.duration}</span>
+                                </small>
+                                ${entry.description ? `<div class="mt-1 small">${entry.description}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Initialize the newly added feather icons
+                feather.replace();
+            })
+            .catch(error => {
+                console.error('Error fetching time off entries:', error);
+                timeOffDiv.innerHTML = '<p class="text-danger">Error loading time off entries</p>';
+            });
+    }
+
+    // Update time off entries every minute along with active users
+    updateUpcomingTimeOff();
+    setInterval(updateUpcomingTimeOff, 60000);
+
+    // Update active users panel
+    function updateActiveUsers() {
+        const activeUsersDiv = document.getElementById('active-users');
+        if (!activeUsersDiv) return;
+
+        fetch('/api/active_users')
+            .then(response => response.json())
+            .then(users => {
+                if (users.length === 0) {
+                    activeUsersDiv.innerHTML = '<p class="text-muted">No active technicians</p>';
+                    return;
+                }
+
+                activeUsersDiv.innerHTML = users.map(user => `
+                    <div class="active-user-entry d-flex align-items-center mb-3 p-2" 
+                         style="border-left: 4px solid ${user.color};">
+                        <span class="me-2" style="width: 12px; height: 12px; border-radius: 50%; background-color: ${user.color}"></span>
+                        <span class="fw-medium">${user.username}</span>
+                    </div>
+                `).join('');
+            })
+            .catch(error => {
+                console.error('Error fetching active users:', error);
+                activeUsersDiv.innerHTML = '<p class="text-danger">Error loading active users</p>';
+            });
+    }
+
+    // Update active users every minute
+    updateActiveUsers(); // Call immediately when loaded
+    setInterval(updateActiveUsers, 60000);
 });

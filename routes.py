@@ -302,13 +302,7 @@ def calendar():
         form.technician.data = current_user.id
 
     # Add location choices to the form
-    locations_list = Location.query.filter_by(active=True).order_by(Location.name).all()
-    form.location_id.choices = [(l.id, l.name) for l in locations_list]
-    
-    # Set default location to Plex (ID 1)
-    plex_location = Location.query.filter(Location.name.ilike('Plex')).first()
-    if plex_location:
-        form.location_id.data = plex_location.id
+    form.location_id.choices = [(l.id, l.name) for l in Location.query.filter_by(active=True).order_by(Location.name).all()]
 
     # Get all active locations for the filter dropdown
     locations = Location.query.filter_by(active=True).order_by(Location.name).all()
@@ -371,11 +365,6 @@ def new_schedule():
     if not locations:
         form.location_id.choices = [(0, 'No locations available')]
 
-    # Set default location to Plex
-    plex_location = Location.query.filter(Location.name.ilike('Plex')).first()
-    if plex_location:
-        form.location_id.data = plex_location.id
-        
     # Check if we're dealing with a mobile form submission (with schedule_date, start_hour, end_hour)
     schedule_date = request.form.get('schedule_date')
     start_hour = request.form.get('start_hour')
@@ -493,12 +482,6 @@ def new_schedule():
             if direct_repeat_days:
                 app.logger.debug(f"Found direct_repeat_days_list: {direct_repeat_days}")
                 repeat_days = direct_repeat_days
-            
-            # Check for repeat_days_list field (added to personal_schedule.html and calendar.html)
-            repeat_days_list = request.form.get('repeat_days_list')
-            if not repeat_days and repeat_days_list:
-                app.logger.debug(f"Found repeat_days_list field: {repeat_days_list}")
-                repeat_days = repeat_days_list
                 
             # Next check the repeat_days hidden field (should be the same as direct_repeat_days_list)
             if not repeat_days:
@@ -722,7 +705,7 @@ def new_schedule():
     else:
         return redirect(url_for('calendar', week_start=week_start))
 
-@app.route('/schedule/delete/<int:schedule_id>', methods=['GET', 'POST'])
+@app.route('/schedule/delete/<int:schedule_id>')
 @login_required
 def delete_schedule(schedule_id):
     # Debug information
@@ -1147,11 +1130,6 @@ def personal_schedule():
     if not locations:
         form.location_id.choices = [(0, 'No locations available')]
 
-    # Set default location to Plex
-    plex_location = Location.query.filter(Location.name.ilike('Plex')).first()
-    if plex_location:
-        form.location_id.data = plex_location.id
-    
     # Debug mobile detection
     print(f"is_mobile_device() in personal_schedule: {is_mobile_device()}")
     is_mobile = is_mobile_device()  # Force evaluation

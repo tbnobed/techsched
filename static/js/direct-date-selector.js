@@ -320,22 +320,9 @@ function directUpdateFormWithSelectedDates() {
             console.log("Added repeat_days field to form");
         }
         
-        // Update repeat_days_list field (new field added for compatibility)
-        let repeatDaysListField = document.getElementById('repeat_days_list');
-        if (!repeatDaysListField) {
-            // Create the field if it doesn't exist
-            repeatDaysListField = document.createElement('input');
-            repeatDaysListField.type = 'hidden';
-            repeatDaysListField.name = 'repeat_days_list';
-            repeatDaysListField.id = 'repeat_days_list';
-            form.appendChild(repeatDaysListField);
-            console.log("Added repeat_days_list field to form");
-        }
-        
-        // Set all fields to the same value
+        // Set both fields to the same value
         directRepeatDaysField.value = datesList;
         repeatDaysField.value = datesList;
-        repeatDaysListField.value = datesList;
         
         // Also create individual checkboxes for each date (for compatibility with server-side processing)
         if (directSelectedDates.size > 0) {

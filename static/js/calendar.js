@@ -138,22 +138,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Fix for date display - adjust for timezone issues
             // Use the date from the data attribute directly without timezone conversion
             const startTimeStr = this.dataset.startTime.split(' ')[0]; // Get YYYY-MM-DD portion
-            console.log("Original date from server:", this.dataset.startTime);
-            
-            // Add more detailed debugging
-            const rawDate = new Date(this.dataset.startTime);
-            console.log("JavaScript Date object:", rawDate);
-            console.log("Date as ISO string:", rawDate.toISOString());
-            console.log("Date in local timezone:", rawDate.toString());
-            console.log("Local year/month/day:", rawDate.getFullYear() + '-' + 
-                       (rawDate.getMonth() + 1).toString().padStart(2, '0') + '-' + 
-                       rawDate.getDate().toString().padStart(2, '0'));
-            console.log("UTC year/month/day:", rawDate.getUTCFullYear() + '-' + 
-                       (rawDate.getUTCMonth() + 1).toString().padStart(2, '0') + '-' + 
-                       rawDate.getUTCDate().toString().padStart(2, '0'));
-            
-            // Always use the original server date string
-            console.log("Using date from server:", startTimeStr);
             
             document.getElementById('schedule_date').value = startTimeStr;
             document.getElementById('start_hour').value = startTime.getHours().toString().padStart(2, '0');

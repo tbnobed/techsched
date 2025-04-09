@@ -1069,22 +1069,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Fix for date display - extract date directly from data attribute
             const startTimeStr = this.getAttribute('data-start-time').split(' ')[0]; // Get YYYY-MM-DD portion
-            console.log("Original date from server:", this.getAttribute('data-start-time'));
-            
-            // Add more detailed debugging
-            const rawDate = new Date(this.getAttribute('data-start-time'));
-            console.log("JavaScript Date object:", rawDate);
-            console.log("Date as ISO string:", rawDate.toISOString());
-            console.log("Date in local timezone:", rawDate.toString());
-            console.log("Local year/month/day:", rawDate.getFullYear() + '-' + 
-                       (rawDate.getMonth() + 1).toString().padStart(2, '0') + '-' + 
-                       rawDate.getDate().toString().padStart(2, '0'));
-            console.log("UTC year/month/day:", rawDate.getUTCFullYear() + '-' + 
-                       (rawDate.getUTCMonth() + 1).toString().padStart(2, '0') + '-' + 
-                       rawDate.getUTCDate().toString().padStart(2, '0'));
-            
-            // Always use the original server date string
-            console.log("Using date from server:", startTimeStr);
             
             document.getElementById('schedule_date').value = startTimeStr;
             

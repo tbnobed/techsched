@@ -126,9 +126,54 @@ def favicon():
 def apple_touch_icon():
     return redirect(url_for('static', filename='images/plex_logo_small.png'))
 
+def attempt_db_connection_with_retry():
+    """
+    Attempt to connect to the database with retry logic
+    This helps during container orchestration when the database might not be ready
+    """
+    import time
+    import sqlalchemy.exc
+    max_retries = 30  # Retry for up to 5 minutes (30 * 10 seconds)
+    retry_count = 0
+    
+    logger.info("Attempting to connect to the database...")
+    
+    while retry_count < max_retries:
+        try:
+            # Attempt to connect to the database and create tables
+            with app.app_context():
+                import models
+                engine = db.engine
+                # Test connection
+                conn = engine.connect()
+                conn.close()
+                logger.info("Successfully connected to the database!")
+                
+                # Create tables
+                db.create_all()
+                logger.info("Database tables created successfully!")
+                return True
+        except sqlalchemy.exc.OperationalError as e:
+            retry_count += 1
+            logger.warning(f"Database connection attempt {retry_count}/{max_retries} failed: {str(e)}")
+            if retry_count < max_retries:
+                logger.info(f"Retrying in 10 seconds...")
+                time.sleep(10)
+            else:
+                logger.error("Maximum retry attempts reached. Could not connect to the database.")
+                raise
+        except Exception as e:
+            logger.error(f"Unexpected error connecting to database: {str(e)}")
+            raise
+    
+    return False
+
+# Initialize database with retry logic
+attempt_db_connection_with_retry()
+
+# Import models after database is ready
 with app.app_context():
     import models
-    db.create_all()
 
 # Import and register blueprints
 from routes import *

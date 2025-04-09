@@ -47,6 +47,8 @@ cp -r \
     update_theme_preference.sql \
     add_schedule_created_at.sql \
     update_schedule_columns.sh \
+    docker-entrypoint.sh \
+    db_healthcheck.sh \
     .env.example \
     admin_guide.md \
     technician_quick_start.md \

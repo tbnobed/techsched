@@ -2,7 +2,7 @@
 
 This document provides a step-by-step guide for updating your existing Plex Technician Scheduler installation on Ubuntu with the latest changes.
 
-## Update Steps (Version 1.2.2)
+## Update Steps (Version 1.2.3)
 
 1. **Backup your current installation and database**
 
@@ -68,6 +68,23 @@ docker-compose logs -f
 curl http://localhost:5000/health
 ```
 
+## What's New in Version 1.2.3 (April 9, 2025)
+
+### New Features and Improvements
+- **Enhanced Database Connection Reliability**: Added retry mechanism for database connections to improve stability during startup.
+- **Improved Container Orchestration**: Added wait-for-database script to ensure application starts only when database is ready.
+- **Enhanced Database Health Check**: Added comprehensive database connectivity check to the health endpoint.
+- **Enhanced Schema Update Tools**: New tools to facilitate database schema migrations.
+
+### Bug Fixes
+- Fixed issue with missing database columns in deployments.
+- Fixed connection timing issues during initial setup.
+- Fixed docker-compose dependencies to ensure proper startup sequence.
+
+### Documentation
+- Added detailed troubleshooting guide for database connection issues.
+- Updated deployment documentation with more robust steps.
+
 ## What's New in Version 1.2.2 (March 31, 2025)
 
 ### New Features and Improvements
@@ -87,6 +104,63 @@ curl http://localhost:5000/health
 - Enhanced mobile section in user guide with detailed navigation instructions.
 
 ## Troubleshooting
+
+### If you encounter database connection issues:
+
+1. **Check if database columns are missing**
+   
+   If you see an error like `column schedule.created_at does not exist`, run:
+   
+   ```bash
+   # Run the schedule column update script
+   ./update_schedule_columns.sh
+   
+   # Restart the application
+   docker-compose down
+   docker-compose up -d
+   ```
+
+2. **Check database connection status**
+   
+   Use the database healthcheck script to verify the connection:
+   
+   ```bash
+   # Make the script executable if needed
+   chmod +x db_healthcheck.sh
+   
+   # Run the database healthcheck
+   ./db_healthcheck.sh
+   ```
+
+3. **Verify application health**
+   
+   Check the enhanced health endpoint for more diagnostics:
+   
+   ```bash
+   curl http://localhost:5000/health
+   ```
+   
+   The response will show detailed status about database connectivity.
+
+4. **Check container logs for connection problems**
+   
+   ```bash
+   # Check logs for database connection issues
+   docker-compose logs web | grep -i "database\|connection\|postgres"
+   
+   # Check if the database container is healthy
+   docker-compose logs db
+   ```
+
+5. **Ensure docker-compose settings are correct**
+   
+   Make sure your docker-compose.yml has the proper dependency configuration:
+   
+   ```yaml
+   depends_on:
+     db:
+       condition: service_healthy
+   ```
 
 ### If the browser tab icon is not displaying correctly:
 

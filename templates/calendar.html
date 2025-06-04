@@ -41,24 +41,24 @@
             </a>
             {% else %}
             <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=28)).strftime('%Y-%m-%d'), location_id=selected_location) }}" 
-               class="btn btn-outline-secondary me-2">
-                <i data-feather="chevrons-left"></i> Previous Month
+               class="btn btn-outline-secondary">
+                <i data-feather="chevrons-left"></i>
             </a>
             <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d'), location_id=selected_location) }}" 
-               class="btn btn-outline-primary me-2">
-                <i data-feather="chevron-left"></i> Previous Week
+               class="btn btn-outline-primary">
+                <i data-feather="chevron-left"></i>
             </a>
             <a href="{{ url_for('calendar', location_id=selected_location) }}" 
-               class="btn btn-outline-primary me-2">
-                Current Week
+               class="btn btn-primary">
+                Today
             </a>
             <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d'), location_id=selected_location) }}"
-               class="btn btn-outline-primary me-2">
-                Next Week <i data-feather="chevron-right"></i>
+               class="btn btn-outline-primary">
+                <i data-feather="chevron-right"></i>
             </a>
             <a href="{{ url_for('calendar', week_start=(week_start + timedelta(days=28)).strftime('%Y-%m-%d'), location_id=selected_location) }}"
-               class="btn btn-outline-secondary me-2">
-                Next Month <i data-feather="chevrons-right"></i>
+               class="btn btn-outline-secondary">
+                <i data-feather="chevrons-right"></i>
             </a>
             {% endif %}
             {% if current_user.is_admin %}

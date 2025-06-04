@@ -1817,30 +1817,38 @@ def restore_backup():
                 app.logger.info("Starting quick links restoration...")
                 for link_data in backup_data['quick_links']:
                     try:
-                        title = link_data.get('title', '').lower()
-                        url = link_data.get('url', '').lower()
-
+                        title = link_data.get('title', '')
+                        url = link_data.get('url', '')
+                        
                         # Skip if title or url is missing
                         if not title or not url:
+                            app.logger.warning(f"Skipping quick link with missing title or URL")
                             continue
 
-                        # Check if link already exists
-                        if (title, url) in existing_quick_links:
+                        # Check if link already exists (case-insensitive)
+                        title_lower = title.lower()
+                        url_lower = url.lower()
+                        
+                        if (title_lower, url_lower) in existing_quick_links:
                             app.logger.info(f"Quick link already exists: {title}")
                             continue
 
+                        # Create new quick link
                         link = QuickLink(
-                            title=link_data['title'],
-                            url=link_data['url'],
+                            title=title,
+                            url=url,
                             icon=link_data.get('icon', 'link'),
-                            category=link_data['category'],
+                            category=link_data.get('category', 'Uncategorized'),
                             order=link_data.get('order', 0)
                         )
                         db.session.add(link)
+                        
+                        # Add to existing_quick_links to prevent duplicates within this restore
+                        existing_quick_links[(title_lower, url_lower)] = link
                         app.logger.info(f"Created new quick link: {title}")
 
                     except Exception as e:
-                        app.logger.error(f"Error processing quick link: {str(e)}")
+                        app.logger.error(f"Error processing quick link {link_data.get('title', 'Unknown')}: {str(e)}")
                         continue
 
                 db.session.commit()

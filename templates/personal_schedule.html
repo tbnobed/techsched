@@ -45,7 +45,7 @@
         {% set is_today = current_date.date() == today.date() %}
         <div class="day-column {{ 'today' if is_today else '' }}">
             <div class="day-header {{ 'today' if is_today else '' }}" data-bs-toggle="modal" data-bs-target="#scheduleModal" data-date="{{ current_date.strftime('%Y-%m-%d') }}">
-                {{ current_date.strftime('%A %m/%d') }}
+                {{ current_date.strftime('%a %m/%d') }}
             </div>
             <div class="day-slots" data-date="{{ current_date.strftime('%Y-%m-%d') }}">
                 {% for hour in range(24) %}

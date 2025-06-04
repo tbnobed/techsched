@@ -322,62 +322,58 @@
             {% if current_user.is_authenticated %}
             <!-- Modern Sidebar -->
             <div class="col-lg-3">
-                <div class="sidebar">
-                <!-- Current Time Display -->
-                <div id="current-time-display" class="text-center">
-                    <h4 class="current-datetime"></h4>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Currently Active</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="active-users">
-                            Loading active users...
-                        </div>
+                <div class="sidebar-section">
+                    <div id="current-time-display" class="text-center animate-fade-scale">
+                        <h4 class="current-datetime text-gradient"></h4>
                     </div>
                 </div>
 
-                <!-- Upcoming Time Off Panel -->
-                <div class="card mt-3">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Upcoming Time Off</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="upcoming-time-off">
-                            Loading time off entries...
-                        </div>
+                <div class="sidebar-section">
+                    <h6 class="sidebar-title">
+                        <i data-feather="activity"></i>
+                        Currently Active
+                    </h6>
+                    <div id="active-users" class="animate-slide-up">
+                        <div class="loading-skeleton" style="height: 60px; margin-bottom: 12px;"></div>
+                        <div class="loading-skeleton" style="height: 60px; margin-bottom: 12px;"></div>
                     </div>
                 </div>
 
-                <!-- Open Tickets -->
-                <div class="card mt-3">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Active Tickets</h5>
+                <div class="sidebar-section">
+                    <h6 class="sidebar-title">
+                        <i data-feather="clock"></i>
+                        Upcoming Time Off
+                    </h6>
+                    <div id="upcoming-time-off" class="animate-slide-up">
+                        <div class="loading-skeleton" style="height: 40px; margin-bottom: 8px;"></div>
+                        <div class="loading-skeleton" style="height: 40px; margin-bottom: 8px;"></div>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="list-group list-group-flush">
-                            {% if request.path.startswith('/tickets/dashboard') %}
-                                <!-- For the dashboard, use our function which gets all active tickets -->
-                                {% from "tickets/macros/ticket_utils.html" import display_active_tickets %}
-                                {{ display_active_tickets()|safe }}
-                            {% else %}
-                                <!-- For all other pages, use the standard get_user_tickets function -->
-                                {% set tickets = get_user_tickets() %}
-                                {% if tickets %}
-                                    {% for ticket in tickets %}
-                                    <a href="{{ url_for('tickets.view_ticket', ticket_id=ticket.id) }}" 
-                                       class="list-group-item list-group-item-action d-flex align-items-center">
-                                        {% if ticket.priority == 3 %}
-                                            <span class="badge bg-danger me-2">Urgent</span>
-                                        {% elif ticket.priority == 2 %}
-                                            <span class="badge bg-warning text-dark me-2">High</span>
-                                        {% elif ticket.priority == 1 %}
-                                            <span class="badge bg-info me-2">Medium</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary me-2">Low</span>
-                                        {% endif %}
+                </div>
+
+                <div class="sidebar-section">
+                    <h6 class="sidebar-title">
+                        <i data-feather="alert-circle"></i>
+                        Active Tickets
+                    </h6>
+                    <div class="animate-slide-up">
+                        {% if request.path.startswith('/tickets/dashboard') %}
+                            {% from "tickets/macros/ticket_utils.html" import display_active_tickets %}
+                            {{ display_active_tickets()|safe }}
+                        {% else %}
+                            {% set tickets = get_user_tickets() %}
+                            {% if tickets %}
+                                {% for ticket in tickets %}
+                                <a href="{{ url_for('tickets.view_ticket', ticket_id=ticket.id) }}" 
+                                   class="quick-link-item">
+                                    {% if ticket.priority == 3 %}
+                                        <span class="badge badge-danger">Urgent</span>
+                                    {% elif ticket.priority == 2 %}
+                                        <span class="badge badge-warning">High</span>
+                                    {% elif ticket.priority == 1 %}
+                                        <span class="badge badge-primary">Medium</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Low</span>
+                                    {% endif %}
                                         
                                         <div>
                                             <div class="fw-bold text-truncate" style="max-width: 190px;">{{ ticket.title }}</div>
@@ -406,29 +402,25 @@
                     </div>
                 </div>
 
-                <!-- Dynamic Quick Links -->
-                <div class="card mt-3">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Quick Links</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="list-group list-group-flush p-2">
-                            {% for link in get_quick_links() %}
-                            <a href="{{ link.url }}" target="_blank"
-                               class="list-group-item list-group-item-action d-flex align-items-center mb-2 p-3"
-                               style="border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.08); border: 1px solid var(--dark-border); transform: translateY(0); transition: transform 0.3s ease, box-shadow 0.3s ease;"
-                               onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.12)';"
-                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.08)';">
-                                <i data-feather="{{ link.icon }}" class="me-2"></i>
-                                {{ link.title }}
-                            </a>
-                            {% endfor %}
-                        </div>
+                <div class="sidebar-section">
+                    <h6 class="sidebar-title">
+                        <i data-feather="link"></i>
+                        Quick Links
+                    </h6>
+                    <div class="quick-links animate-slide-up">
+                        {% for link in get_quick_links() %}
+                        <a href="{{ link.url }}" target="_blank" class="quick-link-item">
+                            <i data-feather="{{ link.icon }}" class="quick-link-icon"></i>
+                            <span>{{ link.title }}</span>
+                        </a>
+                        {% endfor %}
                     </div>
                 </div>
+                </div>
             </div>
-            <!-- Main Content -->
-            <div class="col-md-9">
+            <!-- Main Content Area -->
+            <div class="col-lg-9">
+                <div class="animate-fade-scale">
             {% endif %}
 
             {% with messages = get_flashed_messages() %}
@@ -442,12 +434,13 @@
             {% block content %}{% endblock %}
 
             {% if current_user.is_authenticated %}
+                </div>
             </div>
             {% endif %}
         </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
     <script src="{{ url_for('static', filename='js/calendar.js') }}?v={{ now.timestamp() | int }}"></script>
     <script>

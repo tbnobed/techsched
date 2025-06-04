@@ -1,42 +1,43 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="calendar-container">
-    <div class="calendar-header d-flex justify-content-between align-items-center mb-4">
-        <div class="d-flex align-items-center">
-            <h2>{{ week_start.strftime('%B %Y') }}</h2>
-            <div class="ms-4">
-                <select id="locationFilter" class="form-select calendar-location-filter" onchange="applyLocationFilter(this.value)">
-                    <option value="">All Locations</option>
-                    {% for location in locations %}
-                    <option value="{{ location.id }}" {% if selected_location == location.id %}selected{% endif %}>
-                        {{ location.name }}
-                    </option>
-                    {% endfor %}
-                </select>
+<div class="calendar-container animate-fade-scale">
+    <div class="calendar-header p-4 border-bottom">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center">
+                <h2 class="mb-0 text-gradient">{{ week_start.strftime('%B %Y') }}</h2>
+                <div class="ms-4">
+                    <select id="locationFilter" class="form-control" onchange="applyLocationFilter(this.value)">
+                        <option value="">All Locations</option>
+                        {% for location in locations %}
+                        <option value="{{ location.id }}" {% if selected_location == location.id %}selected{% endif %}>
+                            {{ location.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-        </div>
-        <div class="calendar-controls">
+            <div class="calendar-controls d-flex gap-2">
             {% if personal_view %}
             <a href="{{ url_for('personal_schedule', week_start=(week_start - timedelta(days=28)).strftime('%Y-%m-%d')) }}" 
-               class="btn btn-outline-secondary me-2">
-                <i data-feather="chevrons-left"></i> Previous Month
+               class="btn btn-outline-secondary">
+                <i data-feather="chevrons-left"></i>
             </a>
             <a href="{{ url_for('personal_schedule', week_start=(week_start - timedelta(days=7)).strftime('%Y-%m-%d')) }}" 
-               class="btn btn-outline-primary me-2">
-                <i data-feather="chevron-left"></i> Previous Week
+               class="btn btn-outline-primary">
+                <i data-feather="chevron-left"></i>
             </a>
             <a href="{{ url_for('personal_schedule') }}" 
-               class="btn btn-outline-primary me-2">
-                Current Week
+               class="btn btn-primary">
+                Today
             </a>
             <a href="{{ url_for('personal_schedule', week_start=(week_start + timedelta(days=7)).strftime('%Y-%m-%d')) }}"
-               class="btn btn-outline-primary me-2">
-                Next Week <i data-feather="chevron-right"></i>
+               class="btn btn-outline-primary">
+                <i data-feather="chevron-right"></i>
             </a>
             <a href="{{ url_for('personal_schedule', week_start=(week_start + timedelta(days=28)).strftime('%Y-%m-%d')) }}"
-               class="btn btn-outline-secondary me-2">
-                Next Month <i data-feather="chevrons-right"></i>
+               class="btn btn-outline-secondary">
+                <i data-feather="chevrons-right"></i>
             </a>
             {% else %}
             <a href="{{ url_for('calendar', week_start=(week_start - timedelta(days=28)).strftime('%Y-%m-%d'), location_id=selected_location) }}" 

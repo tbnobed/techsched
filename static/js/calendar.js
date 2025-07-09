@@ -107,86 +107,65 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.style.height = `${height}px`;
             });
 
-            // Position overlapping events horizontally - evenly distribute across column width
+            // Position overlapping events horizontally - handle same-start-time events specially
             overlappingGroups.forEach(group => {
                 if (group.length > 1) {
-                    console.log(`Processing overlapping group of ${group.length} events:`);
-                    group.forEach((event, i) => {
-                        console.log(`  Event ${i}: ${event.dataset.startTime} - ${event.dataset.endTime}`);
+                    // Group events by start time within this overlap group
+                    const startTimeGroups = {};
+                    group.forEach(event => {
+                        const startTime = event.dataset.startTime;
+                        if (!startTimeGroups[startTime]) {
+                            startTimeGroups[startTime] = [];
+                        }
+                        startTimeGroups[startTime].push(event);
                     });
                     
-                    // Check if events start at exactly the same time
-                    const firstEventStart = new Date(group[0].dataset.startTime);
-                    const allSameStartTime = group.every(event => {
-                        const eventStart = new Date(event.dataset.startTime);
-                        console.log(`  Comparing ${eventStart.getTime()} === ${firstEventStart.getTime()} = ${eventStart.getTime() === firstEventStart.getTime()}`);
-                        return eventStart.getTime() === firstEventStart.getTime();
-                    });
+                    // Get all start time groups that have multiple events
+                    const sameTimeGroups = Object.values(startTimeGroups).filter(g => g.length > 1);
                     
-                    if (allSameStartTime) {
-                        // Events start at same time - divide evenly across column width
-                        const eventWidth = Math.floor(100 / group.length);
-                        const spacing = 1; // 1% spacing between events
+                    // If we have events that start at the same time, handle them specially
+                    if (sameTimeGroups.length > 0) {
+                        let processedEvents = new Set();
                         
-                        group.forEach((event, index) => {
-                            const leftPosition = index * eventWidth;
-                            const actualWidth = eventWidth - spacing;
+                        sameTimeGroups.forEach(sameTimeGroup => {
+                            // Divide these same-time events evenly across column width
+                            const eventWidth = Math.floor(100 / sameTimeGroup.length);
+                            const spacing = 1;
                             
-                            // Ensure we don't exceed column boundaries
-                            if (leftPosition + actualWidth <= 100) {
-                                event.style.width = `${actualWidth}%`;
+                            sameTimeGroup.forEach((event, index) => {
+                                const leftPosition = index * eventWidth;
+                                const actualWidth = Math.min(eventWidth - spacing, 100 - leftPosition);
+                                
+                                event.style.width = `${Math.max(10, actualWidth)}%`;
                                 event.style.left = `${leftPosition}%`;
-                            } else {
-                                // Fallback: fit within remaining space
-                                const remainingSpace = 100 - leftPosition;
-                                event.style.width = `${Math.max(10, remainingSpace - spacing)}%`;
-                                event.style.left = `${leftPosition}%`;
-                            }
-                            
-                            console.log(`Same time event ${index}: left=${leftPosition}%, width=${actualWidth}%, zIndex=${10 + index}`);
-                            
+                                event.style.right = 'auto';
+                                event.style.boxSizing = 'border-box';
+                                event.style.zIndex = 10 + index;
+                                
+                                processedEvents.add(event);
+                            });
+                        });
+                        
+                        // Handle remaining events (that don't have same start times) with offset positioning
+                        const remainingEvents = group.filter(event => !processedEvents.has(event));
+                        const offsetStep = 8;
+                        
+                        remainingEvents.forEach((event, index) => {
+                            const leftPosition = index * offsetStep;
+                            const maxWidth = 100 - leftPosition;
+                            event.style.width = `${Math.min(75, maxWidth)}%`;
+                            event.style.left = `${leftPosition}%`;
                             event.style.right = 'auto';
                             event.style.boxSizing = 'border-box';
-                            event.style.zIndex = 10 + index;
+                            event.style.zIndex = 20 + index; // Higher z-index for overlapping events
                         });
                     } else {
-                        // Events start at different times - use offset positioning
-                        const offsetStep = 8; // Fixed 8% offset between events
-                        
+                        // No same-time events, use standard offset positioning
+                        const offsetStep = 8;
                         group.forEach((event, index) => {
                             const leftPosition = index * offsetStep;
-                            
-                            // Measure the text width in the header
-                            const headerElement = event.querySelector('.schedule-header');
-                            if (headerElement) {
-                                // Create a temporary element to measure text width
-                                const tempElement = document.createElement('span');
-                                tempElement.style.visibility = 'hidden';
-                                tempElement.style.position = 'absolute';
-                                tempElement.style.whiteSpace = 'nowrap';
-                                tempElement.style.fontSize = window.getComputedStyle(headerElement).fontSize;
-                                tempElement.style.fontFamily = window.getComputedStyle(headerElement).fontFamily;
-                                tempElement.style.fontWeight = window.getComputedStyle(headerElement).fontWeight;
-                                tempElement.textContent = headerElement.textContent;
-                                
-                                document.body.appendChild(tempElement);
-                                const textWidth = tempElement.offsetWidth;
-                                document.body.removeChild(tempElement);
-                                
-                                // Calculate width based on text, with some padding
-                                const parentWidth = event.parentElement.offsetWidth;
-                                const textWidthPercent = ((textWidth + 16) / parentWidth) * 100; // Add 16px padding
-                                const minWidth = 60; // Minimum 60% width
-                                const maxWidth = Math.min(95, 100 - leftPosition); // Stay within bounds
-                                const calculatedWidth = Math.max(minWidth, Math.min(textWidthPercent, maxWidth));
-                                
-                                event.style.width = `${calculatedWidth}%`;
-                            } else {
-                                // Fallback to fixed width if no header found
-                                const maxWidth = 100 - leftPosition;
-                                event.style.width = `${Math.min(75, maxWidth)}%`;
-                            }
-                            
+                            const maxWidth = 100 - leftPosition;
+                            event.style.width = `${Math.min(75, maxWidth)}%`;
                             event.style.left = `${leftPosition}%`;
                             event.style.right = 'auto';
                             event.style.boxSizing = 'border-box';

@@ -333,7 +333,7 @@
         <div class="row">
             {% if current_user.is_authenticated %}
             <!-- Side Panel for Active Users -->
-            <div class="col-md-3 mb-4">
+            <div class="col-md-2 col-lg-1 mb-4">
                 <!-- Current Time Display -->
                 <div id="current-time-display" class="text-center">
                     <h4 class="current-datetime"></h4>
@@ -439,7 +439,7 @@
                 </div>
             </div>
             <!-- Main Content -->
-            <div class="col-md-9">
+            <div class="col-md-10 col-lg-11">
             {% endif %}
 
             {% with messages = get_flashed_messages() %}

@@ -110,10 +110,16 @@ document.addEventListener('DOMContentLoaded', function() {
             // Position overlapping events horizontally - evenly distribute across column width
             overlappingGroups.forEach(group => {
                 if (group.length > 1) {
+                    console.log(`Processing overlapping group of ${group.length} events:`);
+                    group.forEach((event, i) => {
+                        console.log(`  Event ${i}: ${event.dataset.startTime} - ${event.dataset.endTime}`);
+                    });
+                    
                     // Check if events start at exactly the same time
                     const firstEventStart = new Date(group[0].dataset.startTime);
                     const allSameStartTime = group.every(event => {
                         const eventStart = new Date(event.dataset.startTime);
+                        console.log(`  Comparing ${eventStart.getTime()} === ${firstEventStart.getTime()} = ${eventStart.getTime() === firstEventStart.getTime()}`);
                         return eventStart.getTime() === firstEventStart.getTime();
                     });
                     

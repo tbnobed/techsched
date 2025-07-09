@@ -175,8 +175,8 @@ body {
     min-height: 40px;
     /* Create a gradient that's solid at top (header) and transparent at bottom (body) */
     background: linear-gradient(to bottom, 
-        currentColor 0%, 
-        currentColor 32px, 
+        var(--user-color) 0%, 
+        var(--user-color) 32px, 
         transparent 32px, 
         transparent 100%) !important;
 }

@@ -110,7 +110,7 @@
                 {% endif %}
                 {% for schedule in schedules if schedule.start_time.date() == current_date.date() %}
                     <div class="schedule-event"
-                         style="background-color: {{ '#6a6d6c' if schedule.time_off else schedule.technician.color }}"
+                         style="--user-color: {{ '#6a6d6c' if schedule.time_off else schedule.technician.color }};"
                          data-schedule-id="{{ schedule.id }}"
                          data-technician-id="{{ schedule.technician_id }}"
                          data-start-time="{{ schedule.start_time.strftime('%Y-%m-%d %H:%M:%S') }}"

@@ -730,17 +730,47 @@ document.addEventListener('DOMContentLoaded', function() {
         const timeLines = document.querySelectorAll('.current-time-line');
         if (timeLines.length === 0) return;
         
+        // Get current time in user's timezone
         const now = new Date();
-        const currentHour = now.getHours();
-        const currentMinute = now.getMinutes();
+        const userTimezone = window.userTimezone || 'UTC';
+        
+        // Create time in user's timezone using Intl API
+        let currentHour, currentMinute, timeString;
+        
+        try {
+            // Get the current time in the user's timezone
+            const timeInUserTimezone = new Intl.DateTimeFormat('en-US', {
+                timeZone: userTimezone,
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }).format(now);
+            
+            // Parse the formatted time
+            const [hour, minute] = timeInUserTimezone.split(':').map(Number);
+            currentHour = hour;
+            currentMinute = minute;
+            
+            // Format time for display
+            timeString = new Intl.DateTimeFormat('en-US', {
+                timeZone: userTimezone,
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            }).format(now);
+            
+        } catch (error) {
+            console.warn('Error getting time in user timezone, falling back to local time:', error);
+            // Fallback to local time
+            currentHour = now.getHours();
+            currentMinute = now.getMinutes();
+            timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
         
         // Calculate position: each hour is 60px, so we need to find the exact position
         const hourPixels = 60; // Height of each hour slot
         const totalMinutes = currentHour * 60 + currentMinute;
         const topPosition = (totalMinutes / 60) * hourPixels;
-        
-        // Format time for display
-        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
         timeLines.forEach(timeLine => {
             timeLine.style.top = `${topPosition}px`;

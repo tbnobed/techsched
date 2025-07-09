@@ -73,6 +73,9 @@
     </div>
 
     <script>
+        // Pass timezone from server to client
+        window.userTimezone = '{{ user_timezone }}';
+        
         function applyLocationFilter(locationId) {
             const currentUrl = new URL(window.location.href);
             if (locationId) {

@@ -339,6 +339,7 @@ def calendar():
                             locations=locations,
                             selected_location=location_filter,
                             today=datetime.now(current_user.get_timezone()),
+                            user_timezone=str(current_user.get_timezone()),
                             datetime=datetime,
                             timedelta=timedelta)
 
@@ -1149,6 +1150,7 @@ def personal_schedule():
                             form=form,
                             locations=locations,  # Add locations to mobile template
                             today=datetime.now(current_user.get_timezone()),
+                            user_timezone=str(current_user.get_timezone()),
                             datetime=datetime,
                             timedelta=timedelta,
                             personal_view=True,
@@ -1160,6 +1162,7 @@ def personal_schedule():
                             week_end=week_start + timedelta(days=7),
                             form=form,
                             today=datetime.now(current_user.get_timezone()),
+                            user_timezone=str(current_user.get_timezone()),
                             datetime=datetime,
                             timedelta=timedelta,
                             personal_view=True)

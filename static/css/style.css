@@ -173,8 +173,7 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     border: 1px solid rgba(255,255,255,0.2);
     min-height: 40px;
-    /* Make the overall background transparent except for header */
-    background: rgba(255, 255, 255, 0.1) !important;
+    /* Keep user colors - no background override */
 }
 
 .schedule-event:hover {
@@ -193,10 +192,10 @@ body {
     min-height: 24px;
 }
 
-/* Schedule body with transparent background - this area fills the time duration */
+/* Schedule body with semi-transparent background using user's color */
 .schedule-body {
     padding: 4px 8px 6px 8px;
-    background: transparent !important;
+    background: rgba(255, 255, 255, 0.15) !important;
     border-radius: 0 0 6px 6px;
     color: white;
     min-height: 20px;

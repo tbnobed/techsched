@@ -41,6 +41,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             ? 24 
                             : existingEnd.getHours() + existingEnd.getMinutes() / 60;
 
+                        // Events that start at exactly the same time should always be grouped together
+                        if (eventStart.getTime() === existingStart.getTime()) {
+                            return true;
+                        }
+
+                        // Regular overlap detection
                         return (
                             eventStart < (existingEndHour === 24 ? new Date(existingEnd).setHours(24, 0, 0) : existingEnd) && 
                             (normalizedEndHour === 24 ? new Date(eventEnd).setHours(24, 0, 0) : eventEnd) > existingStart
@@ -72,6 +78,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const end2 = new Date(event2.dataset.endTime);
                                 const end2Hour = end2.getHours() === 0 && end2.getMinutes() === 0 ? 24 : end2.getHours() + end2.getMinutes() / 60;
 
+                                // Events that start at exactly the same time should be in the same group
+                                if (start1.getTime() === start2.getTime()) {
+                                    return true;
+                                }
+
+                                // Regular overlap detection
                                 return (
                                     start1 < (end2Hour === 24 ? new Date(end2).setHours(24, 0, 0) : end2) && 
                                     (end1Hour === 24 ? new Date(end1).setHours(24, 0, 0) : end1) > start2

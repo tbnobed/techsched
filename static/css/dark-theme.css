@@ -33,6 +33,19 @@ body {
   color: var(--dark-text);
 }
 
+/* Remove focus outline from all elements */
+*:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Specifically target current time display */
+#current-time-display * {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
 .navbar {
   background-color: var(--dark-panel) !important;
   border-bottom: 1px solid var(--dark-border);

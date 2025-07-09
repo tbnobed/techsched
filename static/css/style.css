@@ -3,6 +3,19 @@ body {
     background-color: #f8f9fa;
 }
 
+/* Remove focus outline from all elements */
+*:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Specifically target current time display */
+#current-time-display * {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
 /* Calendar Styles */
 .calendar-container {
     background: white;

@@ -173,10 +173,21 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     border: 1px solid rgba(255,255,255,0.2);
     min-height: 40px;
-    display: flex;
-    flex-direction: column;
-    /* Apply semi-transparent background to entire event */
-    position: relative;
+    /* Apply semi-transparent background to entire event using pseudo-element */
+    background: transparent !important;
+}
+
+.schedule-event::before {
+    content: '';
+    position: absolute;
+    top: 32px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--user-color);
+    opacity: 0.2;
+    border-radius: 0 0 6px 6px;
+    z-index: -1;
 }
 
 .schedule-event:hover {
@@ -195,28 +206,14 @@ body {
     min-height: 24px;
 }
 
-/* Schedule body fills remaining space with semi-transparent background */
+/* Schedule body with transparent background - color comes from parent pseudo-element */
 .schedule-body {
     padding: 4px 8px 6px 8px;
     background: transparent !important;
     border-radius: 0 0 6px 6px;
     color: white;
-    flex: 1;
+    min-height: 20px;
     text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-    position: relative;
-}
-
-.schedule-body::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--user-color);
-    opacity: 0.2;
-    border-radius: 0 0 6px 6px;
-    z-index: -1;
 }
 
 .schedule-title {

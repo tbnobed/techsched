@@ -173,12 +173,8 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     border: 1px solid rgba(255,255,255,0.2);
     min-height: 40px;
-    /* Create a gradient that's solid at top (header) and transparent at bottom (body) */
-    background: linear-gradient(to bottom, 
-        var(--user-color) 0%, 
-        var(--user-color) 32px, 
-        transparent 32px, 
-        transparent 100%) !important;
+    /* Make entire event transparent - only header will have color */
+    background: transparent !important;
 }
 
 .schedule-event:hover {
@@ -187,13 +183,13 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 
-/* Schedule header with transparent background - color comes from parent gradient */
+/* Schedule header with solid user color background */
 .schedule-header {
     padding: 6px 8px 4px 8px;
     color: white;
     font-weight: bold;
     border-radius: 6px 6px 0 0;
-    background: transparent !important;
+    background: var(--user-color) !important;
     min-height: 24px;
 }
 

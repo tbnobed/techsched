@@ -107,14 +107,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.style.height = `${height}px`;
             });
 
-            // Position overlapping events horizontally
+            // Position overlapping events horizontally - make them wider and overlap
             overlappingGroups.forEach(group => {
                 if (group.length > 1) {
-                    const width = 100 / group.length;
+                    // Make overlapping events wider (120% of original) and offset them
+                    const baseWidth = 120; // 120% width for better readability
+                    const offsetPercent = 15; // Offset each event by 15%
+                    
                     group.forEach((event, index) => {
-                        event.style.width = `calc(${width}% - 4px)`;
-                        event.style.left = `calc(${index * width}% + 2px)`;
+                        event.style.width = `${baseWidth}%`;
+                        event.style.left = `${index * offsetPercent}%`;
                         event.style.boxSizing = 'border-box';
+                        event.style.zIndex = 10 + index; // Stack them properly
                     });
                 }
             });

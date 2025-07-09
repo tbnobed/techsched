@@ -724,4 +724,32 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update active users every minute
     updateActiveUsers(); // Call immediately when loaded
     setInterval(updateActiveUsers, 60000);
+    
+    // Current time line functionality
+    function updateCurrentTimeLine() {
+        const timeLines = document.querySelectorAll('.current-time-line');
+        if (timeLines.length === 0) return;
+        
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        
+        // Calculate position: each hour is 60px, so we need to find the exact position
+        const hourPixels = 60; // Height of each hour slot
+        const totalMinutes = currentHour * 60 + currentMinute;
+        const topPosition = (totalMinutes / 60) * hourPixels;
+        
+        // Format time for display
+        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        timeLines.forEach(timeLine => {
+            timeLine.style.top = `${topPosition}px`;
+            timeLine.style.display = 'block';
+            timeLine.setAttribute('data-time', timeString);
+        });
+    }
+    
+    // Initialize current time line and update it every minute
+    updateCurrentTimeLine();
+    setInterval(updateCurrentTimeLine, 60000);
 });

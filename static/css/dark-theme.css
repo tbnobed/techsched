@@ -98,6 +98,20 @@ body {
 
 .table td, .table th {
   border-top: 1px solid var(--dark-border);
+}
+
+/* Current Time Line - Dark Theme */
+.current-time-line {
+  background: var(--dark-danger);
+}
+
+.current-time-line::before {
+  background: var(--dark-danger);
+}
+
+.current-time-line::after {
+  background: var(--dark-danger);
+}
   padding: 12px 15px !important;
   color: #ffffff !important;
   border-bottom: 1px solid #2c3e50 !important;

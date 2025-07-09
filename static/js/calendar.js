@@ -107,19 +107,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.style.height = `${height}px`;
             });
 
-            // Position overlapping events horizontally - make them wider but stay within bounds
+            // Position overlapping events horizontally - ensure they stay within column bounds
             overlappingGroups.forEach(group => {
                 if (group.length > 1) {
-                    // Calculate optimal width and offset to fit within column
-                    const maxOffset = (group.length - 1) * 10; // 10% offset per event
-                    const availableWidth = 100 - maxOffset; // Remaining width after offsets
-                    const eventWidth = Math.min(100, availableWidth + 15); // Add 15% for better readability
+                    // Calculate safe positioning to stay within 100% column width
+                    const offsetStep = Math.min(8, 60 / group.length); // Max 8% offset, smaller for more events
+                    const maxWidth = 100 - ((group.length - 1) * offsetStep); // Ensure last event fits
+                    const eventWidth = Math.max(maxWidth, 70); // Minimum 70% width for readability
                     
                     group.forEach((event, index) => {
-                        event.style.width = `${eventWidth}%`;
-                        event.style.left = `${index * 10}%`; // 10% offset between events
+                        const leftPosition = index * offsetStep;
+                        const actualWidth = Math.min(eventWidth, 100 - leftPosition); // Clamp to column boundary
+                        
+                        event.style.width = `${actualWidth}%`;
+                        event.style.left = `${leftPosition}%`;
+                        event.style.right = 'auto'; // Clear any right positioning
                         event.style.boxSizing = 'border-box';
-                        event.style.zIndex = 10 + index; // Stack them properly
+                        event.style.zIndex = 10 + index;
                     });
                 }
             });

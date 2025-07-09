@@ -119,10 +119,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (allSameStartTime) {
                         // Events start at same time - divide evenly across column width
-                        const eventWidth = 100 / group.length;
+                        const eventWidth = Math.floor(100 / group.length);
+                        const spacing = 1; // 1% spacing between events
+                        
                         group.forEach((event, index) => {
-                            event.style.width = `${eventWidth - 1}%`; // Subtract 1% for spacing
-                            event.style.left = `${index * eventWidth}%`;
+                            const leftPosition = index * eventWidth;
+                            const actualWidth = eventWidth - spacing;
+                            
+                            // Ensure we don't exceed column boundaries
+                            if (leftPosition + actualWidth <= 100) {
+                                event.style.width = `${actualWidth}%`;
+                                event.style.left = `${leftPosition}%`;
+                            } else {
+                                // Fallback: fit within remaining space
+                                const remainingSpace = 100 - leftPosition;
+                                event.style.width = `${Math.max(10, remainingSpace - spacing)}%`;
+                                event.style.left = `${leftPosition}%`;
+                            }
+                            
+                            console.log(`Same time event ${index}: left=${leftPosition}%, width=${actualWidth}%, zIndex=${10 + index}`);
+                            
                             event.style.right = 'auto';
                             event.style.boxSizing = 'border-box';
                             event.style.zIndex = 10 + index;

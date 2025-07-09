@@ -197,7 +197,7 @@ body {
 .day-slots {
     position: relative;
     height: calc(24 * 60px); /* 24 hours */
-    overflow: visible;
+    overflow: hidden; /* Contain schedules within day boundaries */
 }
 
 /* Schedule header with solid user color background */

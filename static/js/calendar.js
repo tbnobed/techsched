@@ -119,29 +119,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.style.height = `${height}px`;
             });
 
-            // Position overlapping events horizontally - ensure they stay within column bounds
+            // Position overlapping events horizontally - evenly distribute across column width
             overlappingGroups.forEach(group => {
                 if (group.length > 1) {
                     console.log(`Positioning group of ${group.length} overlapping events`);
                     
-                    // Calculate positioning that fits all events within 100% width
                     const totalEvents = group.length;
                     const maxUsableWidth = 95; // Leave 5% margin
+                    const minEventWidth = 30; // Minimum width for readability
                     
-                    // If too many events, reduce offset; if few events, increase offset
-                    let offsetStep;
+                    // Calculate the best distribution strategy
+                    let eventWidth, offsetStep;
+                    
                     if (totalEvents <= 3) {
-                        offsetStep = 15; // Larger offset for better visibility
-                    } else if (totalEvents <= 5) {
-                        offsetStep = 10;
+                        // For few events, use generous spacing
+                        eventWidth = 60;
+                        offsetStep = (maxUsableWidth - eventWidth) / (totalEvents - 1);
                     } else {
-                        offsetStep = Math.max(5, maxUsableWidth / totalEvents); // Ensure all fit
+                        // For many events, distribute evenly across available width
+                        // Calculate how much space each event gets
+                        const availableSpace = maxUsableWidth;
+                        const idealWidth = Math.max(minEventWidth, availableSpace / totalEvents);
+                        const idealOffset = availableSpace / totalEvents;
+                        
+                        eventWidth = Math.min(idealWidth, 50); // Cap at 50% max
+                        offsetStep = idealOffset;
                     }
                     
                     group.forEach((event, index) => {
-                        const leftPosition = Math.min(index * offsetStep, maxUsableWidth - 40); // Ensure at least 40% width
-                        const remainingWidth = maxUsableWidth - leftPosition;
-                        const eventWidth = Math.max(40, Math.min(75, remainingWidth)); // Between 40-75% width
+                        const leftPosition = Math.min(index * offsetStep, maxUsableWidth - eventWidth);
                         
                         event.style.width = `${eventWidth}%`;
                         event.style.left = `${leftPosition}%`;
@@ -150,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         event.style.zIndex = 10 + index;
                         event.style.position = 'absolute';
                         
-                        console.log(`Event ${index}: left=${leftPosition}%, width=${eventWidth}%, zIndex=${10 + index}`);
+                        console.log(`Event ${index}: left=${leftPosition.toFixed(1)}%, width=${eventWidth}%, zIndex=${10 + index}`);
                     });
                 } else {
                     // Single events should use full width

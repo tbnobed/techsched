@@ -259,6 +259,17 @@ body {
     vertical-align: middle;
 }
 
+.schedule-desc {
+    font-size: 0.75em;
+    font-weight: 400;
+    line-height: 1.2;
+    margin-top: 2px;
+    opacity: 0.9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .schedule-tech {
     font-size: 0.75em;
     opacity: 0.9;

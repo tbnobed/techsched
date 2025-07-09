@@ -81,12 +81,12 @@
                                 {{ schedule.location.name }}
                             </div>
                             {% endif %}
-                        </div>
-                        
-                        <div class="schedule-body">
                             {% if schedule.description and not schedule.time_off %}
                             <div class="schedule-desc">{{ schedule.description }}</div>
                             {% endif %}
+                        </div>
+                        
+                        <div class="schedule-body">
                         </div>
                     </div>
                 {% endfor %}

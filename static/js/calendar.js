@@ -107,16 +107,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.style.height = `${height}px`;
             });
 
-            // Position overlapping events horizontally - make them wider and overlap
+            // Position overlapping events horizontally - make them wider but stay within bounds
             overlappingGroups.forEach(group => {
                 if (group.length > 1) {
-                    // Make overlapping events wider (120% of original) and offset them
-                    const baseWidth = 120; // 120% width for better readability
-                    const offsetPercent = 15; // Offset each event by 15%
+                    // Calculate optimal width and offset to fit within column
+                    const maxOffset = (group.length - 1) * 10; // 10% offset per event
+                    const availableWidth = 100 - maxOffset; // Remaining width after offsets
+                    const eventWidth = Math.min(100, availableWidth + 15); // Add 15% for better readability
                     
                     group.forEach((event, index) => {
-                        event.style.width = `${baseWidth}%`;
-                        event.style.left = `${index * offsetPercent}%`;
+                        event.style.width = `${eventWidth}%`;
+                        event.style.left = `${index * 10}%`; // 10% offset between events
                         event.style.boxSizing = 'border-box';
                         event.style.zIndex = 10 + index; // Stack them properly
                     });

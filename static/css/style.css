@@ -163,6 +163,7 @@ body {
 .schedule-event {
     position: absolute;
     left: 0px;
+    right: 0px;
     border-radius: 6px;
     font-size: 0.9em;
     overflow: visible;
@@ -180,7 +181,7 @@ body {
     position: absolute;
     top: 32px;
     left: 0;
-    width: 100%;
+    right: 0;
     bottom: 0;
     background: var(--user-color);
     opacity: 0.2;
@@ -197,7 +198,7 @@ body {
 .day-slots {
     position: relative;
     height: calc(24 * 60px); /* 24 hours */
-    overflow: hidden; /* Contain schedules within day boundaries */
+    overflow: visible;
 }
 
 /* Schedule header with solid user color background */

@@ -41,12 +41,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             ? 24 
                             : existingEnd.getHours() + existingEnd.getMinutes() / 60;
 
-                        // Events that start at exactly the same time should always be grouped together
-                        if (eventStart.getTime() === existingStart.getTime()) {
-                            return true;
-                        }
-
-                        // Regular overlap detection
                         return (
                             eventStart < (existingEndHour === 24 ? new Date(existingEnd).setHours(24, 0, 0) : existingEnd) && 
                             (normalizedEndHour === 24 ? new Date(eventEnd).setHours(24, 0, 0) : eventEnd) > existingStart
@@ -78,12 +72,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const end2 = new Date(event2.dataset.endTime);
                                 const end2Hour = end2.getHours() === 0 && end2.getMinutes() === 0 ? 24 : end2.getHours() + end2.getMinutes() / 60;
 
-                                // Events that start at exactly the same time should be in the same group
-                                if (start1.getTime() === start2.getTime()) {
-                                    return true;
-                                }
-
-                                // Regular overlap detection
                                 return (
                                     start1 < (end2Hour === 24 ? new Date(end2).setHours(24, 0, 0) : end2) && 
                                     (end1Hour === 24 ? new Date(end1).setHours(24, 0, 0) : end1) > start2
@@ -119,53 +107,51 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.style.height = `${height}px`;
             });
 
-            // Position overlapping events horizontally - evenly distribute across column width
+            // Position overlapping events horizontally - adjust width based on text content
             overlappingGroups.forEach(group => {
                 if (group.length > 1) {
-                    console.log(`Positioning group of ${group.length} overlapping events`);
-                    
-                    const totalEvents = group.length;
-                    const maxUsableWidth = 95; // Leave 5% margin
-                    const minEventWidth = 30; // Minimum width for readability
-                    
-                    // Calculate the best distribution strategy
-                    let eventWidth, offsetStep;
-                    
-                    if (totalEvents <= 3) {
-                        // For few events, use generous spacing
-                        eventWidth = 60;
-                        offsetStep = (maxUsableWidth - eventWidth) / (totalEvents - 1);
-                    } else {
-                        // For many events, distribute evenly across available width
-                        // Calculate how much space each event gets
-                        const availableSpace = maxUsableWidth;
-                        const idealWidth = Math.max(minEventWidth, availableSpace / totalEvents);
-                        const idealOffset = availableSpace / totalEvents;
-                        
-                        eventWidth = Math.min(idealWidth, 50); // Cap at 50% max
-                        offsetStep = idealOffset;
-                    }
+                    // Calculate width based on text content in header
+                    const offsetStep = 8; // Fixed 8% offset between events
                     
                     group.forEach((event, index) => {
-                        const leftPosition = Math.min(index * offsetStep, maxUsableWidth - eventWidth);
+                        const leftPosition = index * offsetStep;
                         
-                        event.style.width = `${eventWidth}%`;
+                        // Measure the text width in the header
+                        const headerElement = event.querySelector('.schedule-header');
+                        if (headerElement) {
+                            // Create a temporary element to measure text width
+                            const tempElement = document.createElement('span');
+                            tempElement.style.visibility = 'hidden';
+                            tempElement.style.position = 'absolute';
+                            tempElement.style.whiteSpace = 'nowrap';
+                            tempElement.style.fontSize = window.getComputedStyle(headerElement).fontSize;
+                            tempElement.style.fontFamily = window.getComputedStyle(headerElement).fontFamily;
+                            tempElement.style.fontWeight = window.getComputedStyle(headerElement).fontWeight;
+                            tempElement.textContent = headerElement.textContent;
+                            
+                            document.body.appendChild(tempElement);
+                            const textWidth = tempElement.offsetWidth;
+                            document.body.removeChild(tempElement);
+                            
+                            // Calculate width based on text, with some padding
+                            const parentWidth = event.parentElement.offsetWidth;
+                            const textWidthPercent = ((textWidth + 16) / parentWidth) * 100; // Add 16px padding
+                            const minWidth = 60; // Minimum 60% width
+                            const maxWidth = Math.min(95, 100 - leftPosition); // Stay within bounds
+                            const calculatedWidth = Math.max(minWidth, Math.min(textWidthPercent, maxWidth));
+                            
+                            event.style.width = `${calculatedWidth}%`;
+                        } else {
+                            // Fallback to fixed width if no header found
+                            const maxWidth = 100 - leftPosition;
+                            event.style.width = `${Math.min(75, maxWidth)}%`;
+                        }
+                        
                         event.style.left = `${leftPosition}%`;
                         event.style.right = 'auto';
                         event.style.boxSizing = 'border-box';
                         event.style.zIndex = 10 + index;
-                        event.style.position = 'absolute';
-                        
-                        console.log(`Event ${index}: left=${leftPosition.toFixed(1)}%, width=${eventWidth}%, zIndex=${10 + index}`);
                     });
-                } else {
-                    // Single events should use full width
-                    const event = group[0];
-                    event.style.width = '95%';
-                    event.style.left = '2.5%'; // Center with small margin
-                    event.style.right = 'auto';
-                    event.style.position = 'absolute';
-                    event.style.zIndex = '10';
                 }
             });
         });

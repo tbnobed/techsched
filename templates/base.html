@@ -432,12 +432,12 @@
                         <div class="list-group list-group-flush p-2" style="max-height: 250px; overflow-y: auto; scrollbar-width: thin;">
                             {% for link in get_quick_links() %}
                             <a href="{{ link.url }}" target="_blank"
-                               class="list-group-item list-group-item-action d-flex align-items-center mb-2 p-2"
+                               class="list-group-item list-group-item-action d-flex align-items-center mb-2 p-3"
                                style="border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.08); border: 1px solid var(--dark-border); transform: translateY(0); transition: transform 0.3s ease, box-shadow 0.3s ease;"
                                onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.12)';"
                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.08)';">
-                                <i data-feather="{{ link.icon }}" class="me-2" style="width: 16px; height: 16px;"></i>
-                                <span class="text-truncate" style="font-size: 0.9rem;">{{ link.title }}</span>
+                                <i data-feather="{{ link.icon }}" class="me-2" style="width: 18px; height: 18px;"></i>
+                                <span class="text-truncate">{{ link.title }}</span>
                             </a>
                             {% endfor %}
                         </div>

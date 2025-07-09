@@ -107,21 +107,48 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.style.height = `${height}px`;
             });
 
-            // Position overlapping events horizontally - ensure they stay within column bounds
+            // Position overlapping events horizontally - adjust width based on text content
             overlappingGroups.forEach(group => {
                 if (group.length > 1) {
-                    // Calculate safe positioning to stay within 100% column width
-                    const offsetStep = Math.min(8, 60 / group.length); // Max 8% offset, smaller for more events
-                    const maxWidth = 100 - ((group.length - 1) * offsetStep); // Ensure last event fits
-                    const eventWidth = Math.max(maxWidth, 70); // Minimum 70% width for readability
+                    // Calculate width based on text content in header
+                    const offsetStep = 8; // Fixed 8% offset between events
                     
                     group.forEach((event, index) => {
                         const leftPosition = index * offsetStep;
-                        const actualWidth = Math.min(eventWidth, 100 - leftPosition); // Clamp to column boundary
                         
-                        event.style.width = `${actualWidth}%`;
+                        // Measure the text width in the header
+                        const headerElement = event.querySelector('.schedule-header');
+                        if (headerElement) {
+                            // Create a temporary element to measure text width
+                            const tempElement = document.createElement('span');
+                            tempElement.style.visibility = 'hidden';
+                            tempElement.style.position = 'absolute';
+                            tempElement.style.whiteSpace = 'nowrap';
+                            tempElement.style.fontSize = window.getComputedStyle(headerElement).fontSize;
+                            tempElement.style.fontFamily = window.getComputedStyle(headerElement).fontFamily;
+                            tempElement.style.fontWeight = window.getComputedStyle(headerElement).fontWeight;
+                            tempElement.textContent = headerElement.textContent;
+                            
+                            document.body.appendChild(tempElement);
+                            const textWidth = tempElement.offsetWidth;
+                            document.body.removeChild(tempElement);
+                            
+                            // Calculate width based on text, with some padding
+                            const parentWidth = event.parentElement.offsetWidth;
+                            const textWidthPercent = ((textWidth + 16) / parentWidth) * 100; // Add 16px padding
+                            const minWidth = 60; // Minimum 60% width
+                            const maxWidth = Math.min(95, 100 - leftPosition); // Stay within bounds
+                            const calculatedWidth = Math.max(minWidth, Math.min(textWidthPercent, maxWidth));
+                            
+                            event.style.width = `${calculatedWidth}%`;
+                        } else {
+                            // Fallback to fixed width if no header found
+                            const maxWidth = 100 - leftPosition;
+                            event.style.width = `${Math.min(75, maxWidth)}%`;
+                        }
+                        
                         event.style.left = `${leftPosition}%`;
-                        event.style.right = 'auto'; // Clear any right positioning
+                        event.style.right = 'auto';
                         event.style.boxSizing = 'border-box';
                         event.style.zIndex = 10 + index;
                     });

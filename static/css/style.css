@@ -163,7 +163,6 @@ body {
 .schedule-event {
     position: absolute;
     left: 0px;
-    right: 0px;
     border-radius: 6px;
     font-size: 0.9em;
     overflow: visible;
@@ -181,7 +180,7 @@ body {
     position: absolute;
     top: 32px;
     left: 0;
-    right: 0;
+    width: 100%;
     bottom: 0;
     background: var(--user-color);
     opacity: 0.2;

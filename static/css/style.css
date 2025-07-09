@@ -193,10 +193,11 @@ body {
     min-height: 24px;
 }
 
-/* Schedule body with transparent background - shows calendar grid through */
+/* Schedule body with semi-transparent user color background */
 .schedule-body {
     padding: 4px 8px 6px 8px;
-    background: transparent !important;
+    background: var(--user-color) !important;
+    opacity: 0.4;
     border-radius: 0 0 6px 6px;
     color: white;
     min-height: 20px;

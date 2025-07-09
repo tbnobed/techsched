@@ -119,15 +119,27 @@
                          data-toggle="tooltip"
                          data-html="true"
                          title="<div class='hover-content'><strong>{{ schedule.technician.username }}</strong> <span class='text-muted'>{{ schedule.start_time.strftime('%m/%d/%y') }}</span><br>{{ schedule.start_time.strftime('%H:%M') }}-{{ schedule.end_time.strftime('%H:%M') }} ({{ ((schedule.end_time - schedule.start_time).total_seconds() / 3600)|int }}h){% if schedule.location %}<br><i data-feather='map-pin'></i> {{ schedule.location.name }}{% endif %}{{ ('<br>' + schedule.description) if schedule.description else '' }}</div>">
-                        <div class="schedule-time">
-                            {{ schedule.start_time.strftime('%H:%M') }} - 
-                            {{ schedule.end_time.strftime('%H:%M') }}
+                        <div class="schedule-header">
+                            <div class="schedule-title">
+                                {% if schedule.time_off %}Time Off{% else %}{{ schedule.description or 'Scheduled Work' }}{% endif %}
+                            </div>
+                            <div class="schedule-time">
+                                {{ schedule.start_time.strftime('%H:%M') }} - {{ schedule.end_time.strftime('%H:%M') }}
+                            </div>
                         </div>
-                        <div class="schedule-tech">{{ schedule.technician.username }}</div>
-                        {% if schedule.location %}
-                        <div class="schedule-location"><i data-feather="map-pin"></i> {{ schedule.location.name }}</div>
-                        {% endif %}
-                        <div class="schedule-desc">{{ schedule.description }}</div>
+                        
+                        <div class="schedule-body">
+                            <div class="schedule-tech">{{ schedule.technician.username }}</div>
+                            {% if schedule.location %}
+                            <div class="schedule-location">
+                                <i data-feather="map-pin"></i>
+                                {{ schedule.location.name }}
+                            </div>
+                            {% endif %}
+                            {% if schedule.description and not schedule.time_off %}
+                            <div class="schedule-desc">{{ schedule.description }}</div>
+                            {% endif %}
+                        </div>
                     </div>
                 {% endfor %}
             </div>

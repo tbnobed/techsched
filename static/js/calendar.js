@@ -128,7 +128,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const scheduleId = this.dataset.scheduleId;
             const startTime = new Date(this.dataset.startTime);
             const endTime = new Date(this.dataset.endTime);
-            const description = this.querySelector('.schedule-desc').textContent;
+            const descElement = this.querySelector('.schedule-desc');
+            const description = descElement ? descElement.textContent : '';
             const technicianId = this.dataset.technicianId;
             const timeOff = this.dataset.timeOff === 'true';  // Add time off status
             
@@ -159,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Set location if it exists
             // We need to find the location ID from the location element
             const locationElement = this.querySelector('.schedule-location');
-            if (locationElement) {
+            if (locationElement && locationElement.textContent) {
                 const locationText = locationElement.textContent.trim();
                 // Find the location select and set it to the proper location if found
                 const locationSelect = document.getElementById('location_id');

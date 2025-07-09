@@ -685,28 +685,28 @@ body {
 }
 
 .col-md-2 .card:nth-of-type(1),
-.col-lg-1 .card:nth-of-type(1) {
+.col-lg-2 .card:nth-of-type(1) {
   background: var(--sidebar-active-bg);
   border: none;
   box-shadow: 0 8px 16px rgba(0,0,0,0.08);
 }
 
 .col-md-2 .card:nth-of-type(2),
-.col-lg-1 .card:nth-of-type(2) {
+.col-lg-2 .card:nth-of-type(2) {
   background: var(--sidebar-timeoff-bg);
   border: none;
   box-shadow: 0 8px 16px rgba(0,0,0,0.08);
 }
 
 .col-md-2 .card:nth-of-type(3),
-.col-lg-1 .card:nth-of-type(3) {
+.col-lg-2 .card:nth-of-type(3) {
   background: var(--sidebar-tickets-bg);
   border: none;
   box-shadow: 0 8px 16px rgba(0,0,0,0.08);
 }
 
 .col-md-2 .card:nth-of-type(4),
-.col-lg-1 .card:nth-of-type(4) {
+.col-lg-2 .card:nth-of-type(4) {
   background: var(--sidebar-links-bg);
   border: none;
   box-shadow: 0 8px 16px rgba(0,0,0,0.08);

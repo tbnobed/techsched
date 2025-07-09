@@ -287,20 +287,7 @@
     background-color: rgba(0, 123, 255, 0.1);
 }
 
-.schedule-event {
-    position: absolute;
-    width: calc(100% - 4px);
-    left: 2px;
-    border-radius: 4px;
-    padding: 2px 5px;
-    font-size: 0.8rem;
-    overflow: hidden;
-    color: #fff;
-    cursor: pointer;
-    z-index: 5;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    background: linear-gradient(135deg, var(--event-gradient-start), var(--event-gradient-end));
-}
+/* Schedule event styling is now handled in main style.css */
 
 /* Make sure events are positioned correctly using JavaScript */
 {% for day in range(7) %}

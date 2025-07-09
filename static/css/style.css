@@ -165,13 +165,14 @@ body {
     left: 2px;
     right: 2px;
     border-radius: 6px;
-    font-size: 0.85em;
-    overflow: hidden;
+    font-size: 0.9em;
+    overflow: visible;
     transition: all 0.2s ease;
     z-index: 1;
     width: calc(100% - 4px);
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     border: 1px solid rgba(255,255,255,0.2);
+    min-height: 40px;
 }
 
 .schedule-event:hover {
@@ -187,13 +188,13 @@ body {
     font-weight: bold;
     border-radius: 6px 6px 0 0;
     background: inherit; /* Uses the event's background color */
+    min-height: 24px;
 }
 
 /* Schedule body with transparent background */
 .schedule-body {
     padding: 4px 8px 6px 8px;
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(0.5px);
+    background: transparent;
     border-radius: 0 0 6px 6px;
     color: white;
     min-height: 20px;

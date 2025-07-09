@@ -364,8 +364,11 @@
 
                 <!-- Open Tickets -->
                 <div class="card mt-3">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">Active Tickets</h5>
+                        <a href="{{ url_for('tickets.create_ticket') }}" class="btn btn-primary btn-sm">
+                            <i data-feather="plus-circle" style="width: 14px; height: 14px;"></i>
+                        </a>
                     </div>
                     <div class="card-body p-0">
                         <div class="list-group list-group-flush" style="max-height: 250px; overflow-y: auto; scrollbar-width: thin;">
@@ -410,9 +413,6 @@
                                 </div>
                                 {% endif %}
                             {% endif %}
-                            <a href="{{ url_for('tickets.create_ticket') }}" class="list-group-item list-group-item-action text-primary text-center">
-                                <i data-feather="plus-circle" class="me-1"></i> Create New Ticket
-                            </a>
                         </div>
                     </div>
                 </div>

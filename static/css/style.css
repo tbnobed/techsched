@@ -10,10 +10,23 @@ body {
 }
 
 /* Specifically target current time display */
-#current-time-display * {
+#current-time-display *, 
+.current-datetime,
+.current-datetime * {
     outline: none !important;
     box-shadow: none !important;
     border: none !important;
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
+}
+
+/* Reset all possible border/outline sources */
+div[style*="gradient"] {
+    border: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
 }
 
 /* Calendar Styles */

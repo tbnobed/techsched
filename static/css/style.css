@@ -168,7 +168,7 @@ body {
     font-size: 0.9em;
     overflow: visible;
     transition: all 0.2s ease;
-    z-index: 1;
+    z-index: 10;
     width: 100%;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     border: 1px solid rgba(255,255,255,0.2);
@@ -191,8 +191,14 @@ body {
 
 .schedule-event:hover {
     transform: scale(1.02);
-    z-index: 100;
+    z-index: 1000;
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.day-slots {
+    position: relative;
+    height: calc(24 * 60px); /* 24 hours */
+    overflow: visible;
 }
 
 /* Schedule header with solid user color background */

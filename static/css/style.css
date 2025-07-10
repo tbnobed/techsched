@@ -42,7 +42,7 @@ div[style*="gradient"] {
     position: absolute;
     left: 0;
     right: 0;
-    height: 2px;
+    height: 4px;
     background: #dc3545;
     z-index: 100;
     pointer-events: none;
@@ -52,10 +52,10 @@ div[style*="gradient"] {
 .current-time-line::before {
     content: '';
     position: absolute;
-    left: -4px;
-    top: -3px;
-    width: 8px;
-    height: 8px;
+    left: -6px;
+    top: -4px;
+    width: 12px;
+    height: 12px;
     background: #dc3545;
     border-radius: 50%;
 }
